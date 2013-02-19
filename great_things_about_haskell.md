@@ -15,10 +15,6 @@ Great things about Haskell
 
 
 
-(In order of greatness)
-
-
-
 The type system
 ---------------
 
@@ -50,7 +46,7 @@ The other great thing about commonly using custom types is the **added safety**.
 
 Many things in programming have similar interfaces. You can add two numbers, adding 0 to anything doesn't change it, and it doesn't matter where you put the parentheses in `1+2+3`. You can multiply numbers, 1 doesn't change the result, and parentheses in `1*2*3` don't matter. So much for elementary operations. But there's more, in fact a lot more. When you concatenate a list and the empty list, you get back the list. When you concatenate three lists, it doesn't matter how you group the concatenation, you'll always get the same result. There are many other objects that obey these two simple rules. So why not have a common interface? Well, it's called `Monoid` in Haskell (and math). There are functions that take any monoid and put them together, using the appropriate monoid operation.
 
-Monoids are of course just an example, there are many other so-called *type classes*. `Eq` is for things you can compare for equality; as you may expect, most things are part of this. `Ord` are ordered types, for example real numbers. Complex numbers aren't in `Ord` for example, because you can't order them in a meaningful manner. `Enum` (for enumeratable) are things that have a next and previous element.
+Monoids are of course just an example, there are many other so-called *type classes*. `Eq` is for things you can compare for equality; as you may expect, most things are part of this. `Ord` are ordered types, for example real numbers. Complex numbers aren't in `Ord` for example, because you can't order them in a meaningful manner. `Enum` (for enumerable) are things that have a next and previous element.
 
 Functions are rarely restricted more than they have to be. If you write a function, chances are that it doesn't only work for the type you have intended, but for the whole class of types that behaves similarly, and in addition, there are laws for the basic operations that ensure that these generic functions do what you think they should do, no matter what kind of an abstruse type you feed them.
 
@@ -88,10 +84,27 @@ Immutability, next to purity, is probably the other concept that seems extremely
 
 
 
+
+It's evolving
+-------------
+
+In the beginning days of Haskell, there was a serious problem with input/output (IO): how can this concept possibly be present in a *pure* language? IO is about modifying the outside world after all. Well, I don't know how, but some people recognized the mathematical concept of a *monad* is a suitable abstraction for this issue. Using monads completely revolutionized Haskell.
+
+Nowadays, programming in Haskell without using monads is almost unthinkable.Luckily, using them doesn't require you to understand the math behind them. It's like you don't have to know advanced math to calculate 3+5. After reading the sections about how flexible the type system is, it probably won't surprise you that monads aren't a language feature, they're built using things that are already present in it.
+
+Every couple of years, someone comes along and finds something really interesting that can be applied to Haskell. Some things turn out to be impractical and become history, others add a new concept to the standard libraries and are used by the entire community from that point on.
+
+At the time of writing this (early 2013), the concept of a so-called *comonad* is in the air. A comonad is something like a backwards monad in a sense, and it is probably very useful in practice. Unfortunately, only a few people truly understand their meaning and are able to put them to good use; there are not a lot of tutorials yet, no book even mentions their name. But here's the thing: it's exciting to see the language evolve. From all I know, once comonads break through, they may be the next big thing in Haskell, and in five years someone will write about how cute it was when nobody understood these things that are now on page 200 in every Haskell book.
+
+In Haskell, you may be there when people discover the printing press, electricity and transistors, and you will see yourself grow on the new way of writing code.
+
+
+
+
 Read-Evaluate-Print-Loops (REPL)
 --------------------------------
 
-Haskell has two implementation of a REPL (GHCi and Hugs), a principle you may know from iPython. It's a command line tool similar to a terminal, where the commands are the functions you import. Typical Haskell workflow is working on a small function, loading it into the REPL, and seeing whether it compiles (fix errors, repeat), and whether it does what it should do. It's very helpful to play around with combinations of your functions before you plug them into your actual code. And this isn't just tinkering: this is what writing Haskell looks like. You have your editor, and your REPL, and you bounce back and forth between them. You immediately see if something is fishy after writing only ten lines; nobody writes more than a page of code in Haskell without giving it a test shot.
+Haskell has two implementation of a REPL ([GHCi][ghci] and [Hugs][hugs]), a principle you may know from [iPython][ipython]. It's a command line tool similar to a terminal, where the commands are the functions you import. Typical Haskell workflow is working on a small function, loading it into the REPL, and seeing whether it compiles (fix errors, repeat), and whether it does what it should do. It's very helpful to play around with combinations of your functions before you plug them into your actual code. And this isn't just tinkering: this is what writing Haskell looks like. You have your editor, and your REPL, and you bounce back and forth between them. You immediately see if something is fishy after writing only ten lines; nobody writes more than a page of code in Haskell without giving it a test shot.
 
 
 
@@ -99,6 +112,17 @@ LYAH
 ----
 
 Learn You a Haskell for Great Good, short LYAH, is the best introductory book for any programming language I've ever come across. It's fun to read, and in the meantime it teaches you Haskell by accident. [Oh, and it's available for free online.](http://learnyouahaskell.com/)
+
+
+
+Nice standard libraries
+-----------------------
+
+Below are a couple of libraries solving a specific problem that are especially nice to use for various reasons.
+
+### Parsing
+
+There are a couple of parser libraries for Haskell, and Parsec is probably the most general purpose one among them. I'm not sure you can state this objectively, but using Parsec is *fun*. You basically think about how your data is structured, write that down, and it compiles and works. Want to parse a letter or a digit? `letter <|> digit`. Many letters or digits? `many (letter <|> digit)`. Parsec code looks like an [EBNF][ebnf] specification, and it compiles. It's short, elegant and maintainable - you can't ask for much more. Parsec is probably also the reason regular expressions aren't used much (although they exist).
 
 
 
@@ -115,14 +139,21 @@ Learning Haskell without a doubt feels like learning to program all over again. 
 
 ### Going back
 
-After becoming proficient in Haskell, you will miss things in any other language you write. You will miss the basic things like `Maybe` as much as you'll miss the advanced features like the type safety, the ability to use functions as data, parameters and return values easily. And that's just the tip of the iceberg.
+After becoming proficient in Haskell, you will miss things in any other language you write. You will miss the basic things like `Maybe` as much as you'll miss the advanced features like the type safety, the ability to use functions as data, parameters and return values easily.
+
+I am serious about this: learning Haskell *will* make you feel somewhat disabled in most other languages. (And by most I probably mean all but Lisp)
+
+
+
+### Going forward
+
+A wise man on the internet once said that in the beginning, Haskell feels like thousands of people keep telling you how ingenious Haskell is, while the entirety of the language seems to be about hacking your way back around those obvious limitations. You will think about how quickly you could've written more performant code in C in half the time - and you will be right to do so - so sometimes it's a challenge to not lose interest. Becoming somewhat productive takes a hobbyist at least a couple of months, for me it was roughly a year until I felt as confident in Haskell as in C++, my previous main language.
 
 
 
 ### The mathiness of the community
 
 If you join `#haskell` on `irc.freenode.net`, you'll most likely encounter a discussion about category theory, logic or some other academic topic quite quickly. This has led to the prejudice that these advanced concepts are necessary to learn Haskell, *which they are absolutely not*. In fact, many of these concepts are applicable to many other programming languages, only that nobody recognizes them or bothers to talk about it. Haskell sure creates an environment where people gather that are interested in such matters, but it's not a requirement in order to learn how to use it.
-
 
 
 
@@ -142,6 +173,12 @@ Now look at the mirror. That's what people will look like when you tell them tha
 
 
 
+### The code looks unappealing
+
+I think Lisp looked unappealing, but I found the concepts of the language interesting enough to give it a shot anyway. Syntax is something you get used to easily. It's of course hard to start something that you don't like looking at, but I recommend not making this a limitation. Read the introductory chapters of a book, and see whether you like what the text tells you between the code segments, and make your judgement based on that.
+
+
+
 
 
 What makes Haskell bad
@@ -158,3 +195,20 @@ From how I see it, it is impossible to learn Haskell when you don't love learnin
 ### The library phase
 
 Once you're past the first steps (e.g. after finishing LYAH), there's nothing to guide you really. It's what I call the library phase: many problems already have libraries to solve them, but you have to find out about them first, and then learn their API. Some concepts of functional problems require approaches that you wouldn't expect as an imperative programmer, making it hard to find the according library; #haskell will be very helpful here though.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[ghci]: http://www.haskell.org/ghc/docs/latest/html/users_guide/ghci.html#ghci-introduction
+[ipython]: http://ipython.org/
+[hugs]: http://www.haskell.org/hugs/
