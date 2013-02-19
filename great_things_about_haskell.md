@@ -212,3 +212,4 @@ Once you're past the first steps (e.g. after finishing LYAH), there's nothing to
 [ghci]: http://www.haskell.org/ghc/docs/latest/html/users_guide/ghci.html#ghci-introduction
 [ipython]: http://ipython.org/
 [hugs]: http://www.haskell.org/hugs/
+[ebnf]: http://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Form
