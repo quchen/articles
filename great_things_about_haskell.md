@@ -100,7 +100,6 @@ In Haskell, you may be there when people discover the printing press, electricit
 
 
 
-
 Read-Evaluate-Print-Loops (REPL)
 --------------------------------
 
@@ -111,18 +110,35 @@ Haskell has two implementation of a REPL ([GHCi][ghci] and [Hugs][hugs]), a prin
 LYAH
 ----
 
-Learn You a Haskell for Great Good, short LYAH, is the best introductory book for any programming language I've ever come across. It's fun to read, and in the meantime it teaches you Haskell by accident. [Oh, and it's available for free online.](http://learnyouahaskell.com/)
+Learn You a Haskell for Great Good, short LYAH, is the best introductory book for any programming language I've ever come across. It's fun to read, and in the meantime it teaches you Haskell by accident. [Oh, and it's available for free online.][lyah]
 
 
 
-Nice standard libraries
------------------------
+The community
+-------------
 
-Below are a couple of libraries solving a specific problem that are especially nice to use for various reasons.
+Haskell's community is known for their friendliness, and that they give helpful answers to even the most basic beginner questions. If you present them with your problem (e.g. on StackOverflow, the Haskell mailing lists or #haskell on irc.freenode.net) and show what you've attempted, you will most likely get an answer that not only explains how to solve your problem, but gives you a deeper insight into what you were trying to accomplish and how it relates to other things you might encounter.
+
+If you're not a beginner, don't fear! I have yet to find an advanced topic nobody in #haskell is able to write an essay about. This of course includes Haskell, but also parallels to logic and mathematics (specifically category theory).
+
+
+
+Notable standard libraries
+--------------------------
+
+Below are a number of noteworthy libraries, in the sense that functionality provided by them is in some way special to Haskell.
 
 ### Parsing
 
-There are a couple of parser libraries for Haskell, and Parsec is probably the most general purpose one among them. I'm not sure you can state this objectively, but using Parsec is *fun*. You basically think about how your data is structured, write that down, and it compiles and works. Want to parse a letter or a digit? `letter <|> digit`. Many letters or digits? `many (letter <|> digit)`. Parsec code looks like an [EBNF][ebnf] specification, and it compiles. It's short, elegant and maintainable - you can't ask for much more. Parsec is probably also the reason regular expressions aren't used much (although they exist).
+There are a couple of parser libraries for Haskell, and Parsec is probably the most general purpose one among them. I'm not sure you can state this objectively, but using Parsec is *fun*. You basically think about how your data is structured, write that down (if you're familiar with the term, it looks like [EBNF][ebnf]), and it compiles and works. Want to parse a letter or a digit? `letter <|> digit`. Many letters or digits? `many (letter <|> digit)`. It's short, elegant and maintainable - you can't ask for much more. Parsec is probably also the reason regular expressions aren't used much at all (although they are supported as well).
+
+### Software transactional memory (STM)
+
+STM is a tool for inter-thread communication in concurrent programming. Usually, you have to worry about data consistency between threads, and as a consequence locks/mutexes are introduced, leading to a framework where bugs are fiendishly difficult to find and very easy to implement. Meet STM: an STM action is an atomical operation, in the sense that it either hasn't been performed yet, or has been performed completely. There is no way a thread can see an intermediate state, hence there is no need for locks/mutexes. By its very design, it eliminates some of the most complicated bugs of cuncurrent programming.
+
+### QuickCheck
+
+QuickCheck is a quality assurance library to test functions. It does this by *automatically* generating appropriate datasets (enabled to do so by Haskell's type system), and then checking whether a function's property holds for this generated data. Often times, functions have only a couple of different corner cases (think of "empty list, list with only one element, list of many"), and QuickCheck is very likely to find them. As an addition to a programmer who understands the code and *thinks* it's alright gives a very high confidence level of the function actually being correct.
 
 
 
@@ -173,7 +189,7 @@ Now look at the mirror. That's what people will look like when you tell them tha
 
 
 
-### The code looks unappealing
+### The code looks different
 
 I think Lisp looked unappealing, but I found the concepts of the language interesting enough to give it a shot anyway. Syntax is something you get used to easily. It's of course hard to start something that you don't like looking at, but I recommend not making this a limitation. Read the introductory chapters of a book, and see whether you like what the text tells you between the code segments, and make your judgement based on that.
 
@@ -213,3 +229,4 @@ Once you're past the first steps (e.g. after finishing LYAH), there's nothing to
 [ipython]: http://ipython.org/
 [hugs]: http://www.haskell.org/hugs/
 [ebnf]: http://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Form
+[lyah]: http://learnyouahaskell.com/
