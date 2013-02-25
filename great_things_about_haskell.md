@@ -214,6 +214,12 @@ Once you're past the first steps (e.g. after finishing LYAH), there's nothing to
 
 
 
+### Small hacks
+
+Haskell's safety and robustness comes at a price. Sure, it will most likely do the right thing for all possible cases up to eternity, but sometimes that's not what you want: a small command line hack can accomplish a lot. So when you're trying to find a pragmatic solution to a small problem, this is probably the better approach. In short: `ls -a | grep ^\\. | wc -l` is much more likely what you want when counting hidden files than writing the Haskell equivalent.
+
+
+
 
 
 
