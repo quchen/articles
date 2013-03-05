@@ -1,0 +1,1 @@
+This repository is free for all for me, I basically use it to store text files online. Contents are subject to rebases and other nasty things you usually don't want in a public repo.
