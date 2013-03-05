@@ -56,7 +56,7 @@ What is it good for?
 One way of picturing how `foldr f z` works is that it takes a list, and replaces every occurrence of `(:)` with `f`, and `[]` with `z`. Sound familiar? That's the inverse of `build`! `build` inserted `nil` and `cons` in a function to produce a list, `foldr` takes a list and inserts `f` and `z`. So if you first use `build` to convert a lambda list to a normal list `foldr` can use, and immediately afterwards use `foldr` to deconstruct the list and replace the `[]` and `(:)` with a new function, why not omit generating the intermediate list? Just insert `f` for `(:)` and `z` for `[]` in the lambda list, and you'll get the same result. As a formula:
 
 ```haskell
-foldr f z (build g)   ==   g f z
+foldr f z (build g)  ==  g f z
 ```
 
 An example:
@@ -149,4 +149,4 @@ Well great, now we just lost us our connections to lists? Not really. `build g` 
 When should I use `build`?
 --------------------------
 
-`build`'s single purpose is optimization for list functions. Unless you're writing a library dealing with generating and consuming lists, you most likely won't ever need to use `build`. However, when you're wondering again why `-O` compiled programs run so much faster than unoptimizes ones, it is likely that `build` is part of the answer.
+`build`'s single purpose is optimization for list functions. Unless you're writing a library dealing with generating and consuming lists, you most likely won't ever need to use `build`. However, when you're wondering again why `-O` compiled programs run so much faster than unoptimized ones, it is likely that `build` is part of the answer.
