@@ -180,7 +180,7 @@ Exercise solutions
 
 ### Bouncy folds
 
-1. Picking every second element of a list:
+1. Picking every second element of a list - the idea here is that the external value switches between `True` and `False` every element, and only if it's `True` that element is added to the result.
 
     ```haskell
     every2nd :: [a] -> [a]
@@ -189,7 +189,7 @@ Exercise solutions
                               | otherwise = acc (not flag)
     ```
 
-2. Equilibrium index:
+2. Equilibrium index - the external value consists of the triple `(sum left, sum right, current index)`. Each step checks whether the left sum is equal to the right sum, starting with `(0, sum xs, 0)`.
 
     ```haskell
     -- Requires BangPatterns language extension for efficiency
@@ -199,7 +199,7 @@ Exercise solutions
                                          | otherwise = acc (sumL+x, sumR-x, i+1)
     ```
 
-3. Covering index:
+3. Covering index - the external value holds three parameters: a `Set` of already occurred unique elements, the running index (i.e. the current position in the list), and the covering index candidate (the position where the last new item was found). If a new item is found it is added to the set and the candidate index is updated to the current running index.
 
     ```haskell
     -- Requires BangPatterns and Data.Set. Could be done with lists only, which
@@ -207,7 +207,7 @@ Exercise solutions
     covering :: (Ord a) => [a] -> Int
     covering xs = foldr go third xs (S.empty, 0, 0)
           where third ~(_,_,x) = x
-                go x fold (u, !ri, !ci) -- (Uniques, RunningIndex, CoveringIndex)
+                go x fold (u, !ri, !ci)
                       | S.notMember x u = fold (S.insert x u, ri+1, ri)
                       | otherwise       = fold (           u, ri+1, ci)
     ```

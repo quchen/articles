@@ -72,7 +72,7 @@ foldr (+) 0 (build myLambdaList)
       = 6
 
 -- The long way: building an intermediate list
-foldr f z (build myLambdaList)
+foldr (+) 0 (build myLambdaList)
       = foldr (+) 0 $ (\cons nil -> 1 `cons` (2 `cons` (3 `cons` nil))) (:) []
       = foldr (+) 0 (1 : (2 : (3 : [])))
       = 1 + (2 + (3 + 0))
