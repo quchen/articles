@@ -1,7 +1,191 @@
 Useful Haskell techniques
 =========================
 
-This is a collection of little techniques I found very useful, elegant, and usually hard to come up with. Used in the wrong places they could be considered a bit hacky though.
+This is a collection of little techniques I found (that I found) very useful, elegant, and usually hard to come up with. Used in the wrong places they could be considered a bit hacky though.
+
+
+
+
+Poor man's supercompiler
+------------------------
+
+### A *very* brief introduction to Template Haskell
+
+[Template Haskell][TH] (TH) can be used to force evaluation at compile time quite easily, and without knowing much about it. I will give a very brief overview about it here; for further reading refer to the Haskell Wiki and the GHC manual.
+
+[TH]: http://www.haskell.org/haskellwiki/Template_Haskell
+
+TH can be summarized as an algebraic data type that represents Haskell code. For example, `1` has the TH representation `LitE (IntegerL 1)`, which stands for a literal expression consisting of the integer literal 1. Similar expressions correspond to any other piece of Haskell code (things get quite unreadable quickly in this representation though). TH now allows building these expressions at compile time, and inserting them into the actual code of the program.
+
+To use TH, you have to enable the syntax extension `TemplateHaskell`, and you should probably import `Language.Haskell.TH` as well. The following will assume this has been done.
+
+There are two important functionalities of TH for now: `$(...)` and `[|...|]`. These two convert between TH and Haskell back and forth: `$(...)` takes a TH expression and creates the corresponding Haskell for it, while `[|...|]` creates a TH expression out of ordinary Haskell code. To look at TH code `X`, you can use `runQ X >>= putStrLn.pprint`. Let's see what the two constructs mentioned do:
+
+```text
+Recreate the example above: what's "1" in TH?
+> runQ [| 1 |]
+>>> LitE (IntegerL 1)
+
+What's the corresponding Haskell source?
+runQ [| 1 |] >>= putStrLn . pprint
+1
+```
+
+To test `$(...)`, you need to create two modules, as you cannot define TH functions in the same module as you want to invoke them.
+
+```haskell
+-- Main.hs
+{-# LANGUAGE TemplateHaskell #-}
+import TH
+-- two is a TH expression representing the integer 2.
+-- $(two) inserts the corresponding Haskell source where it occurs.
+main = print $(two)
+
+-- TH.hs
+{-# LANGUAGE TemplateHaskell #-}
+module TH where
+two = [| 2 |]
+```
+
+Also noteworthy is the type of `two`: `Q Exp`. The `Q` monad (for quotation) is a wrapper for expressions, and `Exp` is a general TH expression.
+
+
+
+### Supercompiling `1+1`
+
+Maybe you haven't noticed it, but the previous example is already close to what we want: it creates `2` at compile time, and inserts it in the main function to be printed. Now how would we modify this to represent `2` as `1+1` instead? The following won't work:
+
+```haskell
+two = [| 1+1 |]
+```
+
+What this does is not precalculating `1+1`, but building the corresponding Haskell expression:
+
+```text
+> runQ [| 1+1 |]
+>>> InfixE (Just (LitE (IntegerL 1))) (VarE GHC.Num.+) (Just (LitE (IntegerL 1)))
+
+> runQ [| 1+1 |] >>= putStrLn . pprint
+>>> 1 GHC.Num.+ 1
+```
+
+This is not what we want of course - we'd like TH to carry out the sum at compile time and carry on with the result. Then of course we would have a single literal integer expression, so let's wrap `1+1` in that:
+
+```haskel
+two :: Q Exp
+-- IntegerL wraps an Integer in a Lit
+-- LitE wraps a Lit Integer in an Exp
+-- return puts everything in the Q monad
+two = return . LitE . IntegerL $ 1 + 1
+```
+
+Let's have a look at what this produces:
+
+```text
+> runQ two
+>>> LitE (IntegerL 2)
+```
+
+Aha! No `1+1` in there, it's been reduced to `2` - supercompilation! Noteworthy about this is that `1+1` is normal Haskell, and this method indeed expands to more complex scenarios.
+
+
+
+### Supercompiling a Fibonacci number
+
+So what do we need to supercompile something?
+
+- Something to supercompile (duh). I'll take the Fibonacci series as an example.
+- A module where the supercompiled code is inserted, here: `Main.hs`.
+- Another module where the TH magic happens, here: `TH.hs`.
+
+`Main.hs` is pretty simple: print a precalculated Fibonacci number.
+
+```haskell
+{-# LANGUAGE TemplateHaskell #-}
+import TH
+main = print $ $(fiboTH)
+```
+
+`TH.hs` has to do two things: calculate the number, and wrap it up in a `Q Exp`.
+
+```haskell
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE BangPatterns #-}
+module TH where
+import Language.Haskell.TH
+
+-- Fibonacci function. Ordinary Haskell.
+fibo :: Integer -> Integer
+fibo = fibo' (0, 1)
+      where fibo' ( a, _)  0 = a
+            fibo' (!a,!b) !n = fibo' (b, a + b) (n - 1)
+
+-- | Precalculate large fibonacci number's length as an integer literal.
+--   (The number itself is a little large for output.)
+fiboTH :: Q Exp
+fiboTH = return . LitE . IntegerL $ fiboLength
+      where fiboLength = fromIntegral . length . show $ fibo (10^6)
+```
+
+So what happens here? `main` requires the code generated from `fiboTH`. To create `fiboTH`, the ordinary Haskell code for `fibo` has to be run during compile time. Speaking of which: you may want to adjust the number `10^6` so you get the program to run in a couple of seconds so you can see the effect, but don't grow a beard waiting for it. The compile time for this TH example is comparable to how long GHCi would take to do the calculation, but you'll notice that the actual program runs in no time - it simply doesn't contain Fibonacci numbers, all it contains is a hard-coded number generated by the supercompilation.
+
+
+
+### The recipe
+
+Using TH this way follows a few easy steps:
+
+1. Find out the type of the result of the desired supercompilation, such as `Integer`.
+
+2. Find out how to create the corresponding TH expression out of this. Previously, the number had to be converted to a `Lit` using `IntegerL` first, then to an `Expr` using `LitE`, and finally put into the `Q` monad using `return`. An easy way of accomplishing this is by letting `[|...|]` do the work for you.
+
+    ```haskell
+    myWrapper x = [| \y -> x * y |]
+    ```
+
+    This will create an expression where you can easily supercompile `x` into.
+
+3. Wrap the desired value using your previously found wrapper function.
+
+4. You're done! Simply insert the result using `$(...)` in another module and it'll be evaluate during compile time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -91,6 +275,34 @@ Solutions for these are given in the last section in this file.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Avoiding `length` in list functions
 -----------------------------------
 
@@ -113,7 +325,7 @@ sameLength' []     (_:ys) = False
 sameLength' (_:xs) (_:ys) = sameLength' xs ys
 ```
 
-Another example where `length` could be used is in a function that drops the last `n` elements from a list:
+Another example where `length` could be used is in a function that drops the last `n` elements from a list, naively implemented as
 
 ```haskell
 dropLast :: Int -> [a] -> [a]
@@ -156,6 +368,7 @@ half _        = []
 -- is equivalent to @drop (length ys) xs@ for finite lists, but `end` also
 -- works on infinite lists.
 end :: [a] -> [b] -> [a]
+end []     _      = []
 end xs     []     = xs
 end (_:xs) (_:ys) = end xs ys
 
@@ -211,3 +424,5 @@ Exercise solutions
                       | S.notMember x u = fold (S.insert x u, ri+1, ri)
                       | otherwise       = fold (           u, ri+1, ci)
     ```
+
+
