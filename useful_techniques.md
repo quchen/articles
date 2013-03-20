@@ -13,150 +13,151 @@ Useful Haskell techniques
 Poor man's supercompiler
 ------------------------
 
+Suppose your program depends on a constant that takes long to calculate. You could of course do the calculation in the beginning each time the program is run, but that takes up time without a good reason; you could hard-code the data into your source code, but that means you lose the flexibility of changing the algorithm.
 
-If a program needs a value that is known in advance and expensive to calculate during runtime, it may be more practical to determine said value during compile time instead of execution time. This is what is meant here with supercompilation, and it is quite easy to use in Haskell.
+However, there is a middle ground: hardcode the value, but let Haskell do it automatically during compilation. This is a form of supercompilation: parts of the program are evaluated before the actual compilation happens.
 
-
-### A *very* brief introduction to Template Haskell
-
-[Template Haskell][TH] (TH) can be used to force evaluation at compile time quite easily, and without knowing much about it. I will give a very brief overview about it here; for further reading refer to the Haskell Wiki and the GHC manual.
+The following is a brief description of how to achieve this with [Template Haskell (TH)][TH]. It assumes you've got some very basic TH knowledge; if not, reading a couple of tutorials will bring you on track in less than an hour.
 
 [TH]: http://www.haskell.org/haskellwiki/Template_Haskell
-
-TH can be summarized as an algebraic data type that represents Haskell code. For example, `1` has the TH representation `LitE (IntegerL 1)`, which stands for a literal expression consisting of the integer literal 1. Similar expressions correspond to any other piece of Haskell code (things get quite unreadable quickly in this representation though). TH now allows building these expressions at compile time, and inserting them into the actual code of the program.
-
-To use TH, you have to enable the syntax extension `TemplateHaskell`, and you should probably import `Language.Haskell.TH` as well. The following will assume this has been done.
-
-There are two important functionalities of TH for now: `$(...)` and `[|...|]`. These two convert between TH and Haskell back and forth: `$(...)` takes a TH expression and creates the corresponding Haskell for it, while `[|...|]` creates a TH expression out of ordinary Haskell code. To look at TH code `X`, you can use `runQ X >>= putStrLn.pprint`. Let's see what the two constructs mentioned do:
-
-```text
-Recreate the example above - what's "1" in TH?
-> runQ [| 1 |]
->>> LitE (IntegerL 1)
-
-What's the corresponding Haskell source?
-runQ [| 1 |] >>= putStrLn . pprint
-1
-```
-
-To test `$(...)`, you need to create two modules, as you cannot define TH functions in the same module as you want to invoke them.
-
-```haskell
--- Main.hs
-{-# LANGUAGE TemplateHaskell #-}
-import TH
--- two is a TH expression representing the integer 2.
--- $(two) inserts the corresponding Haskell source where it occurs.
-main = print $(two)
-
--- TH.hs
-{-# LANGUAGE TemplateHaskell #-}
-module TH where
-two = [| 2 |]
-```
-
-Also noteworthy is the type of `two`: `Q Exp`. The `Q` monad (for quotation) is a wrapper for expressions, and `Exp` is a general TH expression.
-
-
-
-### Supercompiling `1+1`
-
-Maybe you haven't noticed it, but the previous example is already close to what we want: it creates `2` at compile time, and inserts it in the main function to be printed. Now how would we modify this to represent `2` as `1+1` instead? The following won't work:
-
-```haskell
-two = [| 1+1 |]
-```
-
-What this does is not precalculating `1+1`, but building the corresponding Haskell expression:
-
-```text
-> runQ [| 1+1 |]
->>> InfixE (Just (LitE (IntegerL 1))) (VarE GHC.Num.+) (Just (LitE (IntegerL 1)))
-
-> runQ [| 1+1 |] >>= putStrLn . pprint
->>> 1 GHC.Num.+ 1
-```
-
-This is not what we want of course - we'd like TH to carry out the sum at compile time and carry on with the result. Then of course we would have a single literal integer expression, so let's wrap `1+1` in that:
-
-```haskell
-two :: Q Exp
--- IntegerL wraps an Integer in a Lit
--- LitE wraps a Lit Integer in an Exp
--- return puts everything in the Q monad
-two = return . LitE . IntegerL $ 1 + 1
-```
-
-Let's have a look at what this produces:
-
-```text
-> runQ two
->>> LitE (IntegerL 2)
-```
-
-Aha! No `1+1` in there, it's been reduced to `2` - supercompilation! Noteworthy about this is that `1+1` is normal (non-TH) Haskell, and this method indeed expands to more complex scenarios such as the next section.
-
-
-
-### Supercompiling a Fibonacci number
-
-So what do we need to supercompile something?
-
-- Something to supercompile (duh). I'll take the Fibonacci series as an example.
-- A module where the supercompiled code is inserted, here: `Main.hs`.
-- Another module where the TH magic happens, here: `TH.hs`.
-
-`Main.hs` is pretty simple: print a precalculated Fibonacci number.
-
-```haskell
-{-# LANGUAGE TemplateHaskell #-}
-import TH
-main = print $(fiboTH)
-```
-
-`TH.hs` has to do two things: calculate the number, and wrap it up in a `Q Exp`.
-
-```haskell
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE BangPatterns #-}
-module TH where
-import Language.Haskell.TH
-
--- Fibonacci function. Ordinary Haskell.
-fibo :: Integer -> Integer
-fibo = fibo' (0, 1)
-      where fibo' ( a, _) 0 = a
-            fibo' (!a,!b) n = fibo' (b, a + b) (n - 1)
-
--- | Precalculate large fibonacci number's length as an integer literal.
---   (The number itself is a little large for output.)
-fiboTH :: Q Exp
-fiboTH = return . LitE . IntegerL $ fiboLength
-      where fiboLength = fromIntegral . length . show $ fibo (10^6)
-```
-
-So what happens here? `main` requires the code generated from `fiboTH`. To create `fiboTH`, the ordinary Haskell code for `fibo` has to be run during compile time. Speaking of which: you may want to adjust the number `10^6` so you get the program to run in a couple of seconds so you can see the effect, but don't grow a beard waiting for it. The compile time for this TH example is comparable to how long GHCi would take to do the calculation, but you'll notice that the actual program runs in no time - it simply doesn't contain Fibonacci numbers, all it contains is a hard-coded number generated by the supercompilation.
-
-
-TODO: Mention -ddump-splices and rewrite this tut so it's less messy
 
 
 
 ### The recipe
 
-Using TH this way follows a few easy steps:
+The following is the recipe to follow; afterwards, two examples are given on how to apply them.
 
-1. Find out the type of the result of the desired supercompilation, such as `Integer`.
+1. Pack the value to calculate into a single expression. This requires no work or preparation, as you've already got the value you want to calculate, you just want to do it during compilation now.
 
-2. Find out how to create the corresponding TH expression out of this. Previously, the number had to be converted to a `Lit` using `IntegerL` first, then to an `Expr` using `LitE`, and finally put into the `Q` monad using `return`. An easy way of accomplishing this is by letting `[|...|]` do the work for you. As an example, this is how you would supercompile the prefactor in a lambda expression:
+2. Wrap the expression in the appropriate TH data constructors. (The `Lift` typeclass, defined in `Language.Haskell.TH.Syntax`, is very helpful here.)
 
-    ```haskell
-    myWrapper x = [| \y -> x * y |]
-    ```
+3. Splice the generated object in your actual code: just insert `$( wrapped )` in your main code. Note that the TH code has to be in another module than where you plan on inserting it for technical reasons.
 
-3. Wrap the desired value using your previously found wrapper function.
 
-4. Insert the result using `$(...)` in another module and it'll be evaluate during compile time.
+
+### Example #1: primitive type
+
+Let's call the TH module `TH`,
+
+```haskell
+-- File: TH.hs
+{-# LANGUAGE TemplateHaskell #-}
+module TH where
+```
+
+
+What's the best example in all of Haskell? Fibonacci! Step one: write the function you'd like to supercompile.
+
+```haskell
+-- Calculates the n-th Fibonacci number's last 10 digits in O(n).
+fibo :: Integer -> Integer
+fibo = (`rem` 10^10) . fibo' (0, 1)
+      where fibo' (a,_) 0 = a
+            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
+```
+
+Step two: wrap it in a TH expression.
+
+```haskell
+-- Wraps an Integer in(to) a Q Exp
+wrapTH :: Integer -> Q Exp
+wrapTH n = [| n |]
+
+-- | Wrap a certain Fibonacci number in an expression
+fiboTH :: Integer -> Q Exp
+fiboTH n = wrapTH (fibo n)
+```
+
+Step three: insert it in your main code.
+
+```
+-- File: Main.hs
+import TH
+
+myFibo :: Maybe Integer
+myFibo = $( fiboTH (10^6) )
+
+main = print myFibo
+```
+
+You'll notice this compiles slowly, but runs very fast - just as desired.
+
+
+
+### Example #2: custom type
+
+Let's say you want to distinguish even and odd numbers in your result. How would the previous example have to be modified?
+
+```haskell
+data EvenOdd a = Even a | Odd a deriving (Show)
+
+fibo :: Integer -> EvenOdd Integer
+fibo = evenOdd . fibo' (0, 1)
+      where fibo' (a,_) 0 = a
+            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
+            evenOdd x | even x    = Even x
+                      | otherwise = Odd  x
+
+wrapTH :: EvenOdd Integer -> Q Exp
+wrapTH eo = [| eo |]
+
+fiboTH :: Integer -> Q Exp
+fiboTH n = wrapTH (fibo n)
+```
+
+Compile aaand ... error. TH doesn't know how to generate the code for an `EvenOdd`, because the `Lift` instance is missing. `Lift` defines what `wrapTH` was used for as a general version: how to make a `Q Exp` out of something, via `lift :: a -> Q Exp`. We didn't have any problem in the first example, as `Integer` is already an instance, but now we have to define it ourself. Luckily, it's not harder than writing `wrapTH`:
+
+```haskell
+-- Needs Language.Haskell.TH.Syntax
+instance (Lift a) => Lift (EvenOdd a) where
+      lift (Even x) = [| Even x |]
+      lift (Odd  x) = [| Odd  x |]
+```
+
+Note that you can't just use `lift x = [| x |]`, as that would result in infinite recursion, although it conceptually looks the same as the above code - you have to spell things out here.
+
+Now you're done, that pretty much covers this section. Compile, wait, run it!
+
+Here's the complete source of the example for copy+paste:
+
+```haskell
+-- Main.hs
+
+{-# LANGUAGE TemplateHaskell #-}
+import TH
+myFibo = $( fiboTH (10^5) )
+main = print myFibo
+```
+
+```haskell
+-- TH.hs
+
+{-# LANGUAGE TemplateHaskell #-}
+module TH where
+import Language.Haskell.TH
+import Language.Haskell.TH.Syntax
+
+data EvenOdd a = Even a | Odd a deriving (Show)
+
+instance (Lift a) => Lift (EvenOdd a) where
+      lift (Even x) = [| Even x |]
+      lift (Odd  x) = [| Odd  x |]
+
+fibo :: Integer -> EvenOdd Integer
+fibo = evenOdd . (`rem` 10^10) . fibo' (0, 1)
+      where fibo' (a,_) 0 = a
+            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
+            evenOdd x | even x    = Even x
+                      | otherwise = Odd  x
+
+fiboTH :: Integer -> Q Exp
+fiboTH n = lift (fibo n)
+```
+
+
+
+
+
 
 
 
@@ -280,6 +281,15 @@ Here are a few practice problems you can try solving using bouncy folds, (2 and 
 3. (Harder) Find the index of the list element after which all further elements have already occurred before (and including) that element. Example: `covering [1,2,3,4,3,5,2,1,1]  ==>  5`, because `[1,2,3,4,3,5]` contains all unique elements of the list. (Equivalently, `sort . covering == sort . nub`.)
 
 Solutions for these are given in the last section in this file.
+
+
+
+
+
+
+
+
+
 
 
 
