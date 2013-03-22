@@ -20,23 +20,23 @@ The type system
 
 ### Strong vs. weak typing
 
-The good thing about strong typing, like encountered in C, C++ or Java, is that it catches a whole class of bugs during compilation: trying to compare apples with oranges, the compiler will raise a type mismatch error. If you *do* want to compare apples to oranges, you first have to at least convert one into the other. The downside of this is that you have to specify a type signature for every function ("this function takes an integer and returns a boolean"), and if you have to convert many apples to oranges, the code will be full of "toOranges(apple)" calls.
+The good thing about strong typing, like encountered in C, C++ or Java, is that it catches a whole class of bugs during compilation: trying to compare apples with oranges, the compiler will raise a type mismatch error. If you *do* want to compare apples to oranges, you first have to at least convert one into the other. The downside of this is that you have to specify a type signature for every function ("this function takes an integer and returns a boolean"), and if you have to convert many apples to oranges, the code will be full of "toOranges(apple)" calls. (Some - even rather statically typed - languages can do such conversions automatically for simple types. For more complicated ones, you'll have to write some type conversion constructor though, effectively moving the explicit conversion to a different location.)
 
 On the other side, there's weak typing, as seen in e.g. Python and JavaScript. There you don't have to give type annotations, saving you a lot of writing, making the code clearer in many cases. The cost of this is of course the introduction of bugs of the type mentioned above.
 
 Haskell has the best of both worlds: at its core, it is a strongly typed language: you can't compare apples to oranges. However, Haskell doesn't require type annotations: based on the operations you use in a function, Haskell infers the type of all the operations and their combination on its own - it writes the type signatures automatically during compilation! You gain the **safety of strong typing at the convenience of weak typing**. Speaking of strong typing: Haskell's typing is even stronger than the ones of the languages mentioned above. Comparing the integer 0 with the string "0" will result in an error; Haskell *never* converts anything automatically. However, the need to do explicit conversions is surprisingly rare, so there is no real code clutter. In fact, if you feel like you have too many typecasts in a small block of code, there's probably a better way of writing it.
 
-Also worth noting is that you can turn that principle around: by giving a function an explicit type signature, you tell the compiler what kind of function you want. You then write the implementation of that function to the best of your knowledge, and hit compile. Two possible outcomes: either your compiler is fine with what you wrote, or it complains. However, it tells you exactly where it complains and why. Often times, the compiler will guide you through writing your function, not just the types! "Hey, there's something wrong here, expected that". You look at the few options you have, think about them, put one there, and retry until it compiles. **If it compiles, chances are *very* high that the function does what you think it should do**. Yanking this up even more, you get typed holes - you basically leave a placeholder in your code. The compiler tells you what type the hole has, and suggests functions that are in scope to fill that hole. It's almost interactive coding: make hole, read error, fill hole with a sensible solution; that solution can of course contain holes itself. You can keep doing this until your function is finished. Even better, functions with complex types may have only one sensible realization, so you get your code for free by just describing what the function should map to what.
+Also worth noting is that you can turn that principle around: by giving a function an explicit type signature, you tell the compiler what kind of function you want. You can then write the implementation of that function to the best of your knowledge (i.e. the code makes sense in your eyes), and hit compile. Two possible outcomes: either your compiler is fine with what you wrote, or it complains. However, it tells you exactly where it complains and why. Often times, the compilation will guide you through writing your function, not just the types! "Hey, there's something wrong here, expected that". You look at the few options you have, think about them, put one there, and retry until it compiles. **If it compiles, chances are *very* high that the function does what you think it should do**. Yanking this up even more, you get typed holes - you basically leave a placeholder in your code. The compiler tells you what type the hole has, and suggests functions that are in scope to fill that hole. It's almost interactive coding: make hole, read error, fill hole with a sensible solution; that solution can of course contain holes itself. You can keep doing this until your function is finished. Even better, functions with complex types may have only one sensible realization, so you get your code for free by just describing what the function should map to what. A friend of mine called this technique "trial and error programming", and I have to say he's probably right about it - except that in most languages it is casino style gambling, while in Haskell it much more resembles the gambling in evolution. (Actually, I know a couple of complicated functions I know very specifically what they should do and what laws they have to obey, but couldn't write them down or remember them for my life - yet using the methods describe above, I could reproduce them in a minute.)
 
 
 
 ### Custom types
 
-Imagine how you would implement a function to search an array in your preferred language. If you find the desired item, you of course return it, but what happens when there is no such item? Chances are that you have to resort to a nonsensical value like `-1`. But what happens if your array includes negative numbers? How can you tell the "not found" `-1` from the "found, result is" `-1`? You'll probably need to either return a tuple of the value found and a boolean that indicates whether that value was actually present in the array, or search for the corresponding array index instead, and afterwards returning the element at that index or handle the error if the "found" index is `-1`.
+Imagine how you would implement a function to search an array in your preferred language. If you find the desired item, you of course return it, but what happens when there is no such item? Chances are that you have to resort to a nonsensical value like `-1`. But what happens if your array includes negative numbers? How can you tell the "not found" `-1` from the "found, result is" `-1`? You'll probably need to either return a tuple of the value found and a boolean that indicates whether that value was actually present in the array, or search for the corresponding array index/value pointer instead, and afterwards return the element at that location or handle the error.
 
-In Haskell, there is the `Maybe` type for cases like this. Variables of type `Maybe` fall into two kinds of values: they're either `Nothing`, or `Just <some value>`. This solves the above problem: `Nothing` stands for not found, whereas `Just x` is returned when the value `x` has been found. And it doesn't stop there: functions returning `Maybe` compose. Connect to database server? Might fail (`Nothing`), might be a connection (`Just <handler>`). Login? Might fail. Select database? Might fail. What would most languages do? Exceptions? Nested ifs? Early returns? Haskell just chains these operations to each other. If one fails, their combination fails, and whatever comes after the failure is skipped.
+In Haskell, there is the `Maybe` type for cases like this. Variables of type `Maybe` fall into two kinds of values: they're either `Nothing`, or `Just <some value>`. This solves the above problem: `Nothing` stands for not found, whereas `Just x` is returned when the value `x` has been found. Look a key up in a binary map? It'll either be `Just <corresponding value>` or `Nothing`. And it doesn't stop there: functions returning `Maybe` compose. Connect to database server? Might fail (`Nothing`), might be a connection (`Just <handler>`). Login? Might fail. Select database? Might fail. What would most languages do? Exceptions? Nested ifs? Early returns? Haskell just chains these operations to each other. If one fails (i.e. evaluates to `Nothing`), their combination fails, and whatever comes after the failure is skipped.
 
-Big deal about this `Maybe`, you might say. But that was just the canonical example of a Haskell type. In fact, although `Maybe` is a standard library type, you can define it yourself very easily, with the same performance and everything. Many things you commonly use in Haskell are just defined in the source code of libraries, they are not built-in. You could have written it yourself, and in fact, that's what a large part of Haskell is about: figure out your data structure and fill in the gaps. Custom data types are a powerful **abstraction** that does not only not get in your way, but can actively help you developing algorithms.
+Big deal about this `Maybe`, you might say. But that was just the canonical example of a Haskell type. In fact, although `Maybe` is a standard type, you can define it yourself very easily, with the same performance and everything. Many things you commonly use in Haskell are just defined in the source code of libraries, they are not built-in. You could have written it yourself, and in fact, that's what a large part of Haskell is about: figure out your data structure and fill in the gaps. Custom data types are a powerful **abstraction** that does not only not get in your way, but can actively help you developing algorithms.
 
 The other great thing about commonly using custom types is the **added safety**. Suppose you have a database that contains a list of names, and the corresponding bank accounts, each entry of which comes with some meta information like an ID, and then the actual data. The problem here is that all IDs are integers. Imagine what would happen if you add 1 to an ID because you mistake it for an array index, or you use a person's ID to fetch a bank account. These kinds of bugs can be extremely devious and hard to find in most languages, because an int is an int. Not so in Haskell: create a new type wrapping int (which produces no runtime overhead by the way) for each of people and bank accounts, and the compiler will complain (type mismatch, critical error) if you use a person's ID in a function that works only with bank accounts. (You could of course write a struct holding only an int in C as well every time you do something like this, but the point is in Haskell you *will*, in C you probably won't.)
 
@@ -44,22 +44,22 @@ The other great thing about commonly using custom types is the **added safety**.
 
 ### Reusability
 
-Many things in programming have similar interfaces. You can add two numbers, adding 0 to anything doesn't change it, and it doesn't matter where you put the parentheses in `1+2+3`. You can multiply numbers, 1 doesn't change the result, and parentheses in `1*2*3` don't matter. So much for elementary operations. But there's more, in fact a lot more. When you concatenate a list and the empty list, you get back the list. When you concatenate three lists, it doesn't matter how you group the concatenation, you'll always get the same result. There are many other objects that obey these two simple rules. So why not have a common interface? Well, it's called `Monoid` in Haskell (and math). There are functions that take any monoid and put them together, using the appropriate monoid operation.
+Many things in programming have similar interfaces. Think of things that have a neutral element and an associative operation: addition and 0, multiplication and 1, list concatenation and the empty list. There are many other objects that follow this concept. So why not have a common interface? Well, it's called `Monoid` in Haskell (and math). There are functions that take any monoid and put them together, using the appropriate monoid operation.
 
-Monoids are of course just an example, there are many other so-called *type classes*. `Eq` is for things you can compare for equality; as you may expect, most things are part of this. `Ord` are ordered types, for example real numbers. Complex numbers aren't in `Ord` for example, because you can't order them in a meaningful manner. `Enum` (for enumerable) are things that have a next and previous element.
+Monoids are of course just an example, there are many other so-called *type classes*. `Eq` is for things you can compare for equality; as you may expect, most things are part of this. `Ord` are ordered things, for example real numbers. Contrary to that, complex numbers aren't in `Ord`, because you can't order them in a meaningful manner (without breaking other reasonable assumptions, that is). `Enum` (for enumerable) are things that have a next and previous element.
 
-Functions are rarely restricted more than they have to be. If you write a function, chances are that it doesn't only work for the type you have intended, but for the whole class of types that behaves similarly, and in addition, there are laws for the basic operations that ensure that these generic functions do what you think they should do, no matter what kind of an abstruse type you feed them.
+Functions are rarely restricted more than they have to be. If you write a function, chances are that it doesn't only work for the type you have intended, but for the whole class of types that behaves similarly, and in addition, there are laws for the basic operations that ensure that these generic functions do what you think they should do, no matter what kind of an abstruse type you feed them. **Typeclasses often mean the functions you write are much more general than what you initially intended them for**, while certain laws assure that each of the unanticipated uses will do the right thing (and only that).
 
 
 
 Glue
 ----
 
-What is commonly referred to as *glue* is the ability of a language to combine different parts of a program. In Haskell, functions are generally very small - a handful of lines - and do one very specific thing. When programming, you then combine these simple functions. Want the first five positive list elements? Chain `take 5` together with `filter (> 0)`. Haskell has many individual, very reusable functions, and glueing them together makes it possible to have a vast amount of different functions using only a few basic ones.
+What is commonly referred to as *glue* is the ability of a language to combine different parts of a program. In Haskell, functions are generally very *small*, in the sense that they only span a handful of lines, do one specific thing, and compose very well. This composability makes it possible to have a vast amount of different functions using only a few basic ones.
 
-A consequence of this concept is that most functions are composed of smaller functions. When you know precisely how and that the smaller functions work, then you most likely know that about your combined function. It is very common to build a library of small bits, and then just export the actually useful combinations; however, only the small bits have to be tested. (Most likely, the typechecker complains when you combine them the wrong way anyway.)
+A consequence of this concept is that most "large" functions are composed of smaller functions. When you know precisely how and that the smaller functions work, then you most likely know that about your combined function. It is very common to build a library of small bits, and then just export the actually useful combinations; however, only the small bits have to be tested. (Most likely, the typechecker complains when you combine them the wrong way anyway.)
 
-If that still doesn't convice you, think of a Linux terminal. How do you use it? There's a small function for every detail, and you then chain those together. One just prints a file (`cat`), you then feed that to another function that filters out some elements (`grep` etc.), and finally you count how many entries are still left (`wc`). How many lines are in a file containing an 'a'? `cat file | grep "a" | wc`. That's precisely the kind of plumbing you do in Haskell all the time.
+If that still doesn't convice you, think of a Linux terminal. How do you use it? There's a small function for every detail, and you then chain those together. One just prints a file (`cat`), you then feed that to another function that filters out some elements (`grep` etc.), and finally you count how many entries are still left (`wc`). How many lines are in a file containing an 'a'? `cat file | grep "a" | wc`. That's precisely the kind of plumbing you do in Haskell all the time. However, contrary to long terminal expressions, they can still be very readable even if they grow past the middle of the line.
 
 
 
@@ -78,9 +78,11 @@ Purity also means that a function always has the same result given the same inpu
 Immutability
 ------------
 
-In C, `x = 3; x = 4;` sets `x` to `4`. The same line in Haskell would imply that `3 = 4` and the compiler would raise a critical error. All variables in Haskell are immutable, you can define them once, but then they're set in stone.
+In a language like C, `x = 3; x = 4;` sets `x` to `4`. The same line in Haskell would imply that `3 = 4` and the compiler would raise a critical error. All variables in Haskell are immutable, you can define them once, but then they're set in stone.
 
-Immutability, next to purity, is probably the other concept that seems extremely odd and impractical. But again, it guarantees certain things about the code. In fact, mutability is the number one enemy of concurrent programming, leading to the concept of locking mechanisms, but those are hard to build and even harder to debug. On the other hand, you never have to write a lock for an immutable variable.
+Immutability, next to purity, is probably the other concept that seems extremely odd and impractical. But again, it guarantees certain things about the code. In fact, mutability is the number one enemy of parallel/concurrent programming, leading to the concept of locking mechanisms, but those are hard to build and even harder to debug. On the other hand, you never have to write a lock for an immutable variable, and you can *always* evaluate it in parallel.
+
+A valid argument against immutability is of course that updating a variable is often more efficient than allocating a new one, so it should have a negative impact on performance. However, this argument goes both ways: if you have an algorithm referring to a value that has been calculated before, the compiler can be sure that it hasn't changed, and can therefore combine multiple calculations of the same thing into a single pointer to the generated value. In fact, immutability opens the door to a huge amount of compiler optimizations that would be unfeasible to do in a mutable environment.
 
 
 
@@ -105,19 +107,25 @@ Read-Evaluate-Print-Loops (REPL)
 
 Haskell has two implementation of a REPL ([GHCi][ghci] and [Hugs][hugs]), a principle you may know from [iPython][ipython]. It's a command line tool similar to a terminal, where the commands are the functions you import. Typical Haskell workflow is working on a small function, loading it into the REPL, and seeing whether it compiles (fix errors, repeat), and whether it does what it should do. It's very helpful to play around with combinations of your functions before you plug them into your actual code. And this isn't just tinkering: this is what writing Haskell looks like. You have your editor, and your REPL, and you bounce back and forth between them. You immediately see if something is fishy after writing only ten lines; nobody writes more than a page of code in Haskell without giving it a test shot.
 
+[ghci]:    http://www.haskell.org/ghc/docs/latest/html/users_guide/ghci.html#ghci-introduction
+[hugs]:    http://www.haskell.org/hugs/
+[ipython]: http://ipython.org/
 
 
 LYAH
 ----
 
-Learn You a Haskell for Great Good, short LYAH, is the best introductory book for any programming language I've ever come across. It's fun to read, and in the meantime it teaches you Haskell by accident. [Oh, and it's available for free online.][lyah]
+Learn You a Haskell for Great Good, short **LYAH, is the best introductory book for any programming language I've ever come across**. It's fun to read, and in the meantime it teaches you Haskell by accident. [Oh, and it's available for free online.][lyah]
+
+[lyah]: http://learnyouahaskell.com/
+
 
 
 
 The community
 -------------
 
-Haskell's community is known for their friendliness, and that they give helpful answers to even the most basic beginner questions. If you present them with your problem (e.g. on StackOverflow, the Haskell mailing lists or #haskell on irc.freenode.net) and show what you've attempted, you will most likely get an answer that not only explains how to solve your problem, but gives you a deeper insight into what you were trying to accomplish and how it relates to other things you might encounter.
+**Haskell's community is known for their friendliness**, and that they give helpful answers to even the most basic beginner questions. If you present them with your problem (e.g. on StackOverflow, the Haskell mailing lists or #haskell on irc.freenode.net) and show what you've attempted, you will most likely get an answer that not only explains how to solve your problem, but gives you a deeper insight into what you were trying to accomplish and how it relates to other things you might encounter.
 
 If you're not a beginner, don't fear! I have yet to find an advanced topic nobody in #haskell is able to write an essay about. This of course includes Haskell, but also parallels to logic and mathematics (specifically category theory).
 
@@ -130,15 +138,23 @@ Below are a number of noteworthy libraries, in the sense that functionality prov
 
 ### Parsing
 
-There are a couple of parser libraries for Haskell, and Parsec is probably the most general purpose one among them. I'm not sure you can state this objectively, but using Parsec is *fun*. You basically think about how your data is structured, write that down (if you're familiar with the term, it looks like [EBNF][ebnf]), and it compiles and works. Want to parse a letter or a digit? `letter <|> digit`. Many letters or digits? `many (letter <|> digit)`. It's short, elegant and maintainable - you can't ask for much more. Parsec is probably also the reason regular expressions aren't used much at all (although they are supported as well).
+There are a couple of parser libraries for Haskell, and Parsec is probably the most general purpose one among them. I'm not sure you can state this objectively, but **parsing using Parsec is fun**. You basically think about how your data is structured, write that down (if you're familiar with the term, it looks like [EBNF][ebnf]), and it compiles and works. Want to parse a letter or a digit? `letter <|> digit`. Many letters or digits? `many (letter <|> digit)`. It's short, elegant and maintainable - you can't ask for much more. Parsec is probably also the reason regular expressions aren't used much at all (although they are supported as well).
 
-### Software transactional memory (STM)
+[ebnf]: http://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Form
 
-STM is a tool for inter-thread communication in concurrent programming. Usually, you have to worry about data consistency between threads, and as a consequence locks/mutexes are introduced, leading to a framework where bugs are fiendishly difficult to find and very easy to implement. Meet STM: an STM action is an atomical operation, in the sense that it either hasn't been performed yet, or has been performed completely. There is no way a thread can see an intermediate state, hence there is no need for locks/mutexes. By its very design, it eliminates some of the most complicated bugs of cuncurrent programming.
+### [Software transactional memory (STM)][STM]
+
+When you have two independent threads sharing the same data, the usual approach to avoid data inconsistency or corruption is using locks. However, while solving the one problem, new ones - for example deadlocks - are introduced, which can be very hard to debug. Concurrency is usually non-deterministic (a thread may modify data before or after another thread has read it, depending on how busy they are), and this is no different in Haskell: it is executed on an impure level, and therefore it has the same safety as in any other language. Values *inside* the concurrent operation *may* be pure, but in general the whole thing isn't.
+
+STM is a library that largely solves this problem. STM actions are often similar to normal concurrent operations, but with an important difference: they can be composed, and executed as a single atomical operation. Other threads either see the action as not started yet, or already finished - there is no way of having the intermediate state. For this reason, other threads cannot corrupt any of the used data - **STM allows concurrency without locks by design**, and therefore doesn't suffer from their problems, while being applicable to mostly the same problems.
+
+Of course STM is not a silver bullet: the performance is not as good as with raw locks - which are of course also available - and it's not suitable for huge computations where thousands of variables are exchanged in a single atomic operation. It is a very useful addition to, and not a replacement for, the classical locking mechanisms.
+
+[STM]: http://en.wikipedia.org/wiki/Software_transactional_memory
 
 ### QuickCheck
 
-QuickCheck is a quality assurance library to test functions. It does this by *automatically* generating appropriate datasets (enabled to do so by Haskell's type system), and then checking whether a function's property holds for this generated data. Often times, functions have only a couple of different corner cases (think of "empty list, list with only one element, list of many"), and QuickCheck is very likely to find them. As an addition to a programmer who understands the code and *thinks* it's alright gives a very high confidence level of the function actually being correct.
+**QuickCheck is a quality assurance library** to test functions. It does this by **automatically generating appropriate datasets** (enabled to do so by Haskell's type system), and then checking whether a function's property holds for this generated data. Often times, functions have only a couple of different corner cases (think of "empty list, list with only one element, list of many"), and QuickCheck is very likely to find them. As an addition to a programmer who understands the code and *thinks* it's alright gives a very high confidence level of the function actually being correct.
 
 
 
@@ -149,7 +165,7 @@ Double-edged things about Haskell
 
 ### Relearning how to program
 
-Learning Haskell without a doubt feels like learning to program all over again. At least from my perspective, I couldn't imagine having it learned as not a hobby. Tinkering around until you understand all the new concepts may be something that's not for everyone. And you have to do that over and over again.
+Learning Haskell without a doubt feels like learning to program all over again. At least from my perspective, I couldn't imagine having it learned as not a hobby. Tinkering around until you understand all the new concepts may be something that's not for everyone, and you have to do that over and over again.
 
 
 
@@ -157,13 +173,13 @@ Learning Haskell without a doubt feels like learning to program all over again. 
 
 After becoming proficient in Haskell, you will miss things in any other language you write. You will miss the basic things like `Maybe` as much as you'll miss the advanced features like the type safety, the ability to use functions as data, parameters and return values easily.
 
-I am serious about this: learning Haskell *will* make you feel somewhat disabled in most other languages. (And by most I probably mean all but Lisp)
+I am serious about this: learning Haskell *will* make you feel somewhat disabled in most other languages (i.e. probably all but Lisp), which may not be a good thing.
 
 
 
 ### Going forward
 
-A wise man on the internet once said that in the beginning, Haskell feels like thousands of people keep telling you how ingenious Haskell is, while the entirety of the language seems to be about hacking your way back around those obvious limitations. You will think about how quickly you could've written more performant code in C in half the time - and you will be right to do so - so sometimes it's a challenge to not lose interest. Becoming somewhat productive takes a hobbyist at least a couple of months, for me it was roughly a year until I felt as confident in Haskell as in C++, my previous main language.
+A wise man on the internet once said that in the beginning, Haskell feels like thousands of people keep telling you how ingenious Haskell is, while the entirety of the language seems to be about hacking your way back around its limitations. You will think about how quickly you could've written more performant code in C in half the time - and you will be right assuming so - so sometimes it's a challenge to not lose interest. Becoming somewhat productive takes a hobbyist at least a couple of months, for me it was roughly a year until I felt as confident in Haskell as in C++, my previous main language. But then, how long did it take me to learn my very first imperative language?
 
 
 
@@ -175,7 +191,9 @@ If you join `#haskell` on `irc.freenode.net`, you'll most likely encounter a dis
 
 ### Code levels
 
-If you see well-written code by someone who has a much higher skillset than you in say C, C++ or Java, you'll understand what it's doing after reading it a couple of times, even if you wouldn't be able to write it yourself. In Haskell, code using concepts you're not familiar with may be completely unreadable, no matter how well-written and well-documented it is. Above I said you don't need to learn or use advanced math to write Haskell, but if you want to, you've surely come to the right place. On the other hand, the basic modules are all written in pretty basic style, so you won't encounter this all that much until you download your first super flexible, extremely useful and well-documented library, learn to use it, and then dare to take a look at its inside.
+If you see well-written code by someone who has a much higher skillset than you in say C, C++ or Java, you'll understand what it's doing after reading it a couple of times, even if you wouldn't be able to write it yourself. In Haskell, code using concepts you're not familiar with may be completely unreadable, no matter how well-written and well-documented it is. Above I said you don't need to learn or use advanced math to write Haskell, but if you want to, you've surely come to the right place. On the other hand, the basic modules are all written in just as basic style, so you won't encounter this all that much until you download your first super flexible, extremely useful and well-documented library, learn to use it, and then dare to take a look at its inside.
+
+Mind you this is not to say you can't use this code: you can still read the type and the documentation. There are a few libraries around that are as useful and easy to use as their internals are - probably for that very reason - complicated.
 
 
 
@@ -195,6 +213,12 @@ I think Lisp looked unappealing, but I found the concepts of the language intere
 
 
 
+### Learning monads
+
+This thing called *monad* is for many people (including me) the first brick wall they hit when learning Haskell. It's sort of a running gag for people to say that everyone who finally understands monads feels like writing a tutorial about how it's *actually* done, and these tutorials tend to be more confusing than helpful to others. I can't explain what monads are or what they are useful for in a sentence here, but then how would you explain someone what polymorphism is in five lines? There are certain concepts you have to work with a little to understand their value, and when it is appropriate to use them. Let me conclude this with a word of encouragement: while the first encounters with monads are quite confusing, after some time you *will* understand them, not only that - when you do so, they're so crystal clear that you won't be able to recall what your problem with them was.
+
+
+
 
 
 What makes Haskell bad
@@ -202,21 +226,21 @@ What makes Haskell bad
 
 
 
-### You have to like it
+### You *have* to like it
 
-From how I see it, it is impossible to learn Haskell when you don't love learning about it. Certain concepts, even basic ones, require you to play around with them, and you won't understand how they work even if you read the book chapter a hundred times. If you don't like Java and someone wants you to learn and write Java, then you'll be a bad Java programmer after reading some book twice (I'm talking about myself here). You'll be able to write production code, you'll learn by practically applying your skills, and after some time you'll be alright at it. Not so in Haskell. A beginner's book will have at least a couple of sections that are simply over your head at first, but if you skip or skim them you won't be bad at Haskell, you simply won't be able to produce anything useful.
+From how I see it, it is impossible to learn Haskell when you don't like learning it. Certain concepts, even basic ones, require you to play around with them, and you won't understand how they work even if you read the book chapter a hundred times. If you don't like Java and someone wants you to learn and write Java, then you'll be a bad Java programmer after reading some book twice (I'm talking about myself here). You'll be able to write production code, you'll learn by practically applying your skills, and after some time you'll be alright at it. Not so in Haskell. A beginner's book will have at least a couple of sections that are simply over your head at first, but if you skip or skim them you won't be bad at Haskell, you simply will not be able to produce anything useful.
 
 
 
 ### The library phase
 
-Once you're past the first steps (e.g. after finishing LYAH), there's nothing to guide you really. It's what I call the library phase: many problems already have libraries to solve them, but you have to find out about them first, and then learn their API. Some concepts of functional problems require approaches that you wouldn't expect as an imperative programmer, making it hard to find the according library; #haskell will be very helpful here though.
+Once you're past the first steps (e.g. after finishing LYAH), there's nothing to guide you really. It's what I call the library phase: many problems already have libraries to solve them, but you have to find out about them first, and then learn their API. Some concepts of functional problems require approaches that you wouldn't expect as an imperative programmer, making it hard to find the according library; `#haskell` will be very helpful here though.
 
 
 
 ### Small hacks
 
-Haskell's safety and robustness comes at a price. Sure, it will most likely do the right thing for all possible cases up to eternity, but sometimes that's not what you want: a small command line hack can accomplish a lot. So when you're trying to find a pragmatic solution to a small problem, this is probably the better approach. In short: `ls -a | grep ^\\. | wc -l` is much more likely what you want when counting hidden files than writing the Haskell equivalent.
+Haskell's safety and robustness comes at a price. Sure, it will most likely do the right thing for all possible cases up to eternity, but sometimes that's just not what you want: a small dirty hack can accomplish a lot. So when you're trying to find a pragmatic solution to a small problem, this is probably the better approach. `ls -a | grep ^\\. | wc -l` is much more likely what you want when counting hidden files than writing the Haskell equivalent.
 
 
 
@@ -231,8 +255,5 @@ Haskell's safety and robustness comes at a price. Sure, it will most likely do t
 
 
 
-[ghci]: http://www.haskell.org/ghc/docs/latest/html/users_guide/ghci.html#ghci-introduction
-[ipython]: http://ipython.org/
-[hugs]: http://www.haskell.org/hugs/
-[ebnf]: http://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Form
-[lyah]: http://learnyouahaskell.com/
+
+
