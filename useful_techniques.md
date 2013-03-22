@@ -86,17 +86,19 @@ You'll notice this compiles slowly, but runs very fast - just as desired.
 
 ### Example #2: custom type
 
-Let's say you want to distinguish even and odd numbers in your result. How would the previous example have to be modified?
+Let's say you want to distinguish even and odd numbers on type level in your result. How would the previous example have to be modified?
 
 ```haskell
 data EvenOdd a = Even a | Odd a deriving (Show)
 
+evenOdd :: Integral a => a -> EvenOdd a
+evenOdd x | even x    = Even x
+          | otherwise = Odd  x
+
 fibo :: Integer -> EvenOdd Integer
 fibo = evenOdd . fibo' (0, 1)
       where fibo' (a,_) 0 = a
-            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
-            evenOdd x | even x    = Even x
-                      | otherwise = Odd  x
+            fibo' (a,b) n = b `seq` fibo' (b, a + b) (n - 1)
 
 wrapTH :: EvenOdd Integer -> Q Exp
 wrapTH eo = [| eo |]
@@ -105,7 +107,7 @@ fiboTH :: Integer -> Q Exp
 fiboTH n = wrapTH (fibo n)
 ```
 
-Compile aaand ... error. TH doesn't know how to generate the code for an `EvenOdd`, because the `Lift` instance is missing. `Lift` defines what `wrapTH` was used for as a general version: how to make a `Q Exp` out of something, via `lift :: a -> Q Exp`. We didn't have any problem in the first example, as `Integer` is already an instance, but now we have to define it ourself. Luckily, it's not harder than writing `wrapTH`:
+Compile aaand ... error. TH doesn't know how to generate the code for an `EvenOdd` in `wrapTH`, because the `Lift` instance is missing. `Lift` defines what `wrapTH` is used for as a general version: how to make a `Q Exp` out of something, via `lift :: a -> Q Exp`. We didn't have any problem in the first example, as `Integer` is already an instance, but now we have to define it ourself. Luckily, it's not harder than writing `wrapTH`:
 
 ```haskell
 -- Needs Language.Haskell.TH.Syntax
@@ -116,14 +118,13 @@ instance (Lift a) => Lift (EvenOdd a) where
 
 Note that you can't just use `lift x = [| x |]`, as that would result in infinite recursion, although it conceptually looks the same as the above code - you have to spell things out here.
 
-Now you're done, that pretty much covers this section. Compile, wait, run it!
-
-Here's the complete source of the example for copy+paste:
+Now you're done, that pretty much covers this section. Compile, wait, run it! A final hint for using TH: compiling with `-ddump-splices` in GHC will print what every splice evaluates to during compilation, which is very handy for debugging (e.g. to find out whether everything is really calculated as wanted during compile time). Finally, here's the complete source of the example above:
 
 ```haskell
 -- Main.hs
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -ddump-splices #-}
 import TH
 myFibo = $( fiboTH (10^5) )
 main = print myFibo
@@ -139,6 +140,9 @@ import Language.Haskell.TH.Syntax
 
 data EvenOdd a = Even a | Odd a deriving (Show)
 
+evenOdd x | even x    = Even x
+          | otherwise = Odd  x
+
 instance (Lift a) => Lift (EvenOdd a) where
       lift (Even x) = [| Even x |]
       lift (Odd  x) = [| Odd  x |]
@@ -147,8 +151,6 @@ fibo :: Integer -> EvenOdd Integer
 fibo = evenOdd . (`rem` 10^10) . fibo' (0, 1)
       where fibo' (a,_) 0 = a
             fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
-            evenOdd x | even x    = Even x
-                      | otherwise = Odd  x
 
 fiboTH :: Integer -> Q Exp
 fiboTH n = lift (fibo n)
