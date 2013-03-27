@@ -61,10 +61,10 @@ This means that wherever you are in `(...)`, you have the result of `square 2` a
 ```haskell
 square x = \k -> k (x^2)
 add x y  = \k -> k (x + y)
-pythagoras x y = \k -> square x $ \squareX ->
-                       square y $ \squareY ->
-                       add squareX squareY $ \pythagoras ->
-                       k pythagoras
+pythagoras x y = \k -> square x $ \xSquare ->
+                       square y $ \ySquare ->
+                       add xSquare ySquare $ \result ->
+                       k result
 ```
 
 Now calling `pythagoras 3 4` will result in the hypothetical result of `3^2 + 4^2`, so `pythagoras 3 4 id = 25`.
@@ -83,9 +83,7 @@ Now calling `pythagoras 3 4` will result in the hypothetical result of `3^2 + 4^
 What the `Cont` monad does
 --------------------------
 
-The purpose of the `Cont` monad is getting rid of all the explicit `\k -> k ...` you would have to introduce manually, much like `State` takes care of dragging along the `\s -> ...` explicitly. `Cont` in practice consists of three functions, `return`, `>>=` (bind) and `callCC`, which are easy, awful and very awful to understand by looking at the code, respectively.
-
-`Cont` itself is simply a wrapper around the type signature of a continuation like above in the Pythagoras example; note that `square` took a parameter to produce a continuation, so it had an additional `a ->`.
+The purpose of the `Cont` monad is getting rid of all the explicit `\k -> k ...` you would have to introduce manually, much like `State` takes care of dragging along the `\s -> ...` explicitly. `Cont` itself is simply a wrapper around the type signature of a continuation like above in the Pythagoras example; note that `square` took a parameter to produce a continuation, so it had an additional `a ->`.
 
 ```haskell
 newtype Cont r a = Cont {runCont :: ((a -> r) -> r)}
@@ -110,10 +108,12 @@ In other words, **`return` encodes the future of a constant**.
 
 ### `Cont`
 
-`Cont` is our newtype wrapper that can be used to make a continuation out of arbitrary (well-typed) expressions. What is important about this is that in the code
+`Cont` is our newtype wrapper that can be used to make a continuation out of arbitrary (well-typed) expressions. You can always **read the `k` in `Cont $ \k -> ` as "what to do afterwards"**; it is the starting point for further calculations.
+
+What is also important about this is that in the code
 
 ```haskell
-foo = Cont $ \k -> (...)
+Cont $ \k -> (...)
 ```
 
 the rest of the computation is run for each appearance of `k` in `(...)` independently. Consider the following examples:
@@ -121,7 +121,7 @@ the rest of the computation is run for each appearance of `k` in `(...)` indepen
 ```haskell
 -- k isn't used at all. If this happens, the rest of the computation is
 -- skipped entirely, and the final value is x.
-abort x = Cont $ \k -> x
+exit x = Cont $ \k -> x
 
 -- k is used once. This corresponds to the normal case, and serves as the
 -- definition of the return function.
@@ -134,18 +134,41 @@ twice x y = Cont $ \k -> (k x, k y)
 ```
 
 
+### `runCont`
+
+`runCont` may just be an unwrapping function, but nevertheless there's an important interpretation of it: in
+
+```
+runCont m $ \mVal -> (...)
+```
+
+**`mVal` is the resulting value of the continuation of `m` when fully evaluated.** Contrary to ordinary functions, this value is not an independent object but exists only as a lambda parameter, but in the `(...)` block that doesn't make much of a difference.
+
+
 
 
 ### `>>=`
 
-Conceptually, **bind composes two continuations**, so that the result of the first is given to the second one. In the Pythagoras example, you can see the `\(...) ->` as the places where the monadic bind will now jump in.
+Conceptually, `>>=` composes two continuations. It takes a continuation and calculates its hypothetical result, then passes that result to a function generating a new continuation, and returns that continuation as its result - **`>>=` passes the hypothetical result on**. This may be clearer when you compare it to the non-monadic way of writing things:
 
 ```haskell
-(>>=) :: Cont r a -> (a -> Cont r b) -> Cont r b
+-- Cont version (No 'do' notation to illustrate where >>= jumps in)
+pythagoras :: (Num a) => a -> a -> Cont r a
+pythagoras x y = return (x^2) >>= \xSquare ->
+                 return (y^2) >>= \ySquare ->
+                 return (xSquare + ySquare) >>= \result ->
+                 return result
 ```
 
-`>>=` takes a continuation - i.e. the hypothetical result of something - and puts it into a function yielding a new continuation. You can picture it as the first continuation being evaluated to its final result, which is immediately wrapped in a new continuation given by the second argument.
+```haskell
+-- Non-Cont version
+pythagoras x y = \k -> ($ x^2) $ \xSquare ->
+                       ($ y^2) $ \ySquare ->
+                       ($ xSquare + ySquare) $ \result ->
+                       k result
+```
 
+When you compare these, there's not much difference - basically the `\k` isn't there in the monadic version, and all `>>=` and `return` are `$` in the non-monadic one. In both cases, hypothetical results are calculated, and then passed on (via an explicitly named lambda parameter) to the rest of the computation.
 
 
 
@@ -154,7 +177,7 @@ Conceptually, **bind composes two continuations**, so that the result of the fir
 `callCC` on the conceptual side of things is actually quite easy to understand. Suppose you have the previously mentioned function
 
 ```haskell
-abort x = Cont $ \_ -> x
+exit x = Cont $ \_ -> x
 ```
 
 When you evaluate this anywhere in a long `Cont` continuation, the end result will be `x`, no matter what the rest of the statements evaluate to. In imperative terms, this is like an early return statement. But breaking out all the way is not always what you want: sometimes you'd like to control where to break out from and to. If you're in a loop, a break statement might be much more useful than terminating the entire procedure. This concept in a more general version is what `callCC` is for.
@@ -190,7 +213,12 @@ pdf d = callCC $ \exit1 -> do
       return $ makePDF d'
 ```
 
-To sum it up, **`callCC $ \exit ->` allows you to terminate a continuation early by calling `exit`** anywhere in `(...)`. If you use `exit`, the result of the corresponding `callCC` will be `exit`'s argument; if you do not use it, the program runs as if there was no `callCC` in the first place.
+To sum it up, **each `callCC` carries around its own `exit` function**, callable by the name of the lambda parameter. If you use this `exit` anywhere in its scope, the result of the corresponding `callCC` block will be `exit`'s argument; if you do not use it, the program works as if there was no "`callCC $ \exit ->`" in the first place.
+
+
+
+
+
 
 
 
@@ -221,43 +249,44 @@ A constant `x` is wrapped in a continuation, which represents what is to be done
 
 ### `>>=`
 
-The technical implementation of `>>=` however is somewhat confusing, and explaining how it works largely follows a type-based argument rather than one you can easily picture. For one, we surely need a new continuation as a result due to `>>=`'s type, so it should look like
+`>>=` always encapsulates the idea of taking a value out of a monadic expression, and feeding it to a monad-producing function. This is no different in the `Cont` case. First, the type signature is
 
 ```haskell
-m >>= f = Cont $ \k -> (... k, f ...)
+(>>=) :: Cont r a -> (a -> Cont r b) -> Cont r b
 ```
 
-The parentheses should encode the future of the entire result. This result of course consists of two things: the eventual result of the continuation `m`, and the one of whatever `f` creates. First, we have to calculate the result of `m` (as it is "earlier" in the bind chain), so we'll have something like
+We surely need a new continuation as a result due to that type, so it should look like
 
 ```haskell
-m >>= f = Cont $ \k -> runCont m (... k, f ...)
+m >>= f = Cont $ \after -> (... after, f ...)
 ```
 
-`runCont m ...` is the actual result of the continuation up to `m` when we insert `(... k ...)` as its parameter function (like we did with `id` in the pythagoras example), and the whole thing is given the name `k`, just like `square x` is given the name `squareX` in the Pythagoras example. You'll also notice that the parameter function must have type `(a -> r)` so it can be inserted into a continuation, so let's make it a lambda:
+`after` is short for *what to do afterwards*, as mentioned in intuitive section on the `Cont` wrapper. Now in order to get to that end result, we have to get the value out of the `m` first, and the only method at hand to do so is `runCont`,
 
 ```haskell
-m >>= f = Cont $ \k -> runCont m (\l -> (... k, f, l ...))
+m >>= f = Cont $ \after -> runCont m (... after, f ...)
 ```
 
-Now we know that `f :: a -> Cont r b`, so the unknown part will surely involve some continuation. We also know that we don't have any other function to act on that besides `runCont` or its result, so this has to be the outermost call in there.
+`runCont m` is a function waiting to receive its continuation function. Let's give it one, keeping in mind that providing a continuation with a lambda parameter allows us to access its value, as discussed in the previous section on `runCont`:
 
 ```haskell
-m >>= f = Cont $ \k -> runCont m (\l -> runCont (... k, f, l ...))
+-- mVal = "value contained in m"
+m >>= f = Cont $ \after -> runCont m (\mVal -> (... after, f, mVal ...))
 ```
 
-Now everything's used up, all we have left is `k`, `f` and `l`. We know `f` has to be applied to something, `f k` doesn't comply with bind's type signature, and neither do the other combinations - the only possible way of combining these three variables is indeed `(f l) k`. The final result for bind is therefore
+Now that extracted value `mVal` has to be applied to `f`, which is the function we want to feed with the result of the computation so far,
 
 ```haskell
-m >>= f = Cont $ \k -> runCont m (\l -> runCont (f l) k)
+m >>= f = Cont $ \after -> runCont m (\mVal -> (... after, (f mVal) ...))
 ```
 
-Again, what this *does* is getting the value out of `m` by giving it a future, and that future consists of what `f` makes out of that value. The code for `>>=` may look a bit scary, but if you strip it of the wrappers/unwrappers, it becomes much shorter:
+To recap, up to this point we have done two things: given the continuation we'd like to produce the name `after`, and extracted the value `mVal` out of `m`. What's left is building a connection between the two, so that when the result is requested afterwards, the whole extraction stuff happens first:
 
 ```haskell
-(>>=) m f k = m (\l -> (f l) k)
+m >>= f = Cont $ \after -> runCont m (\mVal -> runCont (f mVal) after)
 ```
 
-`(\l -> (f l) k)` is what's given as the future of `m`'s content, and that future consists of modifying the contained value with `f`. I still feel like understanding `>>=` is more about getting a good stomach feeling about what it does - which is simply composition of functions in odd notation. That explanation however is so simple that one is tempted of trying to find a deeper explanation, and it turns out that you have to bend over backwards of actually implementing this composition, but in the end there's not much more to it.
+Again, what this *does* is getting the value out of `m` by, applying `f` to it, and wrapping the whole thing in a final continuation.
 
 
 
@@ -273,7 +302,7 @@ So let's build this function like we've done it with `>>=` before. First, the de
 callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 ```
 
-Oh noes. Well, at least we can see that the result will be of type `Cont r a`, so we know that
+At least we can see that the result will be of type `Cont r a`, so we know that
 
 ```haskell
 callCC f = Cont $ \k -> runCont (...)
