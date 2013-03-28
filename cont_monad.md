@@ -138,18 +138,18 @@ twice x y = Cont $ \k -> (k x, k y)
 
 `runCont` may just be an unwrapping function, but nevertheless there's an important interpretation of it: in
 
-```
+```haskell
 runCont m $ \mVal -> (...)
 ```
 
-**`mVal` is the resulting value of the continuation of `m` when fully evaluated.** Contrary to ordinary functions, this value is not an independent object but exists only as a lambda parameter, but in the `(...)` block that doesn't make much of a difference.
+**the lambda parameter `mVal` is the resulting value of the continuation of `m` when fully evaluated.** Contrary to ordinary functions, this value is not an independent object but exists only as a lambda parameter, but in the `(...)` block that doesn't make much of a difference.
 
 
 
 
 ### `>>=`
 
-Conceptually, `>>=` composes two continuations. It takes a continuation and calculates its hypothetical result, then passes that result to a function generating a new continuation, and returns that continuation as its result - **`>>=` passes the hypothetical result on**. This may be clearer when you compare it to the non-monadic way of writing things:
+`>>=` composes two continuations. It takes a continuation and calculates its hypothetical result, then passes that result to a function generating a new continuation, and returns that continuation as its result, or short: **`>>=` passes the hypothetical result on**. This may be clearer when you compare it to the non-monadic way of writing things:
 
 ```haskell
 -- Cont version (No 'do' notation to illustrate where >>= jumps in)
@@ -180,7 +180,7 @@ When you compare these, there's not much difference - basically the `\k` isn't t
 exit x = Cont $ \_ -> x
 ```
 
-When you evaluate this anywhere in a long `Cont` continuation, the end result will be `x`, no matter what the rest of the statements evaluate to. In imperative terms, this is like an early return statement. But breaking out all the way is not always what you want: sometimes you'd like to control where to break out from and to. If you're in a loop, a break statement might be much more useful than terminating the entire procedure. This concept in a more general version is what `callCC` is for.
+When you evaluate this anywhere in a long `Cont` calculation, the end result will be `x`, no matter what the rest of the statements evaluate to. In imperative terms, this is like an early return statement. But breaking out all the way is not always what you want: sometimes you'd like to control where to break out from and to. If you're in a loop, a break statement might be much more useful than terminating the entire procedure. This concept in a more general version is what `callCC` is for.
 
 Using `callCC` generally has the form of being applied to an explicit lambda, with a parameter called `exit`:
 
@@ -189,21 +189,21 @@ foo :: Cont r a
 foo = callCC $ \exit -> (...)
 ```
 
-The `(...)` is a normal `Cont` computation, but now with a twist: you have the `exit` "function" at hand to break out early (admittedly it may sound weird to see `exit` parameter as a function *itself* at first). Suppose you want to convert some data to PDF, but if there is an error with it should abort and return an empty result.
+The `(...)` is a normal `Cont` computation, but now with a twist: you have the `exit` "function" at hand to break out early (admittedly it may sound weird to see `exit` parameter *itself* as a function at first). Suppose you want to convert some data to PDF format, but if there is an error it should abort and return an empty result.
 
 ```haskell
 -- Create a PDF represented as a String from some Data
-pdf :: Data -> Cont r String
-pdf d = callCC $ \exit -> do
+toPDF :: Data -> Cont r String
+toPDF d = callCC $ \exit -> do
       when (broken d) $ exit ""
       makePDF d
 ```
 
-The nice thing about `callCC` however is that it is easily nestable, providing the functionality of short-circuiting arbirary levels. The following example first checks whether the data is broken (and terminates the procedure entirely). If it is fine, it examines whether it's not too long (resulting in a worded error message); if the data is alright but the format is dirty, it cleans it, and if everything works out alright it adds annoying eye candy.
+The nice thing about `callCC` is that it is easily nestable, providing the functionality of short-circuiting arbirary levels. The following example first checks whether the data is broken (and terminates the procedure entirely). If it is fine, it examines whether it's not too long (resulting in a worded error message); if the data is alright but the format is dirty, it cleans it, and if everything works out alright it adds annoying eye candy.
 
 ```haskell
-pdf :: Data -> Cont r String
-pdf d = callCC $ \exit1 -> do
+toPDF :: Data -> Cont r String
+toPDF d = callCC $ \exit1 -> do
       when (broken d) $ exit1 "Data corrupt"
       d' <- callCC $ \exit2 -> do
             -- when = Control.Monad.when
@@ -213,7 +213,7 @@ pdf d = callCC $ \exit1 -> do
       return $ makePDF d'
 ```
 
-To sum it up, **each `callCC` carries around its own `exit` function**, callable by the name of the lambda parameter. If you use this `exit` anywhere in its scope, the result of the corresponding `callCC` block will be `exit`'s argument; if you do not use it, the program works as if there was no "`callCC $ \exit ->`" in the first place.
+To sum it up, **each `callCC` carries around its own `exit` function**, callable by the name of the lambda parameter. If you use this `exit` anywhere in its scope, the result of the corresponding `callCC` block will be `exit`'s argument; if you do not use it, the program works as if there was no `callCC $ \exit ->` in the first place.
 
 
 
@@ -292,9 +292,7 @@ Again, what this *does* is getting the value out of `m` by, applying `f` to it, 
 
 ### `callCC`
 
-The third function is `callCC`. It's not part of the `Cont` monad itself, but is a very useful API function defined in the standard libraries, just like `State` has `put` and `get`. Unfortunately `callCC` does a remarkable thing: beating `>>=` both in type signature as in implementation when it comes to not being intuitive.
-
-The inner workings of `callCC` can be described like this: it performs an ordinary new `Cont` calculation, but returns its final result with a crux. Instead of returning its own continuation, the continuation parameter of the parent block is inserted. You can view `callCC` as an independent calculation that in the end is merged into the parent continuation. This is also hinted by what `callCC` stands for, namely *call with current continuation*.
+Unfortunately `callCC` does a remarkable thing: beating `>>=` both in type signature as in implementation when it comes to not being intuitive. The inner workings of `callCC` can be described like this: it performs an ordinary new `Cont` calculation, but returns its final result with a crux. Instead of returning its own continuation, the continuation parameter of the *parent* block is inserted. You can view `callCC` as an independent calculation that in the end is merged into the parent continuation. This is also hinted by what `callCC` stands for, namely *call with current continuation*.
 
 So let's build this function like we've done it with `>>=` before. First, the desired type signature:
 
@@ -327,7 +325,7 @@ callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\m -> k a)) (...)
                                                     -- ^ k, not m!
 ```
 
-Note how `m` is never used - `callCC` builds its own continuation environment executes it, but in the end inserts the *outer* continuation, discarding its own one. This is the encapsulated execution of `callCC`; what's left as a final step is merging the result of this to the outer control flow by applying the `runCont` to `k`, and we arrive at the definition of `callCC`,
+This is the encapsulated execution of `callCC`; what's left as a final step is merging the result of this to the outer control flow by applying the `runCont` to `k`, and we arrive at the definition of `callCC`,
 
 ```haskell
 callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
@@ -340,7 +338,7 @@ Summing it up, a version stripped of the newtype wrappers is then
 callCC f = \k -> (f $ \a -> (\_ -> k a)) k
 ```
 
-`\k -> (...) k` supplies `k` to `(...)` to finally embed `callCC` in the outer continuation, and `(f $ \a -> (\_ -> k a))` runs `f` in a copy of the outer continuation, but with its own private exit parameter.
+`\k -> (...) k` supplies `k` to `(...)` to finally embed `callCC` in the outer continuation, and `(f $ \a -> (\_ -> k a))` runs `f` in a copy of the outer continuation, with its own private exit parameter.
 
 
 
