@@ -129,9 +129,18 @@ return x = Cont $ \k -> k x
 
 -- k is used multiple times; the computation effectively splits up in two
 -- independent calculations, one done with x, the other with y, and the results
--- are put in a tuple.
-twice x y = Cont $ \k -> (k x, k y)
+-- are added.
+twice x y = Cont $ \k -> k x + k y
 ```
+
+This behavior is a little similar to the list monad, which performs the rest of the monadic calculation for each list element indpendently; here, it's done for each appearance of `k`. For example
+
+```haskell
+flip runCont id $ do x <- twice 1 2
+                     return (x^2)
+```
+
+will evaluate to `1^2 + 2^2 = 5`.
 
 
 ### `runCont`
