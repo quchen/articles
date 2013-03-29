@@ -15,7 +15,7 @@ I am convinced that many complicated things in Haskell can - and have to be - un
 The concept of continuations
 ----------------------------
 
-You surely know the worker-wrapper transformation to introduce tail recursion. For example
+You surely know the transformation to introduce tail recursion by packing the result into an accumulator. For example
 
 ```haskell
 length []     = 0
@@ -168,7 +168,7 @@ pythagoras x y = \k -> ($ x^2) $ \xSquare ->
                        k result
 ```
 
-When you compare these, there's not much difference - basically the `\k` isn't there in the monadic version, and all `>>=` and `return` are `$` in the non-monadic one. In both cases, hypothetical results are calculated, and then passed on (via an explicitly named lambda parameter) to the rest of the computation.
+When you compare these, there's not much difference - basically the `\k` isn't there in the monadic version, and all `>>=` and `return` are `$` in the non-monadic one. In both cases, hypothetical results are calculated, and then passed on (via explicitly named lambda parameters) to the rest of the computation.
 
 
 
@@ -270,8 +270,8 @@ m >>= f = Cont $ \after -> runCont m (... after, f ...)
 `runCont m` is a function waiting to receive its continuation function. Let's give it one, keeping in mind that providing a continuation with a lambda parameter allows us to access its value, as discussed in the previous section on `runCont`:
 
 ```haskell
--- mVal = "value contained in m"
 m >>= f = Cont $ \after -> runCont m (\mVal -> (... after, f, mVal ...))
+-- Types:                              ^ :: a
 ```
 
 Now that extracted value `mVal` has to be applied to `f`, which is the function we want to feed with the result of the computation so far,
@@ -304,41 +304,39 @@ At least we can see that the result will be of type `Cont r a`, so we know that
 
 ```haskell
 callCC f = Cont $ \k -> runCont (...)
+-- Types:          ^ :: a
 ```
 
 We also know `f`'s type, it is `(a -> Cont r b) -> Cont r a`, so we have to apply it to some function; with the resulting `Cont r a`, all we can do is feeding it to `runCont` (which is already there from above), which gives us
 
 ```haskell
 callCC f = Cont $ \k -> runCont (f $ \a -> (...)) (...)
+-- Types:                             ^ :: a
+--                                   |---------| :: a -> Cont r b
+--                               ^ :: (a -> Cont r b) -> Cont r a
+--                              |---------------| :: Cont r a
 ```
 
-`l` has to map to a `Cont r b` due to `f`'s type signature,
+`a` has to map to a `Cont r b` due to `f`'s type signature,
 
 ```haskell
 callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\m -> (...))) (...)
+--                                                ^ m :: b
 ```
 
-Up to this point, basically everything got more complicated based on type-level arguments. Now here comes the crucial step: The inner continuation involving `\m ->` is the one that'll be run by `callCC` as it is supplied to `f`. As mentioned earlier however, we don't want to chain it directly in the outer continuation (i.e. the one around the whole `callCC` block). We therefore *discard* its continuation `m`, and put in a copy of the outer continuation `k`:
+Up to this point, basically everything got more complicated based on type-level arguments. `m` is the hypothetical value of the continuation we get by applying `f` to `a`; it's the `b` in the type signature, and as such stands for the future if the `exit` parameter is called. Now here comes the crucial step: we want a call to `exit` to merge back into the outermost continuation, instead of forking off its own future. For this reason, we *discard* `m`, and supply `k` instead:
 
 ```haskell
 callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\m -> k a)) (...)
-                                                    -- ^ k, not m!
+--                                                     ^ k, not m!
 ```
 
-This is the encapsulated execution of `callCC`; what's left as a final step is merging the result of this to the outer control flow by applying the `runCont` to `k`, and we arrive at the definition of `callCC`,
+So again, if `exit` is called with a value `a`, that `a` is simply put into the outer continuation `k` instead of using `m`, jumping out of the `callCC` continuation block with `a`'s value. What's left as a final step is merging the result of this to the outer control flow by applying the `runCont` to `k`, and we arrive at the definition of `callCC`,
 
 ```haskell
 callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\_ -> k a))) k
 ```
-
-Summing it up, a version stripped of the newtype wrappers is then
-
-```haskell
-callCC f = \k -> (f $ \a -> (\_ -> k a)) k
-```
-
-`\k -> (...) k` supplies `k` to `(...)` to finally embed `callCC` in the outer continuation, and `(f $ \a -> (\_ -> k a))` runs `f` in a copy of the outer continuation, with its own private exit parameter.
 
 
 
