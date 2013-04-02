@@ -42,6 +42,25 @@ The other great thing about commonly using custom types is the **added safety**.
 
 
 
+Laziness
+--------
+
+In most (all?) common programming languages, `x = 1+1` gives `x` the value `2` - values are calculated as they are assigned. In Haskell this is different: **values are only evaluated when they are needed** (and even then only to the degree they are needed), say you want to print them; merely stating `x = 1+1` will give `x` the value `1+1` and that's it. This has some interesting consequences:
+
+- Infinite data structures, such as the list of all primes or the entire [Collatz tree][collatz]. You can often define the set of all solutions to a problem, and then always take "one more" solution from that set as you need them. A sudoku solver can generate the entire (finite, but huge) set/tree of possible boards, and then incrementally filter out the wrong ones.
+
+- Performance-wise, you pay only for what you actually need. A program that does some complicated calculation but never actually needs its value will simply not attempt doing said calculation. Compare this to other languages, where everything has to be calculated in advance, whether or not it is needed.
+
+- Calculations can use values before they are known. You can write functions requiring some value, and you can write them in a way so they do actual calculations with that value, passing on a *hypothetical result*, sort of like using `x` as a placeholder for something you don't know yet in math. In the end, if you *do* need its value, you can insert the actual calculation in the placeholder; if there's no placeholder, there's no need to calculate it.
+
+- A few appetizers: You can have nonsensical computations in your data, and the code will not necessarily fail - a (finite) list full of divisions by zero still has a well-defined length, even though none of its actual elements make any sense. You can split a (singly linked, possibly infinite!) list in two parts of same size or drop the last `n` elements without ever calculating its length.
+
+There are some pitfalls to be aware when it comes to laziness, however. Summing up a billion `1`s in C incrementally adds them to an accumulating integer; doing the same in Haskell (the naive way) builds up a giant expression `1+(1+(1+...`, which blows up your stack. Input/output is also lazy, so if you assign a file's contents to a variable and close the handle, reading that variable may fail, as the file's not known to the program anymore. Laziness is neat, but takes some getting used to - which mostly means knowing when and how to disable it if it's not the right behavior.
+
+[collatz]: http://en.wikipedia.org/wiki/Collatz_conjecture
+
+
+
 ### Reusability
 
 Many things in programming have similar interfaces. Think of things that have a neutral element and an associative operation: addition and 0, multiplication and 1, list concatenation and the empty list. There are many other objects that follow this concept. So why not have a common interface? Well, it's called `Monoid` in Haskell (and math). There are functions that take any monoid and put them together, using the appropriate monoid operation.
@@ -82,7 +101,17 @@ In a language like C, `x = 3; x = 4;` sets `x` to `4`. The same line in Haskell 
 
 Immutability, next to purity, is probably the other concept that seems extremely odd and impractical. But again, it guarantees certain things about the code. In fact, mutability is the number one enemy of parallel/concurrent programming, leading to the concept of locking mechanisms, but those are hard to build and even harder to debug. On the other hand, you never have to write a lock for an immutable variable, and you can *always* evaluate it in parallel.
 
-A valid argument against immutability is of course that updating a variable is often more efficient than allocating a new one, so it should have a negative impact on performance. However, this argument goes both ways: if you have an algorithm referring to a value that has been calculated before, the compiler can be sure that it hasn't changed, and can therefore combine multiple calculations of the same thing into a single pointer to the generated value. In fact, immutability opens the door to a huge amount of compiler optimizations that would be unfeasible to do in a mutable environment.
+A valid argument against immutability is of course that updating a variable is often more efficient than allocating a new one, so it should have a negative impact on performance. However, this argument goes both ways: if you have an algorithm referring to a value that has been calculated before, the compiler can be sure that it hasn't changed, and can therefore combine multiple calculations of the same thing into a single pointer to the generated value. In fact, immutability opens the door to a huge amount of compiler features that would be unfeasible to do in a mutable environment.
+
+
+
+Concurrency, parallelization
+----------------------------
+
+Beyond the benefits of immutability, one thing stands out in GHC, Haskell's main implementation: **Haskell threads are dirt cheap**, you can fork [millions][millionthreads] (!). Clients connect to your server? Give each one an own thread. Calculate the sum of a large list? Split it in ten (or ten thousand?) parts. The cost of scheduling something in parallel being so low, it means that for even relatively simple calculations the performance hit due to new threads is so small that it's barely noticeable during execution on a single core; what *is* noticeable however is the performance increase as soon as you let the program run on multiple CPUs. [(As of beginning 2013, the scheduler scales linearly 32 cores.)][32cores]
+
+[millionthreads]: http://www.scribd.com/doc/19465418/Multicore-Programming-in-Haskell-Now
+[32cores]: http://www.haskell.org/pipermail/ghc-devs/2013-February/000414.html
 
 
 
@@ -90,9 +119,9 @@ A valid argument against immutability is of course that updating a variable is o
 It's evolving
 -------------
 
-In the beginning days of Haskell, there was a serious problem with input/output (IO): how can this concept possibly be present in a *pure* language? IO is about modifying the outside world after all. Well, I don't know how, but some people recognized the mathematical concept of a *monad* is a suitable abstraction for this issue. Using monads completely revolutionized Haskell.
+In the beginning days of Haskell, there was a serious problem with input/output (I/O): how can this concept possibly be present in a *pure* language? I/O is about modifying the outside world after all. Well, I don't know how, but some people recognized the mathematical concept of a *monad* is a suitable abstraction for this issue. Using monads completely revolutionized Haskell.
 
-Nowadays, programming in Haskell without using monads is almost unthinkable.Luckily, using them doesn't require you to understand the math behind them. It's like you don't have to know advanced math to calculate 3+5. After reading the sections about how flexible the type system is, it probably won't surprise you that monads aren't a language feature, they're built using things that are already present in it.
+Nowadays, programming in Haskell without using monads is almost unthinkable. Luckily, using them doesn't require you to understand the math behind them. It's like you don't have to know advanced math to calculate 3+5. After reading the sections about how flexible the type system is, it probably won't surprise you that monads aren't a language feature, they're built using things that are already present in it (which takes, in its current version, 5 lines total).
 
 Every couple of years, someone comes along and finds something really interesting that can be applied to Haskell. Some things turn out to be impractical and become history, others add a new concept to the standard libraries and are used by the entire community from that point on.
 
@@ -201,7 +230,7 @@ Mind you this is not to say you can't use this code: you can still read the type
 
 First, get a mirror. Yes, you. Now.
 
-"I like this language that has no loops, all variables are constant, and evaluates program parts in whatever order it wants to."
+"I like this language that has no loops, all variables are constant while functions take only one argument, and evaluates program parts in whatever order it wants to."
 
 Now look at the mirror. That's what people will look like when you tell them that. Right now you probably think this is a joke. It's not.
 
