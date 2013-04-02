@@ -192,13 +192,15 @@ Double-edged things about Haskell
 
 
 
-### Relearning how to program
+Relearning how to program
+-------------------------
 
 Learning Haskell without a doubt feels like learning to program all over again. At least from my perspective, I couldn't imagine having it learned as not a hobby. Tinkering around until you understand all the new concepts may be something that's not for everyone, and you have to do that over and over again.
 
 
 
-### Going back
+Going back
+----------
 
 After becoming proficient in Haskell, you will miss things in any other language you write. You will miss the basic things like `Maybe` as much as you'll miss the advanced features like the type safety, the ability to use functions as data, parameters and return values easily.
 
@@ -206,19 +208,22 @@ I am serious about this: learning Haskell *will* make you feel somewhat disabled
 
 
 
-### Going forward
+Going forward
+-------------
 
 A wise man on the internet once said that in the beginning, Haskell feels like thousands of people keep telling you how ingenious Haskell is, while the entirety of the language seems to be about hacking your way back around its limitations. You will think about how quickly you could've written more performant code in C in half the time - and you will be right assuming so - so sometimes it's a challenge to not lose interest. Becoming somewhat productive takes a hobbyist at least a couple of months, for me it was roughly a year until I felt as confident in Haskell as in C++, my previous main language. But then, how long did it take me to learn my very first imperative language?
 
 
 
-### The mathiness of the community
+The mathiness of the community
+------------------------------
 
 If you join `#haskell` on `irc.freenode.net`, you'll most likely encounter a discussion about category theory, logic or some other academic topic quite quickly. This has led to the prejudice that these advanced concepts are necessary to learn Haskell, *which they are absolutely not*. In fact, many of these concepts are applicable to many other programming languages, only that nobody recognizes them or bothers to talk about it. Haskell sure creates an environment where people gather that are interested in such matters, but it's not a requirement in order to learn how to use it.
 
 
 
-### Code levels
+Code levels
+-----------
 
 If you see well-written code by someone who has a much higher skillset than you in say C, C++ or Java, you'll understand what it's doing after reading it a couple of times, even if you wouldn't be able to write it yourself. In Haskell, code using concepts you're not familiar with may be completely unreadable, no matter how well-written and well-documented it is. Above I said you don't need to learn or use advanced math to write Haskell, but if you want to, you've surely come to the right place. On the other hand, the basic modules are all written in just as basic style, so you won't encounter this all that much until you download your first super flexible, extremely useful and well-documented library, learn to use it, and then dare to take a look at its inside.
 
@@ -226,7 +231,8 @@ Mind you this is not to say you can't use this code: you can still read the type
 
 
 
-### Everyone thinks you're weird
+Everyone thinks you're weird
+----------------------------
 
 First, get a mirror. Yes, you. Now.
 
@@ -236,13 +242,15 @@ Now look at the mirror. That's what people will look like when you tell them tha
 
 
 
-### The code looks different
+The code looks different
+------------------------
 
 I think Lisp looked unappealing, but I found the concepts of the language interesting enough to give it a shot anyway. Syntax is something you get used to easily. It's of course hard to start something that you don't like looking at, but I recommend not making this a limitation. Read the introductory chapters of a book, and see whether you like what the text tells you between the code segments, and make your judgement based on that.
 
 
 
-### Learning monads
+Learning monads
+---------------
 
 This thing called *monad* is for many people (including me) the first brick wall they hit when learning Haskell. It's sort of a running gag for people to say that everyone who finally understands monads feels like writing a tutorial about how it's *actually* done, and these tutorials tend to be more confusing than helpful to others. I can't explain what monads are or what they are useful for in a sentence here, but then how would you explain someone what polymorphism is in five lines? There are certain concepts you have to work with a little to understand their value, and when it is appropriate to use them. Let me conclude this with a word of encouragement: while the first encounters with monads are quite confusing, after some time you *will* understand them, not only that - when you do so, they're so crystal clear that you won't be able to recall what your problem with them was.
 
@@ -255,25 +263,41 @@ What makes Haskell bad
 
 
 
-### You *have* to like it
+You *have* to like it
+---------------------
 
 From how I see it, it is impossible to learn Haskell when you don't like learning it. Certain concepts, even basic ones, require you to play around with them, and you won't understand how they work even if you read the book chapter a hundred times. If you don't like Java and someone wants you to learn and write Java, then you'll be a bad Java programmer after reading some book twice (I'm talking about myself here). You'll be able to write production code, you'll learn by practically applying your skills, and after some time you'll be alright at it. Not so in Haskell. A beginner's book will have at least a couple of sections that are simply over your head at first, but if you skip or skim them you won't be bad at Haskell, you simply will not be able to produce anything useful.
 
 
 
-### The library phase
+The library phase
+-----------------
 
 Once you're past the first steps (e.g. after finishing LYAH), there's nothing to guide you really. It's what I call the library phase: many problems already have libraries to solve them, but you have to find out about them first, and then learn their API. Some concepts of functional problems require approaches that you wouldn't expect as an imperative programmer, making it hard to find the according library; `#haskell` will be very helpful here though.
 
 
 
-### Small hacks
+Small hacks
+-----------
 
 Haskell's safety and robustness comes at a price. Sure, it will most likely do the right thing for all possible cases up to eternity, but sometimes that's just not what you want: a small dirty hack can accomplish a lot. So when you're trying to find a pragmatic solution to a small problem, this is probably the better approach. `ls -a | grep ^\\. | wc -l` is much more likely what you want when counting hidden files than writing the Haskell equivalent.
 
 
 
+Ugly warts
+----------
 
+Alright, here it comes, things that range from debatable to straight up awful, and are mostly attributed to historical accidents:
+
+- Mathematically, all monads are funcors, but Haskell does not enforce this hierarchy. You can easily derive a functor from any monad, but if you write a library you always have to take them into account separately.
+
+- Exceptions are defined in `Control.Monad.Error`, and errors in `Control.Exception`.
+
+- There is no unsigned arbitrary-sized integer type.
+
+- Some standard functions throw an error (you remember, the things from `Exception`) if the input is mal-formed, instead of using other means (such as returning a `Maybe` value).
+
+- `fail`. We don't talk about this one.
 
 
 
