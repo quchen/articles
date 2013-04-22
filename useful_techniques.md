@@ -405,6 +405,22 @@ split2' xs = (firstHalf, secondHalf)
 
 So the take-away message of this section is that when your goal is to drop/take elements from a list depending on some other list, consider using `zipWith` instead of auxiliary functions like `length`.
 
+Here's an exercise problem (solution see last section): write a *rotate left* function that takes the first `n` elements of a list and moves them to its end. Example:
+
+```haskell
+rotateL  0 [1..10] = [1,2,3,4,5,6,7,8,9,10]
+rotateL  3 [1..10] = [4,5,6,7,8,9,10,1,2,3]
+rotateL 13 [1..10] = [4,5,6,7,8,9,10,1,2,3]
+```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -425,25 +441,36 @@ Exercise solutions
 
 2. Equilibrium index - the external value consists of the triple `(sum left, sum right, current index)`. Each step checks whether the left sum is equal to the right sum, starting with `(0, sum xs, 0)`.
 
-    ```haskell
-    -- Requires BangPatterns language extension for efficiency
-    equi :: (Eq a, Num a) => [a] -> Maybe Int
-    equi xs = foldr go (const Nothing) xs (0, sum xs, 0)
-         where go x acc (sumL, sumR, !i) | sumL == sumR-x = Just i
-                                         | otherwise = acc (sumL+x, sumR-x, i+1)
-    ```
+```haskell
+-- Requires BangPatterns language extension for efficiency
+equi :: (Eq a, Num a) => [a] -> Maybe Int
+equi xs = foldr go (const Nothing) xs (0, sum xs, 0)
+     where go x acc (sumL, sumR, !i) | sumL == sumR-x = Just i
+                                     | otherwise = acc (sumL+x, sumR-x, i+1)
+```
 
 3. Covering index - the external value holds three parameters: a `Set` of already occurred unique elements, the running index (i.e. the current position in the list), and the covering index candidate (the position where the last new item was found). If a new item is found it is added to the set and the candidate index is updated to the current running index.
 
-    ```haskell
-    -- Requires BangPatterns and Data.Set. Could be done with lists only, which
-    -- would need only Eq, but also be far less performant.
-    covering :: (Ord a) => [a] -> Int
-    covering xs = foldr go third xs (S.empty, 0, 0)
-          where third ~(_,_,x) = x
-                go x fold (u, !ri, !ci)
-                      | S.notMember x u = fold (S.insert x u, ri+1, ri)
-                      | otherwise       = fold (           u, ri+1, ci)
-    ```
+```haskell
+-- Requires BangPatterns and Data.Set. Could be done with lists only, which
+-- would need only Eq, but also be far less performant.
+covering :: (Ord a) => [a] -> Int
+covering xs = foldr go third xs (S.empty, 0, 0)
+      where third ~(_,_,x) = x
+            go x fold (u, !ri, !ci)
+                  | S.notMember x u = fold (S.insert x u, ri+1, ri)
+                  | otherwise       = fold (           u, ri+1, ci)
+```
 
 
+### Avoiding `length`
+
+The idea here is cycling the list, dropping the first `n` elements, and then taking as many elements from the result as the original list was long. The naive way would of be `take (length xs)`, the more elegant solution is
+
+```haskell
+rotateL n xs | n >= 0 = takeN . drop n $ cycle xs
+      where takeN ys = zipWith const ys xs
+rotateL _ _ = error "Negative offset"
+```
+
+(Note that a right rotation would be or contain bottoms for infinite lists. For finite lists, it can be implemented with a similar idea though.)
