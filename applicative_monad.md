@@ -7,8 +7,8 @@ A rough table of contents of the following text:
 
 1. The general idea
 2. Why that idea is good
-3. A precise list of the proposed changes
-4. Issues explcitly *not* covered by this proposal
+3. A list of the proposed changes
+4. Issues not covered by this proposal
 5. Code example of the new hierarchy
 
 
