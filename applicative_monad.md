@@ -33,7 +33,7 @@ The proposed change renders a large amount of functions redundant. This fact als
 
 - `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
-- `liftM` and `liftA` can be removed due to now *being* `fmap`. The `liftM*` family is redundant because of `liftA*`, `<*>` is `ap`.
+- `liftM` and `liftA` are `fmap`. The `liftM*` is `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
 
 
@@ -59,7 +59,7 @@ How often did you say ...
 - "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
 - "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
-Having the proper hierarchy will not answer these questions *by design* to the point where they cannot even come up anymore.
+Having the proper hierarchy will answer these questions *by design* to the point where they cannot even come up anymore.
 
 
 
@@ -75,6 +75,8 @@ List of proposed changes
 5. Remove all functions rendered redundant by this proposal. (Since this concerns the Report, deprecation is not an option.) Exception: due to their use in different programming styles, `>>` and `*>` should both be kept.
 
 6. Add a legacy module to Base that re-defines the functions previously removed.
+
+7. Add `Applicative` to the Prelude.
 
 Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of it. On the contrary, the introduction of a legacy module makes this change possible with minimal maintenance for fixing existing libraries.
 
