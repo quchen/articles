@@ -38,12 +38,6 @@ The proposed change renders a large amount of functions redundant. This fact als
 
 
 
-### Compatibility issues
-
-Removing functions previously defined will break many (more realistically: probably all) modules. Therefore, a compatibility "legacy" module containing the now redundant functions (`liftM` and friends), should re-define all these functions.
-
-
-
 ### If it can be done, someone will do it
 
 There will be no way of defining `Monad`s that do not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
@@ -59,7 +53,13 @@ How often did you say ...
 - "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
 - "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
-Having the proper hierarchy will answer these questions *by design* to the point where they cannot even come up anymore.
+With the new hierarchy, the answer would be "use the least restrictive one and you won't run into any issues".
+
+
+
+### Compatibility issues
+
+???
 
 
 
@@ -70,22 +70,26 @@ List of proposed changes
 
 1. Rename `Applicative`'s `pure` to `return`, and remove `return` from `Monad`.
 
-3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally in some cases.
+2. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases.
 
-4. Export `Applicative` from the Prelude.
+3. Export `Applicative` from the Prelude.
 
-5. Remove all functions rendered redundant by this proposal. (Since this concerns the Report, deprecation is not an option.) Exception: due to their use in different programming styles, `>>` and `*>` should both be kept.
-
-6. Add a legacy module to Base that re-defines the functions previously removed.
+4. Change functions that are currently monadic to using only `Applicative` when possible (examples: `sequence`, `mapM`).
 
 Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of it. On the contrary, the introduction of a legacy module makes this change possible with minimal maintenance for fixing existing libraries.
 
+The following things should not change:
+
+1. Functions rendered redundant by the new hierarchy may still have ther places. For example, `liftM` is a valid definition of `fmap` if you want to get a cheap `Functor` instance from a `Monad`.
+
+2. Some functions have too restrictive types. For example, `liftA2` and `liftM2` do the same thing, but the explicitly monadic version should have an appropriate constraint. However, due to the fact that the only difference is a type specialization, `liftM* = liftA*` would be a valid implementation. Keeping this serves two purposes: most importantly, it maintains compatibility; second, some functions may be preferrable in a monadic setting, such as `>>`, which is technically the same as `*>`, which is more used in Applicative style.
 
 
-What this proposal is *not*
----------------------------
 
-To keep this proposal concise, we should not include any semi-related issues in its discussion. For example, (some)one might want to move `fail` from `Monad` to a sub-class, rename `fmap` to `map` etc. These should get their own discussions if they are necessary.
+What this proposal is not
+-------------------------
+
+To keep this proposal concise, we should not include any semi-related issues in its discussion. For example, (some)one might want to move `fail` from `Monad` to a sub-class, rename `fmap` to `map` etc. These should get their own discussions if someone feels they are necessary.
 
 
 
@@ -126,15 +130,13 @@ class Applicative m => Monad m where
     fail :: String -> m a
     fail = error
 
+-- Useful as a default implementation for fmap
+liftM :: (Monad m) => (a -> b) -> m a -> m b
+liftM f m = m >>= return . f
 
-```
-
-The compatibility module would re-define removed functions, and look something like this:
-
-```haskell
-liftA  = fmap
-liftM  = fmap
+-- Same as liftA2 except for an explicitly monadic constraint
+liftM2 :: (Monad m) => (a -> b -> c) -> m a -> m b -> m c
 liftM2 = liftA2
-pure   = return
--- etc.
+
+-- etc
 ```
