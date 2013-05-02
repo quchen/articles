@@ -76,7 +76,7 @@ List of proposed changes
 
 6. Add a legacy module to Base that re-defines the functions previously removed.
 
-Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of the idea. Additionally, the introduction of a legacy module makes this change possible with minimal maintenance for fixing old libraries.
+Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of it. On the contrary, the introduction of a legacy module makes this change possible with minimal maintenance for fixing existing libraries.
 
 
 
