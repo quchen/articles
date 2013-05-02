@@ -1,5 +1,5 @@
-Applicative => Monad
-====================
+Haskell 2014: `Applicative => Monad` proposal
+=============================================
 
 Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified using arguments of practicality, there is one thing that stands out as, well, not that: `Applicative` not being a superclass of `Monad`.
 
