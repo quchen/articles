@@ -27,22 +27,17 @@ Short and simple! Let's do it! ;-)
 Discussion of the consequences
 ------------------------------
 
-### Redundant functions
 
-The proposed change renders a large amount of functions redundant. This fact also showcases the amount of bloating we currently have.
+
+### Redundant functions
 
 - `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
 - `liftM` and `liftA` are `fmap`. The `liftM*` is `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
 
-
-
-### If it can be done, someone will do it
-
-There will be no way of defining `Monad`s that do not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
-
-Additionally, what's the type of `\f m -> fmap f m >>= return`? Well, it starts with `(Monad m, Functor m)`. I personally cringe every time I have to use `liftM` instead of `fmap` to make a function more (!) general.
+While it is not proposed to remove the redundancies, the change would make it the programmer's option to use them, instead of having the type system forcing the use of one of seemingly identical functions, as is the case right now.
+(What's the type of `\f m -> fmap f m >>= return`? Well, it starts with `(Monad m, Functor m)`. I personally cringe every time I have to use `liftM` instead of `fmap` to make a function more general.)
 
 
 
@@ -54,6 +49,12 @@ How often did you say ...
 - "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
 With the new hierarchy, the answer would be "use the least restrictive one and you won't run into any issues".
+
+
+
+### If it can be done, someone will do it
+
+There will be no way of defining `Monad`s that do not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
 
 
 
