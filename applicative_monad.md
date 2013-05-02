@@ -9,6 +9,7 @@ A rough table of contents of the following text:
 2. Why that idea is good
 3. A precise list of the proposed changes
 4. Issues explcitly *not* covered by this proposal
+5. Code example of the new hierarchy
 
 
 
@@ -28,9 +29,9 @@ Discussion of the consequences
 
 ### Redundant functions
 
-The proposed change renders a large amount of functions redundant. This fact also showcases the amount of bloating we currently have as a consequence.
+The proposed change renders a large amount of functions redundant. This fact also showcases the amount of bloating we currently have.
 
-- `pure` and `return` do the same thing. `Monad` will therefore not require the `return` function anymore in its typeclass declaration. Which of the two names `Applicative` should use remains open for debate.
+- `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
 - `liftM` and `liftA` can be removed due to now *being* `fmap`. The `liftM*` family is redundant because of `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
@@ -56,7 +57,7 @@ Additionally, what's the type of `\f m -> fmap f m >>= return`? Well, it starts 
 How often did you say ...
 
 - "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
-- "`liftM` is `fmap` but not really." - "so when should I use `fmap` and when `liftM`?" - *sigh*
+- "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
 Having the proper hierarchy will not answer these questions *by design* to the point where they cannot even come up anymore.
 
@@ -65,11 +66,7 @@ Having the proper hierarchy will not answer these questions *by design* to the p
 List of proposed changes
 ------------------------
 
-One thing to particularly stress here is that this is not merely a "fix" of an issue - it is supposed to change the language standard (i.e. the Report). Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of the idea.
-
-1. Rename `Applicative`'s `pure` to `return`?
-
-2. Remove `return` from the `Monad` typeclass, as `Applicative` provides this functionality already.
+1. Rename `Applicative`'s `pure` to `return`, and remove `return` from `Monad`.
 
 3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally in some cases.
 
@@ -79,6 +76,7 @@ One thing to particularly stress here is that this is not merely a "fix" of an i
 
 6. Add a legacy module to Base that re-defines the functions previously removed.
 
+One thing to particularly stress here is that this is not merely a "fix" of an issue - it is supposed to change the language standard (i.e. the Report). Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of the idea. This explains the rationale of moving the redundant functions to a legacy module, as opposed to leaving them around in the main ones.
 
 
 
@@ -103,27 +101,38 @@ class Functor f where
 class Functor f => Applicative f where
     return :: a -> f a
 
-    (<*>)  :: f (a -> b) -> f a -> f b
+    (<*>) :: f (a -> b) -> f a -> f b
 
-    (*>)   :: f a -> f b -> f b
+    (*>) :: f a -> f b -> f b
     (*>) = liftA2 (const id)
 
-    (<*)   :: f a -> f b -> f a
+    (<*) :: f a -> f b -> f a
     (<*) = liftA2 const
 
 
 
 class Applicative m => Monad m where
     (>>=) :: m a -> (a -> m b) -> m b
-    m >>= f = join $ fmap m f
+    m >>= f = join $ fmap f m
 
     join :: m (m a) -> m a
     join mma = mma >>= id
 
     fail :: String -> m a
+    fail = error
 
 
 -- Note the Monad constraint!
 (>>) :: Monad m => m a -> m b -> m b
 (>>) = (*>)
+```
+
+The compatibility module would re-define removed functions, and look something like this:
+
+```haskell
+liftA = fmap
+liftM = fmap
+liftM2 = liftA2
+pure = return
+-- etc.
 ```
