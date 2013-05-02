@@ -75,7 +75,7 @@ List of proposed changes
 
 3. Export `Applicative` from the Prelude.
 
-4. Change functions that are currently monadic to using `Applicative` when possible (examples: `sequence`, `mapM`).
+4. Change functions that are currently monadic to using `Applicative` when possible (example: `sequence`). Due to naming issues, `mapM` and friends should be kept monadic, but maybe a `mapA` would be a good idea then.
 
 Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of it. On the contrary, the introduction of a legacy module makes this change possible with minimal maintenance for fixing existing libraries.
 
