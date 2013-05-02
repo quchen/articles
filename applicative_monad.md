@@ -66,7 +66,7 @@ Having the proper hierarchy will answer these questions *by design* to the point
 List of proposed changes
 ------------------------
 
-(Note that these can be decided individually.)
+(Note that these can - and should be - be decided individually.)
 
 1. Rename `Applicative`'s `pure` to `return`, and remove `return` from `Monad`.
 
