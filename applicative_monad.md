@@ -29,7 +29,7 @@ List of proposed changes
 
 (Note that these can - and should be - be decided individually.)
 
-1. Rename `Applicative`'s `pure` to `return`, and remove `return` from `Monad`.
+1. Rename `Applicative`'s `pure` to `return`, and remove `return` from `Monad`. The reason for this is that the much more commonly used `return` would enforce a `Monad` constraint, which is not desirable for unification.
 
 2. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases.
 
