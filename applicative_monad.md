@@ -8,7 +8,7 @@ A rough table of contents of the following text:
 1. The general idea
 2. Why that idea is good
 3. A precise list of the proposed changes
-4. A list of issues explcitly *not* covered by this proposal
+4. Issues explcitly *not* covered by this proposal
 
 
 
@@ -34,11 +34,33 @@ The proposed change renders a large amount of functions redundant. This fact als
 - `liftM` and `liftA` can be removed due to now *being* `fmap`. The `liftM*` family is redundant because of `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
 
-###
 
 
-List of proposed changes and open issues
-----------------------------------------
+### If it can be done, someone will do it
+
+There will be no way of defining `Monad`s that do not have an `Applicative` instance anymore
+
+
+
+### Easier type signatures
+
+What's the type of `\f m -> fmap f m >>= return`? Well, it starts with requiring both `Monad` and `Functor`. I personally cringe every time I have to use `liftM` instead of `fmap` to make a function more (!) general.
+
+
+
+### Beginner friendlier
+
+How often did you say ...
+
+- "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
+- "`liftM` is `fmap` but not really." - "so when should I use `fmap` and when `liftM`" - *sigh*
+
+Having the proper hierarchy will not answer these questions by design to the point where they cannot even come up anymore.
+
+
+
+List of proposed changes
+------------------------
 
 1. Rename `Applicative`'s `pure` to `return`?
 
@@ -58,4 +80,4 @@ List of proposed changes and open issues
 What this proposal is *not*
 ---------------------------
 
-To keep this proposal concise, we should not include any semi-related issues in its discussion. For example, (some)one might want to move `fail` from `Monad` to a sub-class, rename `fmap` to `map` etc. To avoid drowning the discussion in a pile of
+To keep this proposal concise, we should not include any semi-related issues in its discussion. For example, (some)one might want to move `fail` from `Monad` to a sub-class, rename `fmap` to `map` etc. These should get their own discussions if they are necessary.
