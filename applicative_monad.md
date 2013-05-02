@@ -72,11 +72,11 @@ List of proposed changes
 
 4. Export `Applicative` from the Prelude.
 
-5. Remove all functions rendered redundant by this proposal. (Since this concerns the Report, deprecation is not an option.) Exception: due to their use in different programming styles, `>>` and `*>` should both be kept. However, `>>` could be removed from the typeclass to being an ordinary top-level synonym for `*>`.
+5. Remove all functions rendered redundant by this proposal. (Since this concerns the Report, deprecation is not an option.) Exception: due to their use in different programming styles, `>>` and `*>` should both be kept.
 
 6. Add a legacy module to Base that re-defines the functions previously removed.
 
-One thing to particularly stress here is that this is not merely a "fix" of an issue - it is supposed to change the language standard (i.e. the Report). Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of the idea. This explains the rationale of moving the redundant functions to a legacy module, as opposed to leaving them around in the main ones.
+Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of the idea. Additionally, the introduction of a legacy module makes this change possible with minimal maintenance for fixing old libraries.
 
 
 
@@ -115,6 +115,9 @@ class Applicative m => Monad m where
     (>>=) :: m a -> (a -> m b) -> m b
     m >>= f = join $ fmap f m
 
+    (>>) :: m a -> m b -> m b
+    (>>) = (*>)
+
     join :: m (m a) -> m a
     join mma = mma >>= id
 
@@ -122,17 +125,14 @@ class Applicative m => Monad m where
     fail = error
 
 
--- Note the Monad constraint!
-(>>) :: Monad m => m a -> m b -> m b
-(>>) = (*>)
 ```
 
 The compatibility module would re-define removed functions, and look something like this:
 
 ```haskell
-liftA = fmap
-liftM = fmap
+liftA  = fmap
+liftM  = fmap
 liftM2 = liftA2
-pure = return
+pure   = return
 -- etc.
 ```
