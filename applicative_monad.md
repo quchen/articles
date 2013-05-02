@@ -54,13 +54,17 @@ With the new hierarchy, the answer would be "use the least restrictive one and y
 
 ### If it can be done, someone will do it
 
-There will be no way of defining `Monad`s that do not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
+There will be no way of defining a `Monad` that does not not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
 
 
 
 ### Compatibility issues
 
-???
+- Old `Applicative` instances will still define `pure`, which is not part of the typeclass anymore. This is a matter of one rename. Similarly, `Monad` does not contain `return` anymore, so the according definition can be removed. These require minimal changes to the existing code.
+
+- The removal of `pure` can be compensated by adding a legacy module to Base that re-defines it in terms of `return`.
+
+- Code defining monads without giving an `Applicative` instance will blow up. This is a good thing, for we know where to carry our pitchforks when it happens.
 
 
 
@@ -76,6 +80,8 @@ List of proposed changes
 3. Export `Applicative` from the Prelude.
 
 4. Change functions that are currently monadic to using `Applicative` when possible (example: `sequence`). Due to naming issues, `mapM` and friends should be kept monadic, but maybe a `mapA` would be a good idea then.
+
+5. Add a legacy module that re-defines removed functions like `pure`.
 
 Some of these may seem rather radical, so let me explain my rationale. This is not merely a "fix" of Base - it is supposed to change the *language standard*. Its consequences will define the language for many years. For this reason, it should not simply implement the minimal changes to make the idea work, but instead be a consistent definition of it. On the contrary, the introduction of a legacy module makes this change possible with minimal maintenance for fixing existing libraries.
 
@@ -126,7 +132,7 @@ class Applicative m => Monad m where
     (>>) = (*>)
 
     join :: m (m a) -> m a
-    join mma = mma >>= id
+    join m = m >>= id
 
     fail :: String -> m a
     fail = error
