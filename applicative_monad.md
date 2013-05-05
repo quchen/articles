@@ -25,11 +25,18 @@ List of proposed changes
 
 3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases. Remove and re-export it from `Control.Monad` (so that qualified uses don't break).
 
+4. (Proposed in #haskell) Add `Alternative => MonadPlus`
+
 
 
 Discussion of the consequences
 ------------------------------
 
+
+
+### It's the right thing to do™
+
+Math etc. You've all heard this one. Moving on,
 
 
 ### Redundant functions
@@ -75,8 +82,10 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 How to apply this change
 ------------------------
 
-1. **Preparing GHC for the change.** Apply the full `Applicative => Monad` change to GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal.
+1. **Preparing GHC for the change.** Apply the full `Applicative => Monad` change to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the change actually makes it.*
 
 2. **Preparing Hackage for the change.** Using a version of GHC with `Applicative => Monad` built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable.
 
 3. **Haskell' proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the report.
+
+Note that the first two points are a good thing to do, regardless of whether the `Applicative => Monad` change is going through.
