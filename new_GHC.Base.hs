@@ -26,9 +26,9 @@ class Functor f => Applicative f where
 class Applicative m => Monad m  where
 
     (>>=) :: m a -> (a -> m b) -> m b
-    m >>= f = join $ fmap f m
+    m >>= f = join (fmap f m)
 
-    (>>) :: forall a b. m a -> m b -> m b
+    (>>) :: m a -> m b -> m b
     (>>) = (*>)
 
     join :: m (m a) -> m a
