@@ -63,8 +63,6 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 
 ### Compatibility issues
 
-Compatibility issues *with non-GHC libraries* can be categorized as follows:
-
 1. Monads lacking `Functor` or `Applicative` instances. This is easily fixable by either setting `fmap = liftM`, `pure = return` and `(<*>) = ap`, although more efficient implementations may exist, or by moving an already existing definition from `Control.Applicative` to the appropriate module.
 
 2. This one is specific to building GHC: importing `Control.Monad/Applicative` introduces a circular module dependence. In this case, one can rely on handwritten implementations of the desired function, e.g. `ap f x = f >>= ...`.
@@ -76,8 +74,6 @@ Compatibility issues *with non-GHC libraries* can be categorized as follows:
 
 How to apply this change
 ------------------------
-
-The first t
 
 1. **Preparing GHC for the change.** Apply the full `Applicative => Monad` change to GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal.
 
