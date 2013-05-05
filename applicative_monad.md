@@ -84,7 +84,7 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 How to apply this change
 ------------------------
 
-1. **Preparing GHC for the change.** Apply the full `Applicative => Monad` change to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the change actually makes it.*
+1. **Preparing GHC for the change.** Apply the full `Applicative => Monad` change to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the change actually makes it.* 
 
 2. **Preparing Hackage for the change.** Using a version of GHC with `Applicative => Monad` built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable. *This should also be done regardless of whether the change actually makes it.*
 
