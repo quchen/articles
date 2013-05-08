@@ -24,9 +24,9 @@ class Applicative m => Monad m where
 
 The rationale behind this proposal's contents is as follows:
 
-1. **Break as little code as possible.** For example, don't move `return` to `Applicative` and remove `pure`.
+1. **Break as little code as possible.** For example, don't move `return` to `Applicative` and remove `pure`. Instead, leave `return` in `Monad`, and give it `pure` as default implementation.
 
-2. **Change only things that are closely related to the proposal.** For example, using `join` in a monad definition requires it to be a functor, so it goes hand in hand with the change. On the other hand, removing `fail` has nothing to do with what we're trying to accomplish.
+2. **Change only things that are closely related to the proposal.** For example, using `join` in a monad definition requires it to be a functor, so it goes hand in hand with the AMP. On the other hand, removing `fail` has nothing to do with what we're trying to accomplish.
 
 
 
@@ -38,7 +38,7 @@ List of proposed changes
 
 1. Make `Applicative` a superclass of `Monad`.
 
-2. Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative`.
+2. Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility.
 
 3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases (e.g. List and Reader). Remove and re-export it from `Control.Monad` (so that qualified uses don't break).
 
@@ -110,11 +110,11 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 How to apply this change
 ------------------------
 
-1. **Preparing GHC.** Apply the full AMP to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the change actually makes it.*
+1. **Preparing GHC.** Apply the full AMP to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the AMP actually makes it.*
 
-2. **Preparing Hackage.** Using a version of GHC with the AMP built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable. *This should also be done regardless of whether the change actually makes it.*
+2. **Preparing Hackage.** Using a version of GHC with the AMP built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable. *This should also be done regardless of whether the AMP actually makes it.*
 
-3. **Haskell Prime proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the report.
+3. **Haskell Prime proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report.
 
 
 
@@ -122,4 +122,5 @@ How to apply this change
 Status report
 -------------
 
-- 2013-05-08: Mail to `ghc-devs` is out, will start patching GHC upon approval of the changes (namely adding `Functor`/`Applicative` instances for all GHC `Monads`).
+- Nothing beyond the 7.6.3 test has been done yet (2013-05-08).
+- Next step: fixing the core libraries
