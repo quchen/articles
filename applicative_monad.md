@@ -53,7 +53,18 @@ Discussion of the consequences
 
 ### It's the right thing to do™
 
-Math etc. You've all heard this one. Moving on,
+Math etc. You've all heard this one, it's good and compelling so I don't need to spell it out. Moving on,
+
+
+
+### Performance
+
+Using `Applicative` can be beneficial to performance, as the code can be optimized better.
+
+An example: a `State` computation with `Applicative` either always or never uses `put`; whether it does can only depend on external parameters, and not on the intermediate results. On the other hand, a monadic computation can depend on previous results, so a `State` `Monad` can, but does not always have to, use `put`.
+
+With the AMP, monadic computations (especially `do` blocks used for their readability) could be rewritten to use `Applicative` functions when possible.
+
 
 
 ### Redundant functions
@@ -103,7 +114,7 @@ How to apply this change
 
 2. **Preparing Hackage.** Using a version of GHC with the AMP built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable. *This should also be done regardless of whether the change actually makes it.*
 
-3. **Haskell' proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the report.
+3. **Haskell Prime proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the report.
 
 
 
