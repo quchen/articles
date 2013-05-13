@@ -1,7 +1,7 @@
 Haskell 2014: `Applicative => Monad` proposal
 =============================================
 
-Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified using arguments of practicality, there is one thing that stands out as, well, not that: `Applicative` not being a superclass of `Monad`.
+Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism, there is one thing that stands out as, well, not that: `Applicative` not being a superclass of `Monad`.
 
 I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal".
 
@@ -38,9 +38,9 @@ List of proposed changes
 
 1. Make `Applicative` a superclass of `Monad`.
 
-2. Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility.
+2. Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility. Similar to `Functor` and `Monad`, only the most basic functions should be accessible in the `Prelude` without further imports, so that'll probably be only the functions defined by the typeclass.
 
-3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases (e.g. List and Reader). Remove and re-export it from `Control.Monad` (so that qualified uses don't break).
+3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases (e.g. List and Reader). Remove and re-export it from `Control.Monad` (so that qualified uses don't break). (This has previously been impossible because of the fact that it requires a `Functor` instance to make `>>=` work out of the box.)
 
 4. (Proposed in #haskell) Add `Alternative => MonadPlus`.
 
@@ -51,15 +51,15 @@ Discussion of the consequences
 
 
 
-### It's the right thing to do™
+### It's the right thing to do™ :-)
 
 Math etc. You've all heard this one, it's good and compelling so I don't need to spell it out. Moving on,
 
 
 
-### Performance
+### Performance :-)
 
-Using `Applicative` can be beneficial to performance, as the code can be optimized better.
+Using `Applicative` can be beneficial to performance, as the code can potentially be optimized better.
 
 An example: a `State` computation with `Applicative` either always or never uses `put`; whether it does can only depend on external parameters, and not on the intermediate results. On the other hand, a monadic computation can depend on previous results, so a `State` `Monad` can, but does not always have to, use `put`.
 
@@ -67,36 +67,20 @@ With the AMP, monadic computations (especially `do` blocks used for their readab
 
 
 
-### Redundant functions
+### Redundant functions :-)
 
 - `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
 - `liftM` and `liftA` are `fmap`. The `liftM*` are `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
 
-That very much violates the "don't repeat yourself" principle, and even more so it forces the programmer to repeat himself to achieve maximal generality.
+That very much violates the "don't repeat yourself" principle, and even more so it forces the programmer to repeat himself to achieve maximal generality. It may be too late to take all redundancies out, but at least we can prevent new ones from being created.
 
 
 
+### Compatibility issues :-(
 
-### Beginner friendliness
-
-How often did you say ...
-
-- "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
-- "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
-
-With the new hierarchy, the answer would be "use the least restrictive one and you won't run into any issues".
-
-
-
-### If it can be done, someone will do it
-
-There will be no way of defining a `Monad` that does not not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
-
-
-
-### Compatibility issues
+These are the kinds of issues to be expected:
 
 1. Monads lacking `Functor` or `Applicative` instances. This is easily fixable by either setting `fmap = liftM`, `pure = return` and `(<*>) = ap`, although more efficient implementations may exist, or by moving an already existing definition from `Control.Applicative` to the appropriate module.
 
@@ -107,12 +91,30 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 
 
 
+### Beginner friendliness :-)
+
+How often did you say ...
+
+- "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
+- "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
+
+With the new hierarchy, the answer would be "use the least restrictive one and you won't run into any issues".
+
+
+
+### If it can be done, someone will do it :-)
+
+There will be no way of defining a `Monad` that does not not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
+
+
+
+
 How to apply this change
 ------------------------
 
-1. **Preparing GHC.** Apply the full AMP to a fork of GHC's code and fix the emerging compilation errors by giving all `Monads` `Applicative` and `Functor` instances. Once the build works, revert the change, but leave the instance definitions in. Note that this does not actually change anything about Haskell or GHC in practice, it is purely internal. *This should be done regardless of whether the AMP actually makes it.*
+1. **Preparing GHC.** Using a GHC fork with the full patch applied, find and fix all compilation errors introduced by the change by adding `Functor`/`Applicative` instances for all `Monads`. *This should be done regardless of whether the AMP actually makes it.*
 
-2. **Preparing Hackage.** Using a version of GHC with the AMP built in, compile as many Hackage libraries as possible. This should give us an overview of how large the proposed change actually is in practice. For modules that break, email the maintainer about the issue, and hope it's fixable. *This should also be done regardless of whether the AMP actually makes it.*
+2. **Preparing Hackage.** Using the same modified compiler as above, compile as many libraries on Hackage as possible to see how many packages break. This should give us an overview of how large the proposed change actually is in practice. Send an email or a patch to the maintainer to fix the issue. *This should also be done regardless of whether the AMP actually makes it.*
 
 3. **Haskell Prime proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report.
 
@@ -122,5 +124,4 @@ How to apply this change
 Status report
 -------------
 
-- Nothing beyond the 7.6.3 test has been done yet (2013-05-08).
-- Next step: fixing the core libraries
+- Todo: Everything.
