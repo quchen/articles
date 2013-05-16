@@ -24,7 +24,7 @@ class Applicative m => Monad m where
 
 The rationale behind this proposal's contents is as follows:
 
-1. **Break as little code as possible.** For example, don't move `return` to `Applicative` and remove `pure`. Instead, leave `return` in `Monad`, and give it `pure` as default implementation.
+1. **Break as little code as possible.** For example, do not move `return` to `Applicative` and remove `pure`. Instead, leave `return` in `Monad`, and give it `pure` as default implementation.
 
 2. **Change only things that are closely related to the proposal.** For example, using `join` in a monad definition requires it to be a functor, so it goes hand in hand with the AMP. On the other hand, removing `fail` has nothing to do with what we're trying to accomplish.
 
@@ -124,4 +124,4 @@ How to apply this change
 Status report
 -------------
 
-- Todo: Everything.
+- 2013-05-16: Told the mailing list about adding instances to GHC.
