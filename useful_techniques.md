@@ -473,4 +473,3 @@ rotateL n xs | n >= 0 = takeN . drop n $ cycle xs
 rotateL _ _ = error "Negative offset"
 ```
 
-(Note that a right rotation would be or contain bottoms for infinite lists. For finite lists, it can be implemented with a similar idea though.)
