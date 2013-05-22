@@ -1,7 +1,7 @@
 Haskell 2014: `Applicative => Monad` proposal
 =============================================
 
-Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism, there is one thing that stands out as, well, not that: `Applicative` not being a superclass of `Monad`.
+Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism, there is one thing that stands out as, well, not that: Applicative not being a superclass of Monad.
 
 I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal".
 
@@ -23,11 +23,11 @@ Here's the list of final changes I have in mind:
 
 - Make `Applicative` a superclass of `Monad`.
 
-- Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility.
+- Add Applicative to the Report, define it in the Prelude, and re-export it from `Control.Applicative` for compatibility.
 
-- Add `join` to the `Monad` typeclass.
+- Add `join` to the `Monad` typeclass. In addition to the fact that `join` may be closer to mathematical monads, it's also sometimes more convenient to implement and understand in practice (example: Reader's `join f x = f x x` vs `m >>= f = \r -> m (f r) r`).
 
-- Make `Alternative` a superclass of `MonadPlus`.
+- Make `Alternative` a superclass of `MonadPlus`. (The *only* reason MonadPlus exists is because of the Applicativie/Monad issue.)
 
 The following will first discuss the consequences of these changes; afterwards there's a strategy about how to make this chainge as painless as possible.
 
@@ -50,11 +50,11 @@ Math etc. You've all heard this one, it's good and compelling so I don't need to
 
 ### Performance
 
-Using `Applicative` can be beneficial to performance, as the code can potentially be optimized better.
+Using Applicative can be beneficial to performance, as the code can potentially be optimized better.
 
-An example: a `State` computation with `Applicative` either always or never uses `put`; whether it does can only depend on external parameters, and not on the intermediate results. On the other hand, a monadic computation can depend on previous results, so a `State` `Monad` can, but does not always have to, use `put`.
+An example: a State computation with Applicative either always or never uses `put`; whether it does can only depend on external parameters, and not on the intermediate results. On the other hand, a monadic computation can depend on previous results, so a State Monad can, but does not always have to, use `put`. The state may or may not be modified, but can't be optimized away that easily.
 
-With the AMP, monadic computations (especially `do` blocks used for their readability) could be rewritten to use `Applicative` functions when possible.
+With the AMP, monadic computations (especially `do` blocks used for their readability) could be rewritten to use Applicative functions when possible.
 
 
 
@@ -73,7 +73,7 @@ That very much violates the "don't repeat yourself" principle, and even more so 
 
 These are the kinds of issues to be expected:
 
-1. Monads lacking `Functor` or `Applicative` instances. This is easily fixable by either setting `fmap = liftM`, `pure = return` and `(<*>) = ap`, although more efficient implementations may exist, or by moving an already existing definition from `Control.Applicative` to the appropriate module.
+1. Monads lacking Functor or Applicative instances. This is easily fixable by either setting `fmap = liftM`, `pure = return` and `(<*>) = ap`, although more efficient implementations may exist, or by moving an already existing definition from `Control.Applicative` to the appropriate module.
 
 2. This one is specific to building GHC: importing `Control.Monad/Applicative` introduces a circular module dependency. In this case, one can rely on handwritten implementations of the desired function, e.g. `ap f x = f >>= ...`.
 
@@ -86,10 +86,10 @@ These are the kinds of issues to be expected:
 
 How often did you say ...
 
-- "A `Monad` is always an `Applicative` but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
+- "A Monad is always an Applicative but due to historical reasons it's not but you can easily verify it by setting `pure = return` and `(<*>) = ap`"
 - "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
-With the new hierarchy, the answer would be "use the least restrictive one and you won't run into any issues".
+With the new hierarchy, the answer would *always* be "use the least restrictive one".
 
 
 
@@ -106,7 +106,7 @@ How to apply this change
 
 ### 1. Prepare GHC
 
-Using a GHC fork with the full patch applied, find and fix all compilation errors introduced by the change by adding `Functor`/`Applicative` instances for all `Monads`.
+Using a GHC fork with the full patch applied, find and fix all compilation errors introduced by the change by adding Functor/Applicative instances for all Monads.
 
 According to SPJ, adding an ad-hoc warning of sorts "Monad without Applicative detected" is not a problem, which will be crucial for the next phase. More specifically, issue a warning if:
 
@@ -117,7 +117,7 @@ According to SPJ, adding an ad-hoc warning of sorts "Monad without Applicative d
 
 ### 2. Prepare Hackage
 
-The warning just mentioned will hint to all authors that they should fix (or help others fix) the non-complying packages. This will ideally lead to libraries eventually adding `Applicative` instances, and changing their APIs if they redefine operators like `<*>`.
+The warning just mentioned will hint to all authors that they should fix (or help others fix) the non-complying packages. This will ideally lead to libraries eventually adding Applicative instances, and changing their APIs if they redefine operators like `<*>`.
 
 After enough time has passed by so libraries adapted to the circumstances, move on to the next phase.
 
