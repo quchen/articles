@@ -44,17 +44,7 @@ Discussion of the consequences
 
 ### It's the right thing to do™
 
-Math etc. You've all heard this one, it's good and compelling so I don't need to spell it out. Moving on,
-
-
-
-### Performance
-
-Using Applicative can be beneficial to performance, as the code can potentially be optimized better.
-
-An example: a State computation with Applicative either always or never uses `put`; whether it does can only depend on external parameters, and not on the intermediate results. On the other hand, a monadic computation can depend on previous results, so a State Monad can, but does not always have to, use `put`. The state may or may not be modified, but can't be optimized away that easily.
-
-With the AMP, monadic computations (especially `do` blocks used for their readability) could be rewritten to use Applicative functions when possible.
+Math. You've all heard this one, it's good and compelling so I don't need to spell it out.
 
 
 
@@ -71,7 +61,9 @@ That very much violates the "don't repeat yourself" principle, and even more so 
 
 ### Using Functor/Applicative functions in monadic code
 
-After code duplication, this one is the next most practically relevant point: whenever there's Monad code, you can use Functor/Applicative functions, without introducing an additional constraint. Keep in mind that "Functor/Applicative functions" does not only include what their typeclasses define but many more, for example `void`, `(<$>)`, `(<**>)`.
+Whenever there's Monad code, you can use Functor/Applicative functions, without introducing an additional constraint. Keep in mind that "Functor/Applicative functions" does not only include what their typeclasses define but many more, for example `void`, `(<$>)`, `(<**>)`.
+
+Even if you think you have monadic code, strictly using the least restrictive functions may result in something that requires only Applicative. This is similar to writing a function that needs `Int`, but it turns out any `Integral` will do - more polymorphism for free.
 
 
 
@@ -84,7 +76,6 @@ These are the kinds of issues to be expected:
 2. This one is specific to building GHC: importing `Control.Monad/Applicative` introduces a circular module dependency. In this case, one can rely on handwritten implementations of the desired function, e.g. `ap f x = f >>= ...`.
 
 3. Libraries using their own `(<*>)`. This one is much tougher, as renaming the operator may require a lot of effort. For building GHC though, this only concerns Hoopl, and a handful of renames.
-
 
 
 
@@ -135,3 +126,63 @@ Status report
 - 2013-05-??: Added Applicatives to GHC for testing. Result: easy but boring.
 - 2013-05-16: Told the mailing list about adding instances to GHC
 - 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
+
+
+
+
+Outline of the new code
+-----------------------
+
+This is how the new code in Base would look like:
+
+
+```haskell
+class  Functor f  where
+
+    fmap :: (a -> b) -> f a -> f b
+
+    (<$) :: a -> f b -> f a
+    (<$) =  fmap . const
+
+
+
+class Functor f => Applicative f where
+
+    pure :: a -> f a
+
+    (<*>) :: f (a -> b) -> f a -> f b
+
+    (*>) :: f a -> f b -> f b
+    (*>) a b = fmap (const id) a <*> b
+
+    (<*) :: f a -> f b -> f a
+    (<*) a b = fmap const a <*> b
+
+
+
+class Applicative m => Monad m where
+
+    (>>=) :: m a -> (a -> m b) -> m b
+    m >>= f = join (fmap f m)
+
+    (>>) :: m a -> m b -> m b
+    (>>) = (*>)
+
+    join :: m (m a) -> m a
+    join m = m >>= id
+
+    return :: a -> m a
+    return = pure
+
+    fail :: String -> m a
+    fail s = error s
+
+
+class (Alternative m, Monad m) => MonadZero m where
+
+    mzero :: m a 
+    mzero = empty
+
+    mplus :: m a -> m a -> m a
+    mplus = (<|>)
+```
