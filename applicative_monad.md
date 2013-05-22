@@ -75,7 +75,7 @@ These are the kinds of issues to be expected:
 
 1. Monads lacking `Functor` or `Applicative` instances. This is easily fixable by either setting `fmap = liftM`, `pure = return` and `(<*>) = ap`, although more efficient implementations may exist, or by moving an already existing definition from `Control.Applicative` to the appropriate module.
 
-2. This one is specific to building GHC: importing `Control.Monad/Applicative` introduces a circular module dependence. In this case, one can rely on handwritten implementations of the desired function, e.g. `ap f x = f >>= ...`.
+2. This one is specific to building GHC: importing `Control.Monad/Applicative` introduces a circular module dependency. In this case, one can rely on handwritten implementations of the desired function, e.g. `ap f x = f >>= ...`.
 
 3. Libraries using their own `(<*>)`. This one is much tougher, as renaming the operator may require a lot of effort. For building GHC though, this only concerns Hoopl, and a handful of renames.
 
@@ -111,11 +111,11 @@ Using a GHC fork with the full patch applied, find and fix all compilation error
 According to SPJ, adding an ad-hoc warning of sorts "Monad without Applicative detected" is not a problem, which will be crucial for the next phase. More specifically, issue a warning if:
 
 - Monad without Applicative
-- MonadZero without Alternative
+- MonadPlus without Alternative
 - One of `<*>`, `pure`, `join` is defined in a different context to avoid naming conflicts, as these functions will go into the Prelude
 
 
-### 2. Preparing Hackage
+### 2. Prepare Hackage
 
 The warning just mentioned will hint to all authors that they should fix (or help others fix) the non-complying packages. This will ideally lead to libraries eventually adding `Applicative` instances, and changing their APIs if they redefine operators like `<*>`.
 

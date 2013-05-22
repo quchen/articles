@@ -1,4 +1,4 @@
--- This is the new GHC.Base, stripped of all comments (and Pragmas).
+-- This would be how Base looks like after the change:
 
 class  Functor f  where
 
@@ -23,7 +23,7 @@ class Functor f => Applicative f where
 
 
 
-class Applicative m => Monad m  where
+class Applicative m => Monad m where
 
     (>>=) :: m a -> (a -> m b) -> m b
     m >>= f = join (fmap f m)
@@ -39,3 +39,13 @@ class Applicative m => Monad m  where
 
     fail :: String -> m a
     fail s = error s
+
+
+class (Alternative m, Monad m) => MonadZero m where
+
+    mzero :: m a 
+    mzero = empty
+
+    mplus :: m a -> m a -> m a
+    mplus = (<|>)
+
