@@ -36,13 +36,22 @@ The rationale behind this proposal's contents is as follows:
 List of proposed changes
 ------------------------
 
-1. Make `Applicative` a superclass of `Monad`.
+1. **Patching current holes.** Add a compiler warning "Monad without Applicative instance" to GHC. According to SPJ, ad-hoc messages like this would not be hard to implement. They would probably lead to authors fixing most of the common packages on Hackage in advance.
 
-2. Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility. Similar to `Functor` and `Monad`, only the most basic functions should be accessible in the `Prelude` without further imports, so that'll probably be only the functions defined by the typeclass.
+2. **Let time pass** for the warning to sink in.
 
-3. Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases (e.g. List and Reader). Remove and re-export it from `Control.Monad` (so that qualified uses don't break). (This has previously been impossible because of the fact that it requires a `Functor` instance to make `>>=` work out of the box.)
+3. **Apply the changes**:
 
-4. (Proposed in #haskell) Add `Alternative => MonadPlus`.
+    a) Make `Applicative` a superclass of `Monad`.
+
+    a) Add `Applicative` to the Report, define it in the `Prelude`, and re-export it from `Control.Applicative` for compatibility. Similar to `Functor` and `Monad`, only the most basic functions should be accessible in the `Prelude` without further imports, so that'll probably be only the functions defined by the typeclass.
+
+    a) Add `join` to the `Monad` typeclass, with default implementation in terms of `>>=`. This is the more mathematical approach to a monad, and can be implemented more naturally than bind in some cases (e.g. List and Reader). Remove and re-export it from `Control.Monad` (so that qualified uses don't break). (This has previously been impossible because of the fact that it requires a `Functor` instance to make `>>=` work out of the box.)
+
+    a) (Proposed in #haskell) Add `Alternative => MonadPlus`.
+
+    a) Remove the warning again, as it is no longer necessary.
+
 
 
 
@@ -51,13 +60,13 @@ Discussion of the consequences
 
 
 
-### It's the right thing to do™ :-)
+### It's the right thing to do™
 
 Math etc. You've all heard this one, it's good and compelling so I don't need to spell it out. Moving on,
 
 
 
-### Performance :-)
+### Performance
 
 Using `Applicative` can be beneficial to performance, as the code can potentially be optimized better.
 
@@ -67,7 +76,7 @@ With the AMP, monadic computations (especially `do` blocks used for their readab
 
 
 
-### Redundant functions :-)
+### Redundant functions
 
 - `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
@@ -78,7 +87,7 @@ That very much violates the "don't repeat yourself" principle, and even more so 
 
 
 
-### Compatibility issues :-(
+### Compatibility issues
 
 These are the kinds of issues to be expected:
 
@@ -91,7 +100,7 @@ These are the kinds of issues to be expected:
 
 
 
-### Beginner friendliness :-)
+### Beginner friendliness
 
 How often did you say ...
 
@@ -102,7 +111,7 @@ With the new hierarchy, the answer would be "use the least restrictive one and y
 
 
 
-### If it can be done, someone will do it :-)
+### If it can be done, someone will do it
 
 There will be no way of defining a `Monad` that does not not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
 
@@ -112,11 +121,19 @@ There will be no way of defining a `Monad` that does not not have a `Functor`/`A
 How to apply this change
 ------------------------
 
-1. **Preparing GHC.** Using a GHC fork with the full patch applied, find and fix all compilation errors introduced by the change by adding `Functor`/`Applicative` instances for all `Monads`. *This should be done regardless of whether the AMP actually makes it.*
+1. **Preparing GHC.**
 
-2. **Preparing Hackage.** Using the same modified compiler as above, compile as many libraries on Hackage as possible to see how many packages break. This should give us an overview of how large the proposed change actually is in practice. Send an email or a patch to the maintainer to fix the issue. *This should also be done regardless of whether the AMP actually makes it.*
+    a) Using a GHC fork with the full patch applied, find and fix all compilation errors introduced by the change by adding `Functor`/`Applicative` instances for all `Monads`. *This should be done regardless of whether the AMP actually makes it.*
 
-3. **Haskell Prime proposal.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report.
+    b) Add the "Monad without Applicative" compiler warning.
+
+2. **Preparing Hackage.**
+
+    a) The warning makes it very easy to spot libraries that lack `Applicative` instances, so they can be fixed.
+
+    b) Libraries defining their own `<*>` etc. are given an advanced notice that they may have to change their API in order to be future-proof.
+
+3. **Applying the change.** This is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape for the change, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report.
 
 
 
@@ -124,4 +141,5 @@ How to apply this change
 Status report
 -------------
 
-- 2013-05-16: Told the mailing list about adding instances to GHC.
+- 2013-05-16: Told the mailing list about adding instances to GHC
+- 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
