@@ -1,5 +1,5 @@
-Haskell 2014: `Applicative => Monad` proposal
-=============================================
+Haskell 2014: `Applicative => Monad` proposal (AMP)
+===================================================
 
 Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism, there is one thing that stands out as, well, not that: Applicative not being a superclass of Monad.
 
@@ -120,12 +120,7 @@ Once Hackage is prepared, applying the changes to the Base package is painless. 
 
 
 
-Status report
--------------
 
-- 2013-05-??: Added Applicatives to GHC for testing. Result: easy but boring.
-- 2013-05-16: Told the mailing list about adding instances to GHC
-- 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
 
 
 
@@ -180,9 +175,19 @@ class Applicative m => Monad m where
 
 class (Alternative m, Monad m) => MonadZero m where
 
-    mzero :: m a 
+    mzero :: m a
     mzero = empty
 
     mplus :: m a -> m a -> m a
     mplus = (<|>)
 ```
+
+
+
+
+Status report
+-------------
+
+- 2013-05-??: Added Applicatives to GHC for testing. Result: easy but boring.
+- 2013-05-16: Told the mailing list about adding instances to GHC
+- 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
