@@ -69,6 +69,12 @@ That very much violates the "don't repeat yourself" principle, and even more so 
 
 
 
+### Using Functor/Applicative functions in monadic code
+
+After code duplication, this one is the next most practically relevant point: whenever there's Monad code, you can use Functor/Applicative functions, without introducing an additional constraint. Keep in mind that "Functor/Applicative functions" does not only include what their typeclasses define but many more, for example `void`, `(<$>)`, `(<**>)`.
+
+
+
 ### Compatibility issues
 
 These are the kinds of issues to be expected:
@@ -90,12 +96,6 @@ How often did you say ...
 - "`liftM` is `fmap` but not really." - "So when should I use `fmap` and when `liftM`?" - *sigh*
 
 With the new hierarchy, the answer would *always* be "use the least restrictive one".
-
-
-
-### If it can be done, someone will do it
-
-There will be no way of defining a `Monad` that does not not have a `Functor`/`Applicative` instance anymore: if you can use `>>=`, you can use `fmap`.
 
 
 
