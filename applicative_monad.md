@@ -134,6 +134,8 @@ This is how the new code in Base would look like:
 ```haskell
 class  Functor f  where
 
+    -- Minimal complete definition: fmap
+
     fmap :: (a -> b) -> f a -> f b
 
     (<$) :: a -> f b -> f a
@@ -142,6 +144,8 @@ class  Functor f  where
 
 
 class Functor f => Applicative f where
+
+    -- Minimal complete definition: pure and (<*>)
 
     pure :: a -> f a
 
@@ -156,6 +160,8 @@ class Functor f => Applicative f where
 
 
 class Applicative m => Monad m where
+
+    -- Minimal complete definition: (>>=) or join
 
     (>>=) :: m a -> (a -> m b) -> m b
     m >>= f = join (fmap f m)
@@ -174,6 +180,8 @@ class Applicative m => Monad m where
 
 
 class (Alternative m, Monad m) => MonadZero m where
+
+    -- Minimal complete definition: nothing :-)
 
     mzero :: m a
     mzero = empty
