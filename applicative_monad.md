@@ -1,7 +1,7 @@
 Haskell 2014: `Applicative => Monad` proposal (AMP)
 ===================================================
 
-Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism, there is one thing that stands out as, well, not that: Applicative not being a superclass of Monad.
+Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism or lack of a strictly better suggestion, there is one thing that stands out as, well, not that: Applicative not being a superclass of Monad.
 
 I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal".
 
@@ -55,7 +55,9 @@ Math. You've all heard this one, it's good and compelling so I don't need to spe
 - `liftM` and `liftA` are `fmap`. The `liftM*` are `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
 
-That very much violates the "don't repeat yourself" principle, and even more so it forces the programmer to repeat himself to achieve maximal generality. It may be too late to take all redundancies out, but at least we can prevent new ones from being created.
+That very much violates the "don't repeat yourself" principle, and even more so it *forces* the programmer to repeat himself to achieve maximal generality. It may be too late to take all redundancies out, but at least we can prevent new ones from being created.
+
+(Note that it is not proposed to remove any functions for compatibility reasons. Maybe some of them can be phased out in the long run, but that's out of scope here.)
 
 
 
