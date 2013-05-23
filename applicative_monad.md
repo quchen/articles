@@ -3,7 +3,9 @@ Haskell 2014: `Applicative => Monad` proposal (AMP)
 
 Haskell calls a couple of historical accidents its own. While some of them, such as the "number classes" hierarchy, can be justified by pragmatism or lack of a strictly better suggestion, there is one thing that stands out as, well, not that: Applicative not being a superclass of Monad.
 
-I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal".
+I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal". Why do I think this is a particularly good time for the AMP? Haskell 2014 just got a committee, that's why. We have a chance of actually going through with this all the way, and the response to someone attempting to tackle this was quite encouraging as well.
+
+If you wish to contact me, I'm dluposchainsky at gmail dot com, or *quchen* on Freenode.
 
 
 
@@ -27,7 +29,7 @@ Here's the list of final changes I have in mind:
 
 - Add `join` to the `Monad` typeclass. In addition to the fact that `join` may be closer to mathematical monads, it's also sometimes more convenient to implement and understand in practice (example: Reader's `join f x = f x x` vs `m >>= f = \r -> m (f r) r`).
 
-- Make `Alternative` a superclass of `MonadPlus`. (The *only* reason MonadPlus exists is because of the Applicativie/Monad issue.)
+- Make `Alternative` (along with `Monad`) a superclass of `MonadPlus`.
 
 The following will first discuss the consequences of these changes; afterwards there's a strategy about how to make this chainge as painless as possible.
 
@@ -57,7 +59,7 @@ Math. You've all heard this one, it's good and compelling so I don't need to spe
 
 That very much violates the "don't repeat yourself" principle, and even more so it *forces* the programmer to repeat himself to achieve maximal generality. It may be too late to take all redundancies out, but at least we can prevent new ones from being created.
 
-(Note that it is not proposed to remove any functions for compatibility reasons. Maybe some of them can be phased out in the long run, but that's out of scope here.)
+(Note that it is not proposed to remove any functions for compatibility reasons. Maybe some of them can be phased out in the long run, but that's beyond scope here.)
 
 
 
@@ -117,7 +119,7 @@ After enough time has passed by so libraries adapted to the circumstances, move 
 
 ### 3. Apply the change
 
-Once Hackage is prepared, applying the changes to the Base package is painless. However, this is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report. If we make it this far, the AMP should go through quite easily.
+Once Hackage is prepared, applying the changes to the Base package is painless. However, this is not primarily a GHC, but a Haskell change. The previous steps were basically preparing the landscape, and when we've (hopefully) found out that it is a good idea to go through with it, it can be proposed to go into the Report. If we make it this far, the AMP should pass quite easily.
 
 
 
@@ -134,6 +136,7 @@ This is how the new code in Base would look like:
 
 
 ```haskell
+-- (Unchanged)
 class  Functor f  where
 
     -- Minimal complete definition: fmap
@@ -145,6 +148,7 @@ class  Functor f  where
 
 
 
+-- (Unchanged)
 class Functor f => Applicative f where
 
     -- Minimal complete definition: pure and (<*>)
@@ -154,10 +158,10 @@ class Functor f => Applicative f where
     (<*>) :: f (a -> b) -> f a -> f b
 
     (*>) :: f a -> f b -> f b
-    (*>) a b = fmap (const id) a <*> b
+    (*>) x y = const id `fmap` x <*> y
 
     (<*) :: f a -> f b -> f a
-    (<*) a b = fmap const a <*> b
+    (<*) x y = const `fmap` x <*> y
 
 
 
@@ -181,7 +185,31 @@ class Applicative m => Monad m where
     fail s = error s
 
 
-class (Alternative m, Monad m) => MonadZero m where
+
+-- (Unchanged)
+class Applicative f => Alternative f where
+
+    -- Minimal complete definition: empty and (<|>)
+
+    empty :: f a
+
+    (<|>) :: f a -> f a -> f a
+
+    some :: f a -> f [a]
+    some v = some_v
+      where
+        many_v = some_v <|> pure []
+        some_v = (:) <$> v <*> many_v
+
+    many :: f a -> f [a]
+    many v = many_v
+      where
+        many_v = some_v <|> pure []
+        some_v = (:) <$> v <*> many_v
+
+
+
+class (Alternative m, Monad m) => MonadPlus m where
 
     -- Minimal complete definition: nothing :-)
 
@@ -201,3 +229,4 @@ Status report
 - 2013-05-??: Added Applicatives to GHC for testing. Result: easy but boring.
 - 2013-05-16: Told the mailing list about adding instances to GHC
 - 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
+- 2013-05-23: AMP posted to libraries mailing list
