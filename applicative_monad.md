@@ -5,7 +5,7 @@ Haskell calls a couple of historical accidents its own. While some of them, such
 
 I will use the abbreviation *AMP* for the "`Applicative => Monad` Proposal". Why do I think this is a particularly good time for the AMP? Haskell 2014 just got a committee, that's why. We have a chance of actually going through with this all the way, and the response to someone attempting to tackle this was quite encouraging as well.
 
-If you wish to contact me, I'm dluposchainsky at gmail dot com, or *quchen* on Freenode.
+If you wish to contact me, I'm *dluposchainsky at gmail dot com*, or *quchen* on Freenode.
 
 
 
@@ -56,6 +56,7 @@ Math. You've all heard this one, it's good and compelling so I don't need to spe
 - `>>` and `*>` are identical.
 - `liftM` and `liftA` are `fmap`. The `liftM*` are `liftA*`, `<*>` is `ap`.
 - Prelude's `sequence` requres `Monad` right now, while `Applicative` is sufficient to implement it. The more general version of this issue is captured by `Data.Traversable`, whose main typeclass implements the *same* functionality twice, namely `traverse` and `mapM`, and `sequenceA` and `sequence`.
+- The `WrappedMonad` type from `Control.Applicative` provides a semi-automatic way to using Functor/Applicative/Alternative functions for Monad/MonadPlus instances as a makeshift patch.
 
 That very much violates the "don't repeat yourself" principle, and even more so it *forces* the programmer to repeat himself to achieve maximal generality. It may be too late to take all redundancies out, but at least we can prevent new ones from being created.
 
@@ -158,10 +159,10 @@ class Functor f => Applicative f where
     (<*>) :: f (a -> b) -> f a -> f b
 
     (*>) :: f a -> f b -> f b
-    (*>) x y = const id `fmap` x <*> y
+    (*>) x y = const id <$> x <*> y
 
     (<*) :: f a -> f b -> f a
-    (<*) x y = const `fmap` x <*> y
+    (<*) x y = const <$> x <*> y
 
 
 
@@ -227,6 +228,6 @@ Status report
 -------------
 
 - 2013-05-??: Added Applicatives to GHC for testing. Result: easy but boring.
-- 2013-05-16: Told the mailing list about adding instances to GHC
-- 2013-05-22: SPJ confirmed that adding ad-hoc warnings is possible
+- 2013-05-16: Asked the mailing list about adding instances to GHC
+- 2013-05-22: SPJ confirmed that adding ad-hoc warnings would be possible
 - 2013-05-23: AMP posted to libraries mailing list
