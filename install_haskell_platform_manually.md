@@ -38,7 +38,7 @@ Next, run
 
     make install
 
-This should not take long, as it basically copies a couple of hundred of megs around.
+This should not take long, as it basically copies a couple of hundred of megs around. (Make sure to use `sudo` if necessary.)
 
 
 
@@ -51,12 +51,14 @@ Change to where you extracted the Platform to, and run
 
     ./configure --prefix=PREFIX --enable-shared --enable-profiling
 
-The `shared` and `profiling` parameters enable installation of shared Base libraries and ones for profiling purposes. The more important part is profiling, because otherwise Base doesn't support it, hence no program that depends on Base (i.e. any program you can possibly write) doesn't. The only economical solution is a reinstallation of all of Haskell with profiling enabled. I suggest avoiding that. If you want a local installation, make sure to adjust the PREFIX to your likings (e.g. `/home/user/haskell-platform-VERSION`, default is `/usr/local`). Next, run
+The `shared` and `profiling` parameters enable installation of shared Base libraries and ones for profiling purposes. The more important part is profiling, because you can't build any program with profiling which has a dependency not built with it. If you don't do this and have to profile at some point (more sooner than later, probably), then the only economical solution is a reinstallation everything with the option present this time.
+
+If you want a local installation, make sure to adjust the PREFIX to your likings (e.g. `/home/user/haskell-platform-VERSION`, default is `/usr/local`). Next, run
 
     make
     make install
 
-The make step will take its time, especially with profiling and shared enabled. I'm not sure multithreaded make is available, but you can just pass `-jX` and hope for a faster build just in case.
+The make step will take its time, especially with profiling and shared enabled. I'm not sure multithreaded make is available, but you can just pass `-jX` and hope for a faster build just in case. (Again, you may need `sudo`.)
 
 
 
