@@ -65,12 +65,8 @@ The make step will take its time, especially with profiling and shared enabled. 
 Configuration
 -------------
 
-1. Run `cabal install cabal-install`. You'll get a couple of errors, but the script will generate `~/.cabal`. Open `~/.cabal/config`, enable `shared`, `library-profiling` and `documentation`, so that these are automatically built when you install future libraries. (If `cabal` cannot be found, make sure the BINDIR parameter from the GHC installation is in your `$PATH` environment variable.)
+1. Next, we'd like to configure Cabal so that installing new libraries automatically generates documentation, and versions for shared and profiling libraries. However, `~/.cabal/config` doesn't exist yet. To change that, run `cabal install cabal-install`, which will fail, but create a default configuration in the process (If `cabal` cannot be found, make sure the BINDIR parameter from the GHC installation is in your `$PATH` environment variable). Open the new config file, and enable `shared`, `library-profiling` and `documentation`, afterwards run `cabal update` followed by `cabal install cabal-install` again to do the actual installation.
 
-2. Run `cabal update` to fix the error raised in the previous step.
-
-3. Run `cabal install cabal-install` again; everything should work fine this time.
-
-4. If you had one before, remember to restore your old `.ghc/ghci.conf`, as it has been removed in step 1.
+2. If you had one before, remember to restore your old `.ghc/ghci.conf`, as it has been removed in the very beginning.
 
 Done :-)
