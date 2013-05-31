@@ -15,6 +15,8 @@ Preparation
 
 - Delete (backup!) `~/.ghc` and `~/.cabal` so your home dir looks like there hasn't been any Haskell before.
 
+- Make sure you don't have an old version of `cabal` installed somewhere else. You can check thish with `which cabal`, which should yield a blank result. If not, delete the listed files.
+
 [ghc.tar]: http://www.haskell.org/ghc/download
 [platform.tar]: http://www.haskell.org/platform/linux.html
 
@@ -68,11 +70,11 @@ The make step will take its time, especially with profiling and shared enabled. 
 Configuration
 -------------
 
-1. Run `cabal update` to get the latest package information. (If `cabal` cannot be found, make sure the BINDIR parameter from the GHC installation is in your `$PATH` environment variable.)
+1. The Platform has installed a new `cabal`, located in `PLATFORM-PREFIX/bin`. Use this to run `./cabal update` to get the latest package information. This will also initialize your `.cabal` directory.
 
 2. In `~/.cabal/config`, enable `shared`, `library-profiling` and `documentation`, so that subsequent library installations automatically support these features.
 
-3. Run `cabal install cabal-install`.
+3. Again in the Platform's `bin` directory, run `./cabal install cabal-install`. This will get you the newest version of Cabal, with the binary located as usual in `.cabal/bin`.
 
 4. If you had one before, remember to restore your old `.ghc/ghci.conf`, as it has been removed in the very beginning.
 
