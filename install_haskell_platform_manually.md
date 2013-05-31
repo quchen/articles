@@ -31,7 +31,7 @@ Go to the directory you extracted GHC to, and run
 
 This will prepare the GHC installation. A note on the directories:
 
-- **PREFIX** is `/usr/local` by default. This will be where all the related files are put, e.g. the precompiled Base libraries. If you want to install GHC globally you can leave it as it is; for a local installation, change it to `/home/user/ghc-VERSION` or something.
+- **PREFIX** is `/usr/local` by default. This will be where all the related files are put, e.g. the precompiled Base libraries. If you want to install GHC globally you can leave it as it is; for a local installation, change it to `/home/user/haskell/ghc` or something.
 - **BINDIR** defaults to `PREFIX/bin`. This is where the executables (e.g. ghc, ghci, runghc) will be put. BINDIR should be in your `$PATH`. For local installations, BINDIR could be something like `/home/user/bin`.
 
 Next, run
@@ -49,11 +49,14 @@ Haskell Platform
 
 Change to where you extracted the Platform to, and run
 
-    ./configure --prefix=PREFIX --enable-shared --enable-profiling
+    ./configure \
+    --prefix=PREFIX \
+    --enable-shared \
+    --enable-profiling
 
-The `shared` and `profiling` parameters enable installation of shared Base libraries and ones for profiling purposes. The more important part is profiling, because you can't build any program with profiling which has a dependency not built with it. If you don't do this and have to profile at some point (more sooner than later, probably), then the only economical solution is a reinstallation everything with the option present this time.
+The `shared` and `profiling` parameters are to build the respective versions of the libraries in the process. Especially profiling is important, since a library compiled with it requires all dependencies to be as well. (If you don't enable it now and find out later you need it, the only viable solution will be starting from scratch again.)
 
-If you want a local installation, make sure to adjust the PREFIX to your likings (e.g. `/home/user/haskell-platform-VERSION`, default is `/usr/local`). Next, run
+If you want a local installation, make sure to adjust the PREFIX to your likings (e.g. `/home/user/haskell/platform`, default is `/usr/local`). Next, run
 
     make
     make install
@@ -65,8 +68,12 @@ The make step will take its time, especially with profiling and shared enabled. 
 Configuration
 -------------
 
-1. Next, we'd like to configure Cabal so that installing new libraries automatically generates documentation, and versions for shared and profiling libraries. However, `~/.cabal/config` doesn't exist yet. To change that, run `cabal install cabal-install`, which will fail, but create a default configuration in the process (If `cabal` cannot be found, make sure the BINDIR parameter from the GHC installation is in your `$PATH` environment variable). Open the new config file, and enable `shared`, `library-profiling` and `documentation`, afterwards run `cabal update` followed by `cabal install cabal-install` again to do the actual installation.
+1. Run `cabal update` to get the latest package information. (If `cabal` cannot be found, make sure the BINDIR parameter from the GHC installation is in your `$PATH` environment variable.)
 
-2. If you had one before, remember to restore your old `.ghc/ghci.conf`, as it has been removed in the very beginning.
+2. In `~/.cabal/config`, enable `shared`, `library-profiling` and `documentation`, so that subsequent library installations automatically support these features.
+
+3. Run `cabal install cabal-install`.
+
+4. If you had one before, remember to restore your old `.ghc/ghci.conf`, as it has been removed in the very beginning.
 
 Done :-)
