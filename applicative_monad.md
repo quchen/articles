@@ -231,3 +231,4 @@ Status report
 - 2013-05-16: Asked the mailing list about adding instances to GHC
 - 2013-05-22: SPJ confirmed that adding ad-hoc warnings would be possible
 - 2013-05-23: AMP posted to libraries mailing list
+- 2013-06-17: AMP accepted unanimously, last call sent, wiki updated
