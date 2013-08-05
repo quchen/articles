@@ -42,6 +42,7 @@ Let's call the TH module `TH`,
 ```haskell
 -- File: TH.hs
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE BangPatterns #-}
 module TH where
 ```
 
@@ -53,7 +54,7 @@ What's the best example in all of Haskell? Fibonacci! Step one: write the functi
 fibo :: Integer -> Integer
 fibo = (`rem` 10^10) . fibo' (0, 1)
       where fibo' (a,_) 0 = a
-            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
+            fibo' (!a,!b) n = fibo' (b, a + b) (n - 1)
 ```
 
 Step two: wrap it in a TH expression.
@@ -98,7 +99,7 @@ evenOdd x | even x    = Even x
 fibo :: Integer -> EvenOdd Integer
 fibo = evenOdd . fibo' (0, 1)
       where fibo' (a,_) 0 = a
-            fibo' (a,b) n = b `seq` fibo' (b, a + b) (n - 1)
+            fibo' (a,!b) n = fibo' (b, a + b) (n - 1)
 
 wrapTH :: EvenOdd Integer -> Q Exp
 wrapTH eo = [| eo |]
@@ -134,7 +135,10 @@ main = print myFibo
 -- TH.hs
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE BangPatterns #-}
+
 module TH where
+
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
@@ -150,7 +154,7 @@ instance (Lift a) => Lift (EvenOdd a) where
 fibo :: Integer -> EvenOdd Integer
 fibo = evenOdd . (`rem` 10^10) . fibo' (0, 1)
       where fibo' (a,_) 0 = a
-            fibo' (a,b) n = a `seq` b `seq` fibo' (b, a + b) (n - 1)
+            fibo' (a,!b) n = fibo' (b, a + b) (n - 1)
 
 fiboTH :: Integer -> Q Exp
 fiboTH n = lift (fibo n)

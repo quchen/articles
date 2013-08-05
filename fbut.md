@@ -14,7 +14,7 @@ Frequently brought up topics in #haskell
 decode . encode = id
 ```
 
-This is where `BS.Char8` fails: when converting a `[Char]` to a `BS.Char8`, all the `Char` are truncated silently to their first byte. Truncation means loss of information, therefore
+This is where `ByteString.Char8` fails: when converting a `[Char]` to a `ByteString.Char8`, all the `Char` are truncated silently to their first byte. Truncation means loss of information, therefore
 
 ```haskell
 unpack . pack /= id
@@ -30,8 +30,11 @@ To give you an analogy, suppose you have a number library for manipulating `Int`
 
 ### The right way
 
-Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion `String -> ByteString`, then use a serialization library such as [Binary][binary] that takes care of the conversion from `[Char] --> [Word8] --> ByteString` and back.
+Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion `String -> ByteString`, then use a serialization library such as [Binary][binary] that takes care of the conversion from `[Char]` to `[Word8]` to `ByteString` and back.
 
-`ByteString.Char8` has very few limited uses if what you want is to interface some other dirty programs etc; I think it's safe to say that if you don't absolutely know that you *do* need `BS.Char8`, it is not a good idea to use it.
+`ByteString.Char8` has very few limited uses if what you want is to interface some other dirty programs etc; I think it's safe to say that if you don't absolutely know that you *do* need `ByteString.Char8`, it is not a good idea to use it.
 
 [binary]: http://hackage.haskell.org/package/binary
+
+
+
