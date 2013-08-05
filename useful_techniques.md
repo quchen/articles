@@ -71,8 +71,11 @@ fiboTH n = wrapTH (fibo n)
 
 Step three: insert it in your main code.
 
-```
+```haskell
 -- File: Main.hs
+
+{-# LANGUAGE TemplateHaskell #-}
+
 import TH
 
 myFibo :: Maybe Integer
@@ -126,8 +129,11 @@ Now you're done, that pretty much covers this section. Compile, wait, run it! A 
 
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -ddump-splices #-}
+
 import TH
+
 myFibo = $( fiboTH (10^5) )
+
 main = print myFibo
 ```
 
