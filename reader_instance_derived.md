@@ -36,7 +36,7 @@ return = const
 Bind/`>>=`
 ----------
 
-We'll construct `m >>= f` in three parts: first, we're getting a value "out" of `m` (by applying it to the environment), then we're applying `f` to it, and finally it's all packed up again so the type system is happy (and nothing remains dangling or unused). That idea in code then looks like the following (you can read it top-to-bottom, imperative-like):
+I always picture `>>=` as a vacuum tube that sucks a value out of `m` and puts it into `f`. We'll take this idea to construct `m >>= f` in three parts: first, we're getting a value "out" of `m`; in the case of `(->) r` this means applying `m` to the environment (of type `r`). Next, we'll apply `f` to the obtained value to get a new monadic action, and finally it's all packed up again so the type system is happy (and nothing remains dangling or unused). That idea in code then looks like the following (you can read it top-to-bottom, imperative-like):
 
 ```haskell
 m >>= f = \environment ->        -- `m >>= f` is a function that takes one
