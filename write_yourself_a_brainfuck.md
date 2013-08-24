@@ -47,7 +47,7 @@ To give you a glimpse at the abomination we're about to create:
 
 [helloworld]: http://en.wikipedia.org/wiki/Brainfuck#Hello_World.21
 
-As you can see, the programs are not very readable. How lucky we are that we're not trying to write but to implement Brainfuck, which luckily is much easier.
+As you can see, the programs are not very readable. How lucky we are that we're not trying to write but to implement Brainfuck, which is much easier.
 
 
 
@@ -107,7 +107,7 @@ Here are some improvements you could make in your code. (Don't worry if you don'
   [hoogle]: http://www.haskell.org/hoogle/
 
 
-2. (easy) You cannot write a `Show` instance for a type synonym like `BrainfuckSource` (Do you know why?). Rewrite it using a `data` declaration to a type that holds a `[BrainfuckCommand]`, and define a `Show` instance for that new type that prints the contained source. For example, `show [LoopL, Decrement, LoopR]` should yield "[-]" in GHCi.
+2. (easy) You cannot write a `Show` instance for a type synonym like `BrainfuckSource` (why?). Rewrite it using a `data` declaration to a type that holds a `[BrainfuckCommand]`, and define a `Show` instance for that new type that prints the contained source. For example, `show $ BFSource [LoopL, Decrement, LoopR]` should yield "[-]" in GHCi.
 
 
 3. Checking syntax
@@ -168,9 +168,12 @@ In the finished interpreter, we'll have to `Tape` objects: one for the data tape
 
 3. Streams
 
-   1. (medium) Since the data tape is always infinite, a list is not absolutely the right type for it - it allows an empty list. A better representation for this would be a `Stream` type, which is identical to lists except that it has no "empty" element, i.e. all values are of infinite length. Implement a `repeat` function for that type analogous to `Data.List.repeat`.
+   1. (medium) Since the data tape is always infinite, a list is not absolutely the right type for it - it allows an empty list. A better representation for this would be a `Stream` type, which is identical to lists except that it has no "empty" element, i.e. all values are of infinite length. Implement that tape a `repeat` function for it analogous to `Data.List.repeat`.
 
    2. (hard) Modify the `Tape` type so it takes the type of the container to use as a type argument, allowing you to create a tape with `[]` or `Stream` in them. For each one, write `moveLeft` and `moveRight`. The list-based type will suffer from the issues raised in the exercise above, but what about the `Stream`-based tape rotations?
+
+
+
 
 
 Part 3: Evaluation
