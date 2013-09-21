@@ -317,5 +317,39 @@ And there you have it, a fully featured Brainfuck interpreter! To use it, simply
 
    1. (medium) If you've done the exercises of parts 1 and 2, you can incorporate their results into the final code.
 
-   2. (open-ended) Optimizations: You could combine multiple uses of `Increment` so that instread of adding 1 five times, you could just add a single 5; successive uses of `+` and `-` cancel out, as do `>` and `<`. And then there are higher-level optimizations as well of course, such as rewriting `[-]` to "set to zero or error if cell content is negative".
+   2. (medium) Instead of having `LoopL` and `LoopR` as primitives, you could replace them by a type `Loop BrainfuckSource`, representing the whole loop and the body. Evaluating such a `Loop` could jump to the beginning of the contained code much easier: there's no need to walk around the source to find the matching brace anymore. This eliminates the need for the `seekLoopX` functions and allows the source code to be stored in a normal list instead of using `Tape`. Note that this also makes execution faster: now jumping back `n` instructions is O(1) instead of O(n)!
 
+   3. (open-ended) Various optimizations: You could combine multiple uses of `Increment` so that instread of adding 1 five times, you could just add a single 5; successive uses of `+` and `-` cancel out, as do `>` and `<`. And then there are higher-level optimizations as well of course, such as rewriting `[-]` to "set to zero or error if cell content is negative".
+
+   3. (monads) State
+
+      1. You see we're passing around `dataTape` and `source` explicitly in the evaluation loop, and potentially modify them at each step. This is precisely the behaviour the `State` monad captures. Rewrite `seekLoopX`, `advance` and `run` to involve a type
+
+         ```haskell
+         State (Tape Int, Tape BrainfuckCommand) (IO ())
+         -- instead of
+         Tape Int -> Tape BrainfuckCommand -> IO ()
+         ```
+
+      2. (transformers, beyond LYAH scope) The solution above may work, but it's not really very beautiful. You can use monad transformers to get a nicer type,
+
+         ```haskell
+         StateT (Tape Int) (StateT (Tape BrainfuckCommand) IO) ()
+         -- instead of
+         State (Tape Int, Tape BrainfuckCommand) (IO ())
+         ```
+
+         For this, you can now implement the API functions much clearer, for example
+
+         ```haskell
+         -- What's the type of this?
+         getInstructionTape = lift get
+
+         -- move data tape to the right
+         dataRight = modify moveRight
+
+         -- move instruction tape to the right
+         instructionRight = lift $ modify moveRight
+         ```
+
+         Note: If you haven't worked with transformers, these might not seem "much clearer" to you at all.
