@@ -42,3 +42,24 @@ Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion `Stri
 
 
 
+
+``(a `op`)`` is not ``\x -> a `op` x``
+------------------------------
+
+These two forms are seeminly identical, but there is a subtle difference. The first one is actually section sugar for `op a`, while the second one is a lambda (and not direct application of `op`). This leads to This leads to different strictness properties in the presence of ⊥:
+
+```haskell
+-- Section
+> let op = undefined in (() `op`) `seq` ()
+>>> *** Exception: Prelude.undefined
+
+-- Prefix
+> let op = undefined in (op ()) `seq` ()
+>>> *** Exception: Prelude.undefined
+
+-- Lambda
+> let op = undefined in (\x -> () `op` x) `seq` ()
+>>> ()
+```
+
+The reason for this behaviour is that a lambda can be thought of as an additional wrapper around the application of `op`, and this wrapper is already WHNF. For this reason, `op` is never forced, and the `seq` terminates without complaints.
