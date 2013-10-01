@@ -80,3 +80,22 @@ Here is the order in which I recommend looking at how to use standard Monad inst
 1. `Maybe`; you can also have a look at `Either` which is pretty similar.
 2. `State`, `Writer`.
 3. `Reader`, `IO`. `IO` in particular is a good Monad to get an *intuitive* feeling for, because in fact `IO` is primitive and you can't just look up the code and not understand how it's implemented.
+
+
+
+Tabs vs. spaces
+---------------
+
+Short version: use spaces.
+
+Long version: You can write valid Haskell with spaces, tabs, or anything in between. The between part is a pain in the ass, but you can make only-tab-indented code work. So why shouldn't do that?
+
+1. If you were referred to this document, you're most likely a beginner. Beginners make *lots* of mistakes with tabs and are surprised why their code breaks and annoy others with this on IRC. Don't be one of those guys.
+
+2. Spaces look the same to everyone, tabs don't. Chances are your tabbed code looks like crap with different settings; if it doesn't you have lots of newlines at the appropriate locations so it looks like crap in the first place.
+
+3. The Haskell community has decided to use spaces. All common libraries use spaces, and the only reason there are a few tabs left in GHC's source is because of potential merge conflicts when editing them all out in bulk.
+
+If you have any further questions, feel free to contact me at `tabs-vs-spaces@example.com`.
+
+
