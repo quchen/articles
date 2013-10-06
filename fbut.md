@@ -46,7 +46,7 @@ Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion `Stri
 ``(a `op`)`` is not ``\x -> a `op` x``
 --------------------------------------
 
-These two forms are seeminly identical, but there is a subtle difference. The first one is just sugar for `op a`, while the second one is a lambda (and not direct application of `op`). This leads to This leads to different strictness properties in the presence of ⊥:
+These two forms are seemingly identical, but there is a subtle difference. The first one is just sugar for `op a`, while the second one is a lambda (and not direct application of `op`). This leads to different strictness properties in the presence of ⊥:
 
 ```haskell
 > let op = undefined
