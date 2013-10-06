@@ -79,7 +79,7 @@ Here is the order in which I recommend looking at how to use standard Monad inst
 
 1. `Maybe`; you can also have a look at `Either` which is pretty similar.
 2. `State`, `Writer`.
-3. `Reader`, `IO`. `IO` in particular is a good Monad to get an *intuitive* feeling for, because in fact `IO` is primitive and you can't just look up the code and not understand how it's implemented.
+3. `Reader`, `IO`. `IO` in particular is a good Monad to get an *intuitive* feeling for, as `IO` is primitive (i.e. hardcoded) and therefore the "I don't understand the implementation so I can't understand this one" is not an excuse.
 
 
 
