@@ -346,7 +346,7 @@ sameLength xs ys = length xs == length ys
 
 However, this does a lot of redundant operations - namely add up a lot of `1`s.
 
-There is another counting method, similar what some humans used when their number system doesn't have large enough numbers (say only 1-3), but you have 20 sheep. In the morning, you let the sheep out, and for every one of them you put one pebble in a bowl. When you gather them back in the evening, you take out one pebble per sheep again, and in the end you'll see whether the counts match, without actually knowing the number of sheep you have. This principle translated to Haskell reads
+There is another counting method, similar to what some humans used when their number systems didn't have enough large numbers (say only 1-3), but they had 20 sheep. In the morning, they let their sheep out, and for every one of them they put one pebble in a bowl. When they gathered the sheep back in the evening, they would remove one pebble per sheep, and in the end they can easily check whether the counts match, allowing them to count their sheep while never requiring them to know their actual number of sheep. This principle translated to Haskell reads
 
 ```haskell
 sameLength' :: [a] -> [b] -> Bool
