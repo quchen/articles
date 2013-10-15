@@ -99,3 +99,30 @@ Long version: You can write valid Haskell with spaces, tabs, or anything in betw
 If you have any further questions, feel free to contact me at `tabs-vs-spaces@example.com`.
 
 
+`(- 4)` is not `\x -> x - 4`
+----------------------------
+
+A single negative sign is a special case in Haskell syntax, and simplifies entering negative numbers. Unfortunately this rule breaks sections with `(-)`.
+
+```haskell
+-- The number "-4".
+a :: Num a => a
+a = (-4)
+-- or simply "a = -4"
+
+-- The function "subtract 4 from the argument".
+b :: Num a => a -> a
+b = \x -> x - 4
+
+-- A useful Prelude definition for the "subtract from" function.
+subtract :: Num a => a -> a -> a
+subtract a b = b - a
+
+-- The "subtract 4" function written with the above.
+c :: Num a => a -> a
+c = subtract 4
+```
+
+So in summary, if you want a section with the `(-)` operator, use `subtract` like in example `c`. A final word of caution, using `subtract` in infix looks reasonable, but produces wrong (negative) results due to reversed arguments - ``3 `subtract` 1`` is `-2`.
+
+
