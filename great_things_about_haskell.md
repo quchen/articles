@@ -74,20 +74,20 @@ Functions are rarely restricted more than they have to be. If you write a functi
 Glue
 ----
 
-What is commonly referred to as *glue* is the ability of a language to combine different parts of a program. In Haskell, functions are generally very *small*, in the sense that they only span a handful of lines, do one specific thing, and compose very well. This composability makes it possible to have a vast amount of different functions using only a few basic ones.
+What is commonly referred to as *glue* is the ability of a language to combine different parts of a program. In Haskell, functions are generally *small*, in the sense that they only span a handful of lines, do one specific thing and do it well, and compose very well. This composability makes it possible to have a vast amount of different functions using only a few basic ones.
 
 A consequence of this concept is that most "large" functions are composed of smaller functions. When you know precisely how and that the smaller functions work, then you most likely know that about your combined function. It is very common to build a library of small bits, and then just export the actually useful combinations; however, only the small bits have to be tested. (Most likely, the typechecker complains when you combine them the wrong way anyway.)
 
-If that still doesn't convice you, think of a Linux terminal. How do you use it? There's a small function for every detail, and you then chain those together. One just prints a file (`cat`), you then feed that to another function that filters out some elements (`grep` etc.), and finally you count how many entries are still left (`wc`). How many lines are in a file containing an 'a'? `cat file | grep "a" | wc`. That's precisely the kind of plumbing you do in Haskell all the time. However, contrary to long terminal expressions, they can still be very readable even if they grow past the middle of the line.
+"Do one thing and do it well" may remind you of the Unix philosophy, and this is indeed a good analogon. There's a small function for every detail, and you then chain those together. One just prints a file (`cat`), you then feed that to another function that filters out some elements (`grep` etc.), and finally you count how many entries are still left (`wc`). How many lines are in a file containing an 'a'? `cat file | grep "a" | wc`. That's precisely the kind of plumbing you do in Haskell all the time.
 
 
 
 Purity
 ------
 
-Purity in a nutshell means that a function cannot have side effects; a side effect is something that modifies the environment. The standard hypothetical Haskell function to do this is called `launchMissiles`. A pure function cannot launch missiles as that would modify the environment; maybe a more friendly version of that function would be reading a file or printing something in the console.
+Purity in a nutshell means that a function cannot have side effects; a side effect is something that modifies or depends the environment (which is anything outside of the function). A pure function cannot read the current time, send an email, get command line arguments, spawn a thread, modify a global mutable variable.
 
-While this sounds like a huge restriction when you haven't used it much, it also has obvious benefits in this case, namely type signatures tell you a lot about what a function actually does. This argument is closely linked to the one given above where the compiler can help you write your code by suggesting functions that fit in a gap. Suppose you have a function of which you know that it maps "a list that can contain anything" to an integer. With side effects, you can't tell anything. It could look up the list's contents in a database and return the time taken. In a pure language, a function cannot talk to the outside world, which eliminates all these cases. What's left is either a constant function (that maps every list to the same number), or a function that counts elements. When you know this, you don't have to understand the code, you only have to understand it enough to exclude the other options; in this case, the function is most likely calculating the length of the list. Strong typing combined with purity means that *the function type often gives away what a function does on its own*, even if you don't know, don't want to bother with, or don't care about the implementation.
+While this sounds like a huge restriction when you haven't used it much, it also has obvious benefits, namely type signatures tell you a lot about what a function actually does. This argument is closely linked to the one given above where the compiler can help you write your code by suggesting functions that fit in a gap. Suppose you have a function of which you know that it maps "a list that can contain anything" to an integer. With side effects, you can't tell anything. It could look up the list's contents in a database and return the time taken. In a pure language, a function cannot talk to the outside world, which eliminates all these cases. What's left is either a constant function (that maps every list to the same number), or a function that counts elements. When you know this, you don't have to understand the code, you only have to understand it enough to exclude the other options; in this case, the function is most likely calculating the length of the list. Strong typing combined with purity means that **a type often strongly hints what a function does**, even if you don't know, don't want to bother with, or don't care about the implementation. One particularly important application of this is when encountering code with bad documentation: the types never lie.
 
 Purity also means that a function always has the same result given the same input, leaving a lot of space for compiler optimization: if it's called twice, you only have to calculate it once and distribute the results. In impure languages, deciding whether a (possibly deeply nested) function modifies the environment is hard work for the compiler, in Haskell it's a piece of cake in arbitrarily complicated cases.
 
@@ -108,10 +108,11 @@ A valid argument against immutability is of course that updating a variable is o
 Concurrency, parallelization
 ----------------------------
 
-Beyond the benefits of immutability, one thing stands out in GHC, Haskell's main implementation: **Haskell threads are dirt cheap**, you can fork [millions][millionthreads] (!). Clients connect to your server? Give each one an own thread. Calculate the sum of a large list? Split it in ten (or ten thousand?) parts. The cost of scheduling something in parallel being so low, it means that for even relatively simple calculations the performance hit due to new threads is so small that it's barely noticeable during execution on a single core; what *is* noticeable however is the performance increase as soon as you let the program run on multiple CPUs. [(As of beginning 2013, the scheduler scales linearly 32 cores.)][32cores]
+Beyond the benefits of immutability, one thing stands out in GHC, Haskell's main implementation: **Haskell threads are dirt cheap**, you can fork [millions][millionthreads] (!). Clients connect to your server? Give each one an own thread. Search something in a large list? Distribute it over ten (or ten thousand?) searchers. The cost of scheduling something in parallel being so low, it means that for even relatively simple calculations the performance hit due to new threads is so small that it's barely noticeable during execution on a single core; what *is* noticeable however is the performance increase as soon as you let the program run on multiple CPUs.
+
+Performance is only one reason to use concurrency though; another one is that programs may be easier to strucure in a non-sequential setting. Conceptually, a webserver works with independent clients and responds to their requests. Cheap and (relatively) easy concurrency means that implementing all clients in parallel is a good solution, probably even easier to implement than a sequential version. Yes, I said it - concurrency can make things easier to reason about.
 
 [millionthreads]: http://www.scribd.com/doc/19465418/Multicore-Programming-in-Haskell-Now
-[32cores]: http://www.haskell.org/pipermail/ghc-devs/2013-February/000414.html
 
 
 
@@ -177,13 +178,15 @@ When you have two independent threads sharing the same data, the usual approach 
 
 STM is a library that largely solves this problem. STM actions are often similar to normal concurrent operations, but with an important difference: they can be composed, and executed as a single atomical operation. Other threads either see the action as not started yet, or already finished - there is no way of having the intermediate state. For this reason, other threads cannot corrupt any of the used data - **STM allows concurrency without locks by design**, and therefore doesn't suffer from their problems, while being applicable to mostly the same problems.
 
-Of course STM is not a silver bullet: the performance is not as good as with raw locks - which are of course also available - and it's not suitable for huge computations where thousands of variables are exchanged in a single atomic operation. It is a very useful addition to, and not a replacement for, the classical locking mechanisms.
+Of course STM is not a silver bullet: the performance is not as good as with raw locks - which are of course also available - and it's not suitable for huge computations where thousands of variables are exchanged in a single atomic operation. It is a very useful addition to, and not a replacement for, the classical concurrency mechanisms.
 
 [STM]: http://en.wikipedia.org/wiki/Software_transactional_memory
 
 ### QuickCheck
 
 **QuickCheck is a quality assurance library** to test functions. It does this by **automatically generating appropriate datasets** (enabled to do so by Haskell's type system), and then checking whether a function's property holds for this generated data. Often times, functions have only a couple of different corner cases (think of "empty list, list with only one element, list of many"), and QuickCheck is very likely to find them. As an addition to a programmer who understands the code and *thinks* it's alright gives a very high confidence level of the function actually being correct.
+
+(QuickCheck has been ported to many other languages, but to my knowledge none of them support it as well as Haskell.)
 
 
 
@@ -215,8 +218,8 @@ A wise man on the internet once said that in the beginning, Haskell feels like t
 
 
 
-The mathiness of the community
-------------------------------
+The mathiness of parts of the community
+---------------------------------------
 
 If you join `#haskell` on `irc.freenode.net`, you'll most likely encounter a discussion about category theory, logic or some other academic topic quite quickly. This has led to the prejudice that these advanced concepts are necessary to learn Haskell, *which they are absolutely not*. In fact, many of these concepts are applicable to many other programming languages, only that nobody recognizes them or bothers to talk about it. Haskell sure creates an environment where people gather that are interested in such matters, but it's not a requirement in order to learn how to use it.
 
@@ -252,7 +255,7 @@ I think Lisp looked unappealing, but I found the concepts of the language intere
 Learning monads
 ---------------
 
-This thing called *monad* is for many people (including me) the first brick wall they hit when learning Haskell. It's sort of a running gag for people to say that everyone who finally understands monads feels like writing a tutorial about how it's *actually* done, and these tutorials tend to be more confusing than helpful to others. I can't explain what monads are or what they are useful for in a sentence here, but then how would you explain to someone what polymorphism is in five lines? There are certain concepts you have to work with a little to understand their value, and when it is appropriate to use them. Let me conclude this with a word of encouragement: while the first encounters with monads are quite confusing, after some time you *will* understand them, not only that - when you do so, they're so crystal clear that you won't be able to recall what your problem with them was.
+The only thing that makes monads scary is because people who don't know about them keep yelling how scary they are. They aren't. Use monad instances and you'll get the hang of them, it took me not half as long as understanding why object orientation is useful back in the days. And that's all I'm going to say about the issue.
 
 
 
@@ -289,15 +292,15 @@ Ugly warts
 
 Alright, here it comes, things that range from debatable to straight up awful, and are mostly attributed to historical accidents:
 
-- Mathematically, all monads are functors, but Haskell does not enforce this hierarchy. You can easily derive a functor from any monad, but if you write a library you always have to take them into account separately.
+- Mathematically, all monads are functors, but Haskell does not enforce this hierarchy. You can easily derive a functor from any monad, but if you write a library you always have to take them into account separately. Think of it as if C++'s `iostream` was not a child of `ostream`, and all libraries would have to take both cases into account separately to be the most general.
 
 - Exceptions are defined in `Control.Monad.Error`, and errors in `Control.Exception`.
 
-- There is no unsigned arbitrary-sized integer type.
+- There is no (standardized) unsigned arbitrary-sized integer type.
 
 - Some standard functions throw an error (you remember, the things from `Exception`) if the input is mal-formed, instead of using other means (such as returning a `Maybe` value).
 
-- `fail`. We don't talk about this one.
+- The `fail` function. We don't talk about this one.
 
 
 
