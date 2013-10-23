@@ -57,9 +57,10 @@ indicates that this rule should only apply when the instance for `m` is marked a
 Benefits
 --------
 
-- Performance. Laws marked as the pragma should simplify code in the same manner as `RULES` do. Obeying a law that makes things more complicated should not be mentioned in a `LAW` pragma.
-
 - Applicative `do` notation for free: due to the new rewrite rules, obedient instances can be rewritten to Applicative style automatically (and this similarly applies to all other class hierarchies).
+
+- Laws marked as the pragma should simplify code in the same manner as `RULES` do, which can be good for performance. Obeying a law that makes things more complicated should therefore not be mentioned in a `LAW` pragma.
+
 
 
 
@@ -67,4 +68,6 @@ Problems
 --------
 
 - Some instances obey only a subset of the laws. The proposal above skips treating those separately in order to make the instance implementation simple, as opposed to adding fine-grained control over which laws are applicable.
+
+- What to do in the presence of ⊥? For example `Reader` doesn't satisfy `⊥ >>= return = ⊥`. Should `LAW` apply?
 
