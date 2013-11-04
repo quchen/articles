@@ -3,6 +3,7 @@ This repository is filled with articles I've written and needed online for vario
 - **applicative_monad.md** is the original text of the 2013 Applicative-Monad proposal, which finally got things going to make Applicative a superclass of Monad.
 - **build.md** explains how the `build` function, which is used in rewrite rules for list-based functions, works.
 - **cont_monad.md** is my shot at explaining the `Cont` Monad.
+- **crazy_io.md** shows some examples of lazy IO pitfalls in Haskell.
 - **fbut.md** is a list of **F**requently **B**rought **U**p **T**opics in #haskell for easy reference. It's like an FAQ, except that the "F" stands for "frequently" instead of "someone thought this may be worth mentioning".
 - **great_things_about_haskell.md** explains what I thought was cool about Haskell some time ago. Maybe I should update it some day.
 - **install_haskell_platform_manually.md** was once a small file for myself to walk me through setting up GHC properly in case I needed to. The revised version is this file, explaining how to get from zero to GHC and Haskell Platform.
