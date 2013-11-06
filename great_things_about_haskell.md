@@ -202,6 +202,20 @@ Learning Haskell without a doubt feels like learning to program all over again. 
 
 
 
+
+Strange problems, great solutions
+---------------------------------
+
+Haskell has some quirks that seem to make it unsuitable for certain things. However, it is a common pattern that once a solution is found, it not only solves the initial problem, but makes a lot of other things easy and elegant. The downside is of course that the language depends on such discoveries to happen.
+
+1. Before the `IO` type, Haskell's way of doing I/O was abysmal. Discovering `IO` not only solved this issue, but also lead to the adoption of monads in everyday Haskell, which proved to be a tremendously useful concept even without IO.
+
+2. Modifying deeply nested data structures is awkward. The Lens library solves this problem by providing simple accessor functions. As it turns out they are much more flexible than "update that" though, supporting very complex lenses far beyond what the initial problem demanded.
+
+3. Lazy I/O is so full of pitfalls it's almost always not a good idea to be used. Until the rise of the pipes/conduit/iteratee family, I/O could be fairly painful at times. Now there are plenty of abstractions for "things that produce" and "things that consume" that can be composed out of very small bits; the result is easy to maintain, runs in constant space, and is performand and readable.
+
+
+
 Going back
 ----------
 
