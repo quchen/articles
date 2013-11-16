@@ -7,12 +7,12 @@ Sequence/mapM
 ```haskell
 sequence :: Monad m => [m a] -> m [a]
 sequence = mapM id
-sequence [action_0, action_1, ..., action_n] = do
-      result_0 <- action_0
-      result_1 <- action_1
+sequence [a, b, ..., c] = do
+      x <- a
+      y <- b
       ...
-      result_n <- action_n
-      return [result_0, result_1, ..., result_n]
+      z <- c
+      return [x, y, ..., z]
 ```
 
 
@@ -20,12 +20,12 @@ sequence [action_0, action_1, ..., action_n] = do
 ```haskell
 mapM :: Monad m => (a -> m b) -> [a] -> m [b]
 mapM f = sequence . map f
-mapM f [action_0, action_1, ..., action_n] = do
-      result_0 <- f action_0
-      result_1 <- f action_1
+mapM f [a, b, ..., c] = do
+      x <- f a
+      y <- f b
       ...
-      result_n <- f action_n
-      return [result_0, result_1, ..., result_n]
+      z <- f c
+      return [x, y, ..., z]
 ```
 
 
