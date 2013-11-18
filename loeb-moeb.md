@@ -145,7 +145,18 @@ printArr arr =
 main = printArr $ loeb spreadsheet
 ```
 
-Run it!
+Run it! The output will be
+
+```
+ 1.0    0.1    1.1    0.0    0.0
+ 3.0    0.3    3.3    0.0    0.0
+ 5.0    0.5    5.5    0.0    0.0
+ 2.0    0.2    2.2    0.0    0.0
+ 0.0    0.0   12.1    0.0    0.0
+```
+
+where in the first column you'll see the prices (declared using `val` above),
+the second column is the added tax to the price on its left, the third lists the effective price, and below the effective prices there's the total sum you have to pay in order to buy everything. Magic! :-)
 
 
 
