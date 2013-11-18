@@ -8,6 +8,7 @@ This repository is filled with articles I've written and needed online for vario
 - **great_things_about_haskell.md** explains what I thought was cool about Haskell some time ago. Maybe I should update it some day.
 - **install_haskell_platform_manually.md** was once a small file for myself to walk me through setting up GHC properly in case I needed to. The revised version is this file, explaining how to get from zero to GHC and Haskell Platform.
 - **law-rules.md** is a draft of a not-yet-proposed proposal for a GHC feature.
+- **loeb-moeb.md** is about an interesting function that calculates the result of a function when applied to the result of the function.
 - **modular_keyboard.md** describes a keyboard I'd like to have. I encourage everyone to steal this idea so I can buy one from him.
 - **reader_instance_derived.md** shows step by step how the golfed instance of Reader (as presented in LYAH, for example) can be derived from something sensible and readable.
 - **useful_techniques.md** shows some neat little Haskell tricks I've collected.
