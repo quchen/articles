@@ -13,5 +13,6 @@ This repository is filled with articles I've written and needed online for vario
 - **reader_instance_derived.md** shows step by step how the golfed instance of Reader (as presented in LYAH, for example) can be derived from something sensible and readable.
 - **useful_techniques.md** shows some neat little Haskell tricks I've collected.
 - **write_yourself_a_brainfuck.md** is a tutorial on how to write a basic [Brainfuck][bf] interpreter in Haskell. It also includes enough exercises to keep readers busy.
+- **zero_to_local_ghc.md** is the advanced version of *install_haskell_platform_manually.md* from above: it guides through the installation of self-compiled GHC plus standard libraries and tools from nothing.
 
 [bf]: https://en.wikipedia.org/wiki/Brainfuck
