@@ -39,7 +39,7 @@ Next, download the Cabal source via the [cabal-install tool download][cabal-inst
 
 Run `cabal update`, then run `cabal install alex happy haddock hscolour`. (The latter is required so that building GHC yourself includes source links in its documentation.)
 
-In order for other programs to call your local installations, add `~/.cabal/bin` to your `$PATH`.
+In order for other programs to call your local installations later, add `~/.cabal/bin` to your `$PATH`. (I recommend doing this with a higher priority than your other entries, so that when a program is both in say `~/bin` and `~/.cabal/bin`, the latter is preferred, as that is where the most recent versions will be.)
 
 [cabal-install]: http://www.haskell.org/cabal/download.html
 
@@ -66,7 +66,7 @@ The previous steps solve the problem of not having GHC. However, your environmen
 
 ### Cleaning up
 
-First of all, you can now uninstall your bootstrapping GHC. Unfortunately, that will break the GHC manpage; add `<prefix>/share/man/` to your `MANPATH` to fix this, and run `sudo mandb` to rebuild the cache for good measure afterwards.
+First of all, you can now uninstall your bootstrapping GHC. Unfortunately, that will break the GHC manpage; add `<prefix>/share/man/` to your `$MANPATH` to fix this, and run `sudo mandb` to rebuild the cache for good measure afterwards.
 
 Next, clean your local directories by deleting `~/.{ghc,cabal}`.
 
