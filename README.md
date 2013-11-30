@@ -1,4 +1,6 @@
-This repository is filled with articles I've written and needed online for various reasons.
+This repository is filled with articles I ([quchen][q]) have written and needed online for various reasons.
+
+[q]: https://github.com/quchen/articles
 
 - **applicative_monad.md** is the original text of the 2013 Applicative-Monad proposal, which finally got things going to make Applicative a superclass of Monad.
 - **build.md** explains how the `build` function, which is used in rewrite rules for list-based functions, works.
