@@ -14,8 +14,8 @@ The order in which programs are built is chosen so that all installed libraries 
 
 
 
-Bootstrapping GHC
------------------
+Getting GHC
+-----------
 
 The first (and longest) part will setup a local GHC installation (including Cabal and Haddock).
 
@@ -23,21 +23,23 @@ The first (and longest) part will setup a local GHC installation (including Caba
 
 ### Obtain a bootstrapping GHC
 
-First you'll need a temporary GHC, which can be obtained whatever way you like. Probably the best choices
+To obtain GHC, you first need to obtain GHC. The two possible ways to do so are:
 
-1. Get a pre-packaged GHC build from your repos
+1. Download the binary release, and install it locally using the usual `--prefix/--bindir` flags in `./configure` (see `--help`). The problem with the current GHC build servers is that they're outdated though. If running GHC complains à la "libgmp.so.3 not found", you most likely have a more recent version of said library, and GHC was linked with an old one. Abandon ship, proceed below.
 
-2. Download precompiled GHC from the website. However, The problem with the current GHC build servers is that they're outdated. If you download the binary builds, you'll probably encounter an error à la "libgmp.so.3 not found" when invoking GHC. When you do not see this error you're either very lucky or have an outdated system.
+2. Get GHC from your distro's repos (you'll use this one to compile GHC yourself later).
 
-Either of these will do; whatever you install here will be safe to delete later.
+In the following, paragraphs marked as *PRE-BUILT* or *SELF-BUILT* apply depending on which one of the above you choose.
 
 
 
 ### Get Cabal
 
-Next, download the Cabal source via the [cabal-install tool download][cabal-install]. The readme included in the download will mention how to proceed, and the errors along the way will hint at what libraries you should install from the repositories (for example Perl is required). Although this Cabal installation is temporary, I suggest putting it in a permanent place anyway; should you delete your `.cabal` later and lose all your Haskell executables, you'll have a working version waiting for you.
+Download the Cabal source via the [cabal-install tool download][cabal-install]. The readme included in the download will mention how to proceed, and the errors along the way will hint at what libraries you should install from the repositories (for example Perl is required). Although this Cabal installation is temporary, I suggest putting it in a permanent place anyway; should you delete your `.cabal` later and lose all your Haskell executables, you'll have a working version waiting for you.
 
-Run `cabal update`, then run `cabal install alex happy haddock hscolour`. (The latter is required so that building GHC yourself includes source links in its documentation.)
+Run `cabal update`, then run `cabal install alex happy haddock`.
+
+*SELF-BUILT*: Also install `hscolour`, which is required so that building GHC yourself includes source links in its documentation.
 
 In order for other programs to call your local installations later, add `~/.cabal/bin` to your `$PATH`. (I recommend doing this with a higher priority than your other entries, so that when a program is both in say `~/bin` and `~/.cabal/bin`, the latter is preferred, as that is where the most recent versions will be.)
 
@@ -45,7 +47,7 @@ In order for other programs to call your local installations later, add `~/.caba
 
 
 
-### Compile GHC from source
+### *SELF-BUILT*: Compile GHC from source
 
 Download the GHC source, and run the `configure` script with custom parameters to suit your local needs (in particular you'll want to have  a look at the `--prefix` and `--bindir` flags, see `./configure --help` for additional info). When you and the configuration script are happy, make sure you have the other dependencies listed in the [GHC building guide][ghc-building-guide].
 
@@ -66,9 +68,9 @@ The previous steps solve the problem of not having GHC. However, your environmen
 
 ### Cleaning up
 
-First of all, you can now uninstall your bootstrapping GHC. Unfortunately, that will break the GHC manpage; add `<prefix>/share/man/` to your `$MANPATH` to fix this, and run `sudo mandb` to rebuild the cache for good measure afterwards.
+*SELF-BUILT*: You can now uninstall your bootstrapping GHC.
 
-Next, clean your local directories by deleting `~/.{ghc,cabal}`.
+Delete `~/.{ghc,cabal}`, which gives you a clean slate.
 
 
 
@@ -78,7 +80,7 @@ Now run `cabal update` again to get a fresh `~/.cabal/config`. There are a coupl
 
 - `library-profiling` compiles all installed modules for profiling automatically. This requires an additional compilation run for every installed module, potentially doubling compilation time. You should enable this anyway, because without it profiling a program you don't have the dependencies compiled for profiling will be a painful process. (... that will end with you reinstalling everything with profiling enabled. How I know this will happen? Take a guess.)
 - `shared` adds yet another separate compilation step, in order to build librares for shared use. Unless you know you want this, you probably don't.
-- `documentation` automatically builds local Haddock docs for installed libraries. This may seem redundant, but you'll be *so* happy you enabled it on that train ride or transatlantic flight, and the documentation step when installing new libraries is usually much shorter than the actual compilation.
+- `documentation` automatically builds local Haddock docs for installed libraries. This may seem redundant, but you'll be *so* happy you enabled it on that train ride or transatlantic flight. Note that while the doc generation is short when you've just installed a couple of libraries, it can grow significantly larger when there are lots of them (because the index is rebuilt each time you install something new, checking all the old packages).
 
 
 
@@ -98,3 +100,9 @@ cabal install -jN async attoparsec case-insensitive cgi fgl GLUT GLURaw hashable
 # Custom packages
 cabal install -jN hlint dlist pipes lens ...
 ```
+
+
+
+### Adding the manpage
+
+Add `<prefix>/share/man/` to your `$MANPATH` so that `man ghc` works. *SELF-BUILT*: Run `sudo mandb` if `man ghc` still points to the previously removed bootstrapping GHC.
