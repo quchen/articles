@@ -126,3 +126,43 @@ c = subtract 4
 So in summary, if you want a section with the `(-)` operator, use `subtract` like in example `c`. A final word of caution, using `subtract` in infix looks reasonable, but produces wrong (negative) results due to reversed arguments - ``3 `subtract` 1`` is `-2`.
 
 
+
+I'm looking for a good Regex library
+------------------------------------
+
+No. Stop. What you want to do is parse something, right? Use a parser! Regex is widely used in other languages a lot, but *very* unpopular in Haskell:
+
+- Regex is very hard to read once written.
+- Writing Regex is error-prone, and the lack of readability makes it hard to debug them.
+- Even if correct, the lack of readability makes them unmaintainable.
+- Regex can split and transform text, but you'll always get out text again. This makes Regex more like a lexer, not a parser. You'l still have to convert your Regex chunks into actual data afterwards.
+
+Want an example? Here's a regex to check US phone numbers in Python ([source][regex-source]):
+
+```python
+r'^(1[-\s.])?(\()?\d{3}(?(2)\))[-\s.?\d{3}[-\s.]?\d{4}$'
+```
+
+Actually no, there's a something missing. First task, find it. Afterwards, you may object that the code lacks documentation, so of course it's unreadable. Split in multiple lines, use comments:
+
+```python
+r'^'
+r'(1[-\s.])?' # optional '1-', '1.' or '1'
+r'(\()?'      # optional opening parenthesis
+r'\d{3}'      # the area code
+r'(?(2)\))'   # if there was opening parenthesis, close it
+r'[-\s.]?'    # followed by '-' or '.' or space
+r'\d{3}'      # first 3 digits
+r'[-\s.]?'    # followed by '-' or '.' or space
+r'\d{4}$'     # last 4 digits
+```
+
+What's the back reference to getting the area code again? The answer is don't use Regex. If you want to do crap, Regex is the right tool for the job. If you want to parse use parsers, for example [Parsec][parsec].
+
+
+
+
+
+
+[regex-source]: http://pypix.com/tools-and-tips/advanced-regular-expression-tips-techniques/
+[parsec]: http://hackage.haskell.org/package/parsec
