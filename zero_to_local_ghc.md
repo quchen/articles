@@ -80,7 +80,7 @@ Now run `cabal update` again to get a fresh `~/.cabal/config`. There are a coupl
 
 - `library-profiling` compiles all installed modules for profiling automatically. This requires an additional compilation run for every installed module, potentially doubling compilation time. You should enable this anyway, because without it profiling a program you don't have the dependencies compiled for profiling will be a painful process. (... that will end with you reinstalling everything with profiling enabled. How I know this will happen? Take a guess.)
 - `shared` adds yet another separate compilation step, in order to build librares for shared use. Unless you know you want this, you probably don't.
-- `documentation` automatically builds local Haddock docs for installed libraries. This may seem redundant, but you'll be *so* happy you enabled it on that train ride or transatlantic flight. Note that while the doc generation is short when you've just installed a couple of libraries, it can grow significantly larger when there are lots of them (because the index is rebuilt each time you install something new, checking all the old packages).
+- `documentation` automatically builds local Haddock docs for installed libraries. This may seem redundant, but you'll be *so* happy you enabled it on that train ride or transatlantic flight. Note that while the doc generation is short when you've just installed a couple of libraries, it can grow significantly larger when there are lots of them (because the index is rebuilt each time you install something new, checking all the old packages). Also, if you want to generate source links in the documentation, you'll have to invoke `cabal install` with the `--haddock-hyperlink-source` flag every time; there is unfortunately no way to specify this in the config.
 
 
 
@@ -89,16 +89,28 @@ Now run `cabal update` again to get a fresh `~/.cabal/config`. There are a coupl
 Alright, it's time to install again!
 
 ```sh
-# (Haddock is automatically built with GHC and in BINDIR)
+#!/usr/bin/env sh
 
-# Rebuild the core tools with the new GHC because why not
-cabal install -jN cabal-install alex happy
+# For some reason, documentation is only generated when Haddock is installed;
+# having only the Haddock executable skips updating the library index.
+# For this reason, install Haddock separately in the beginning.
+cabal install -jN haddock
+
+# Rebuild the core tools with the new GHC, mostly so you get all the docs
+# generated
+cabal install -jN --haddock-hyperlink-source \
+      cabal-install alex happy hscolour
 
 # Packages contained in the Haskell Platform (here: 2013.2)
-cabal install -jN async attoparsec case-insensitive cgi fgl GLUT GLURaw hashable haskell-src html HTTP HUnit mtl network OpenGL OpenGLRaw parallel parsec QuickCheck random regex-base regex-compat regex-posix split stm syb text transformers unordered-containers vector xhtml zlib
+cabal install -jN --haddock-hyperlink-source \
+      async attoparsec case-insensitive cgi fgl GLUT GLURaw hashable \
+      haskell-src html HTTP HUnit mtl network OpenGL OpenGLRaw parallel parsec \
+      QuickCheck random regex-base regex-compat regex-posix split stm syb text \
+      transformers unordered-containers vector xhtml zlib
 
 # Custom packages
-cabal install -jN hlint dlist pipes lens ...
+cabal install -jN --haddock-hyperlink-source \
+      hlint dlist pipes lens ...
 ```
 
 
