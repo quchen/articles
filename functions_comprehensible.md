@@ -99,6 +99,6 @@ filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
 filterM _ [] = return []
 filterM p (x:xs) = do
       flag <- p x
-      ys  <- filterM p xs
+      ys   <- filterM p xs
       return (if flag then x:ys else ys)
 ```
