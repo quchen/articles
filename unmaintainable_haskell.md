@@ -2,7 +2,7 @@
 
 A decent amount of the classic [*How to write unmaintainable code*](http://thc.org/root/phun/unmaintain.html) is biased towards imperative programming. This is an attempt at reaching equality.
 
-1. Use rewrite rule pragmas to alter functions. The compiler doesn't check whether the rewrite rule makes sense at all, so feel free to sprinkle your code with silly rewrites.
+1. Use rewrite rule pragmas to alter functions. The compiler doesn't check whether the rewrite rule makes sense at all, so feel free to sprinkle your code with **meaningful** rewrites.
 ```haskell
     {-# RULES "reverse map/append"
         forall f xs ys. map f (xs ++ ys) = map f ys ++ map f xs #-}
@@ -47,7 +47,7 @@ A decent amount of the classic [*How to write unmaintainable code*](http://thc.o
 ```
 Note that you have to use loop somewhere so it's not optimized away. A good way is having `return $ loop 1 2` as the last function in main.
 
-14. Naming conventions can help making code more readable. For example in `(xs:x)`, `xs` stands for "x singular", and `x` contains the rest.
+14. Naming conventions can help make code more readable. For example in `(xs:x)`, `xs` stands for "x singular", and `x` contains the rest.
 
 15. Use built-in functions as identifiers. Make sure to mention the name in the docs multiple times. Then create a base case that doesn't work for that operator.
 ```haskell
