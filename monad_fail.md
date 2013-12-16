@@ -36,7 +36,9 @@ Desugaring is then changed to the following:
 do ~pat <- computation     >>>     let f pat = more
    more                    >>>     in  computation >>= f
 
--- Only one data constructor: do not add MonadFail constraint
+-- Only one data constructor: do not add MonadFail constraint.
+-- This rule should apply recursively for nested patterns,
+-- e.g.  Only (Only' x).
 do (Only x) <- computation     >>>     let f (Only x) = more
    more                        >>>     in  computation >>= f
 
@@ -53,7 +55,7 @@ Discussion
 
 - Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class should be created. A parser might fail with an error message involving positional information, and for STM failure is undefined although it is `MonadPlus`.
 
-- The case of one data constructor should emit a warning if the data type is defined via `data`: adding another data constructor can make patterns in unrelated modules refutable.
+- The case of one data constructor should emit a warning if the data type is defined via `data` (as opposed to `newtype`): adding another data constructor can make patterns in unrelated modules refutable.
 
 - Some monads use the pattern matching to force evaluation of the binding, for example lazy/strict `StateT`. I'm not sure what exactly the consequences of the above are here; I suspect a strictness annotation or `(>>=)` instead of `do` notation might be sufficient.
 
