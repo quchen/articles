@@ -45,7 +45,7 @@ A decent amount of the classic [*How to write unmaintainable code*](http://thc.o
     loop a b = ()
     {-# RULES "loop" forall x y. loop x y = loop y x #-}
 ```
-Note that you have to use loop somewhere so it's not optimized away. A good way is having `return $ loop 1 2` as the last function in main.
+Note that you have to use loop somewhere so it's not optimized away. A good way is having `return (loop 1 2)` as the last function in main.
 
 14. Naming conventions can help making code more readable. For example in `(xs:x)`, `xs` stands for "x singular", and `x` contains the rest.
 
@@ -65,7 +65,7 @@ Note that you have to use loop somewhere so it's not optimized away. A good way 
 ```
 ... unless ...
 ```haskell
-    succ x = Prelude.succ . Prelude.succ $ x
+    succ x = Prelude.succ (Prelude.succ x)
     -- Eta reduction needs -XMonomorphismRestriction :-(
 ```
 Another thing worth noting is that `otherwise` is not a language feature, but simply defined to be `True` in `Data.Bool`.
