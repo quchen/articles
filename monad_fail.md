@@ -53,7 +53,7 @@ do pat <- computation     >>>     let f pat = more
 Discussion
 ----------
 
-- Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class should be created. A parser might fail with an error message involving positional information, and for STM failure is undefined although it is `MonadPlus`.
+- Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class should be created. A parser might fail with an error message involving positional information, and for STM failure uses the default `fail = error` although it is `MonadPlus`.
 
 - The case of one data constructor should emit a warning if the data type is defined via `data` (as opposed to `newtype`): adding another data constructor can make patterns in unrelated modules refutable.
 
