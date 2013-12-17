@@ -33,7 +33,7 @@ Desugaring is then changed to the following:
 
 ```haskell
 -- Explicitly irrefutable pattern: do not add MonadFail constraint
-do ~pat <- computation     >>>     let f pat = more
+do ~pat <- computation     >>>     let f ~pat = more
    more                    >>>     in  computation >>= f
 
 -- Only one data constructor: do not add MonadFail constraint.
