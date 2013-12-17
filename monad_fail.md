@@ -33,16 +33,28 @@ Desugaring is then changed to the following:
 
 ```haskell
 -- Explicitly irrefutable pattern: do not add MonadFail constraint
+
 do ~pat <- computation     >>>     let f ~pat = more
    more                    >>>     in  computation >>= f
+
+
 
 -- Only one data constructor: do not add MonadFail constraint.
 -- This rule should apply recursively for nested patterns,
 -- e.g.  Only (Only' x).
+
 do (Only x) <- computation     >>>     let f (Only x) = more
    more                        >>>     in  computation >>= f
 
+-- In particular, this means that tuples don't produce constraints.
+
+do (a,b) <- computation     >>>     let f (a,b) = more
+   more                     >>>     in  computation >>= f
+
+
+
 -- Otherwise: add MonadFail constraint
+
 do pat <- computation     >>>     let f pat = more
    more                   >>>         f _   = fail "..."
                           >>>     in  computation >>= f
