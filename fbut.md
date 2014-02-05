@@ -3,6 +3,32 @@ Frequently brought up topics in #haskell
 
 
 
+
+
+Contents
+--------
+
+1. [`ByteString.Char8` is bad][toc-bsbad]
+2. [``(a `op`)`` is not ``\x -> a `op` x``][toc-sections]
+3. ["I don't understand Monads"][toc-monads]
+4. [Tabs vs. spaces][toc-tabspaces]
+5. [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
+6. [I'm looking for a good Regex library][toc-regex]
+7. [I don't like this `Show` instance][toc-show]
+
+[toc-bsbad]:         #bytestringchar8-is-bad
+[toc-sections]:      #a-op-is-not-x---a-op-x
+[toc-monads]:        #i-dont-understand-monads
+[toc-tabspaces]:     #tabs-vs-spaces
+[toc-special-minus]: #--4-is-not-x---x---4
+[toc-regex]:         #im-looking-for-a-good-regex-library
+[toc-show]:          #i-dont-like-this-show-instance
+
+
+
+
+
+
 `ByteString.Char8` is bad
 -------------------------
 
@@ -43,6 +69,7 @@ Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion `Stri
 
 
 
+
 ``(a `op`)`` is not ``\x -> a `op` x``
 --------------------------------------
 
@@ -65,6 +92,8 @@ These two forms are seemingly identical, but there is a subtle difference. The f
 ```
 
 The reason for this behaviour is that a lambda can be thought of as an additional wrapper around the application of `op`, and this wrapper is already WHNF. For this reason, `op` is never forced, and the `seq` terminates without complaints.
+
+
 
 
 
