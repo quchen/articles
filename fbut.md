@@ -186,7 +186,7 @@ r'[-\s.]?'    # followed by '-' or '.' or space
 r'\d{4}$'     # last 4 digits
 ```
 
-What's the back reference to getting the area code again? The answer is don't use Regex. If you want to do crap, Regex is the right tool for the job. If you want to parse use parsers, for example [Parsec][parsec].
+What's the back reference to getting the area code again? The answer is don't use Regex. If you want to do dirty hacking, Regex is the right tool for the job. If you want to parse use parsers, for example [Parsec][parsec].
 
 
 
