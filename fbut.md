@@ -117,7 +117,7 @@ Tabs vs. spaces
 
 Short version: use spaces.
 
-Long version: You can write valid Haskell with spaces, tabs, or anything in between. The between part is a pain in the ass, but you can make only-tab-indented code work. So why shouldn't do that?
+Long version: You can write valid Haskell with spaces, tabs, or anything in between. The between part is a pain in the ass, but you can make only-tab-indented code work. So why shouldn't you do that?
 
 1. If you were referred to this document, you're most likely a beginner. Beginners make *lots* of mistakes with tabs and are surprised why their code breaks and annoy others with this on IRC. Don't be one of those guys.
 
