@@ -198,7 +198,7 @@ What's the back reference to getting the area code again? The answer is don't us
 I don't like this `Show` instance
 ---------------------------------
 
-Most likely this means you're expecting the wrong thing from `Show`. `Show` is not for prettyprinting, it's for converting things to `String`, often in a way where the resulting `String` is valid Haskell and could be re-inserted into code. Because of this, **`Show` is first and foremost a debugging class**. For prettyprinting, there are other libraries, such as [`pretty`][pretty] or [`pretty-show`][pretty-show].
+Most likely this means you're expecting the wrong thing from `Show`. `Show` is not for prettyprinting, it's for converting things to `String`, often in a way where the resulting `String` is valid Haskell and could be re-inserted into code. Because of this, **`Show` is first and foremost a debugging class**. For prettyprinting, there are other libraries, such as [`pretty`][pretty] or [`pretty-show`][pretty-show] and `Text.Printf`.
 
 [pretty]:      http://hackage.haskell.org/package/pretty
 [pretty-show]: http://hackage.haskell.org/package/pretty-show
