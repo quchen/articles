@@ -18,7 +18,10 @@ Contents
 5. [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
 6. [I'm looking for a good Regex library][toc-regex]
 7. [`Show` is not for prettyprinting][toc-show]
-7. [Imposing constraints on data types][toc-constraint-types]
+8. [Imposing constraints on data types][toc-constraint-types]
+9. [`seq` does not specify an evaluation order][toc-seq]
+
+
 
 [toc-bsbad]:            #bytestringchar8-is-bad
 [toc-sections]:         #a-op-is-not-x---a-op-x
@@ -28,6 +31,7 @@ Contents
 [toc-regex]:            #im-looking-for-a-good-regex-library
 [toc-show]:             #show-is-not-for-prettyprinting
 [toc-constraint-types]: #imposing-constraints-on-data-types
+[toc-seq]:              #seq-does-not-specify-an-evaluation-order
 
 
 
