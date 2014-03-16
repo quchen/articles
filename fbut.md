@@ -1,6 +1,8 @@
 Frequently brought up topics in #haskell
 ========================================
 
+(This is like an FAQ, except that the *F* stands for *frequently* instead of "someone thought this might be worth mentioning".)
+
 
 
 
