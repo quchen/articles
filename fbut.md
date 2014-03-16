@@ -372,3 +372,36 @@ I merely mention this for completeness sake here. For basic usage, follow the
 advice before: constrain functions, not the data declarations.
 
 [ghc-gadt-manual]: http://www.haskell.org/ghc/docs/latest/html/users_guide/data-type-extensions.html#gadt
+
+
+
+
+`seq` does not specify an evaluation order
+==========================================
+
+[The `seq` function is defined by the following equations in the Haskell Report][haskell-report-seq]:
+
+```
+seq ⊥ x = ⊥
+seq y x = x   (if y ≠ ⊥)
+```
+
+Any function that satisfies these properties is a valid implementation of `seq`. In particular, no evaluation order is specified; in other words, implementations can choose whether to evaluate `seq x y` by evaluating `x` first, `y` first, or even choosing randomly. In case such an order is desirable, there is the `pseq` function from Control.Concurrent, which guarantees evaluation of the first parameter first. These would all be valid implementations for `seq`:
+
+```haskell
+-- Evaluate x first
+seq1 x y = x `pseq` y
+
+-- Evaluate y first
+seq2 x y = y `pseq` x `seq1` y
+
+-- Random choice
+seqR | randomBool = seq1
+     | otherwise  = seq2
+     where randomBool = unsafePerformIO (randomRIO (False, True))
+```
+
+It is worth noting that evaluating `seq (error "x") (error "y")` allows inspection of which argument is actually evaluated first. However, the errors are identical from within the program's perspective; it takes an intervention of the runtime to extract anything useful from it.
+
+[haskell-report]: http://www.haskell.org/onlinereport/haskell2010/
+[haskell-report-seq]: http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
