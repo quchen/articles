@@ -386,7 +386,7 @@ advice before: constrain functions, not the data declarations.
 
 
 `seq` does not specify an evaluation order
-==========================================
+------------------------------------------
 
 [The `seq` function is defined by the following equations in the Haskell Report][haskell-report-seq]:
 
