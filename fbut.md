@@ -410,7 +410,7 @@ seq2 x y = y `pseq` x `seq1` y
 -- Random choice
 seqR | randomBool = seq1
      | otherwise  = seq2
-     where randomBool = unsafePerformIO (randomRIO (False, True))
+     where randomBool = unsafePerformIO randomIO
 ```
 
 It is worth noting that evaluating `seq (error "x") (error "y")` allows
