@@ -321,7 +321,9 @@ data Ord a => OrdList a = Nil | a :< OrdList a
 
 This is usually not a good idea, because the `Ord` constraint would be required
 by *all* functions working with an `OrdList`, regardless of whether it actually
-needs a comparison. For example, the `ordLength` function would look like this:
+needs a comparison, and in particular it would eliminate *no* `Ord` constraints
+on any function that uses `OrdList` compared to how an non-`Ord` list would
+work. For example, the `ordLength` function would look like this:
 
 ```haskell
 ordLength :: Ord a => OrdList a -> Int
