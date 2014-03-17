@@ -420,10 +420,13 @@ seqR | randomBool = seq1
      where randomBool = unsafePerformIO randomIO
 ```
 
-It is worth noting that evaluating `seq (error "x") (error "y")` allows
-inspection of which argument is actually evaluated first. However, the errors
-are identical from within the program's perspective; it takes an intervention
-of the runtime to extract anything useful from it.
+It is worth noting that evaluating `seq (error "x") (error "y")` superficially
+allows inspection of which argument is actually evaluated first. However, the
+errors are identical from within the program's perspective; it takes an
+intervention of the runtime to extract anything useful from it. In addition,
+the compiler may (and does!) choose which argument to evaluate first as an
+optimization, so there really is no guarantee of evaluation order even if the
+above simple test always displays the "x" error.
 
 [haskell-report]: http://www.haskell.org/onlinereport/haskell2010/
 [haskell-report-seq]: http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
