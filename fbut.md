@@ -91,10 +91,11 @@ to `ByteString` and back. The same goes for `Text`, which can be serialized
 using `ByteString.Encoding`.
 
 `ByteString.Char8` has very few limited uses, for example if you're
-communicating over a HTTP connections the commands are all ASCII, so using
-`Char8` saves you from converting between `ByteString` and `String` explicitly
-all the time. (Note that HTTP requests can still contain Unicode in their
-bodies, so HTTP isn't a ticket to using `Char8` in general.)
+communicating over a HTTP connections the headers are all ASCII. Using
+`Char8` saves you from converting your literal `String`s in the code to
+`ByteString` explicitly all the time, but note that HTTP requests can still
+contain Unicode in their bodies, so HTTP isn't a ticket to using `Char8` in
+general.
 
 [binary]: http://hackage.haskell.org/package/binary
 
