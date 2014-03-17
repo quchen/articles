@@ -214,18 +214,21 @@ b :: Num a => a -> a
 b = \x -> x - 4
 
 -- A useful Prelude definition for the "subtract from" function.
+-- Note the switched order of a and b.
 subtract :: Num a => a -> a -> a
 subtract a b = b - a
 
--- The "subtract 4" function written with the above.
+-- The "subtract 4 from the argument" function written with the above.
 c :: Num a => a -> a
 c = subtract 4
 ```
 
-So in summary, if you want a section with the `(-)` operator, use `subtract`
-like in example `c`. A final word of caution, using `subtract` in infix looks
-reasonable, but produces wrong (negative) results due to reversed arguments -
-``3 `subtract` 1`` is `-2`.
+So in summary, if*f* you want a section with the `(-)` operator, use `subtract`
+like in example `c`.
+
+A final word of caution, using `subtract` in infix looks reasonable, but
+produces wrong (negative) results due to reversed arguments - ``3 `subtract` 1``
+is `-2`.
 
 
 
