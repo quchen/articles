@@ -20,4 +20,4 @@ This repository is filled with articles I ([quchen][q]) have written and needed 
 - **zero_to_local_ghc.md** is the advanced version of *install_haskell_platform_manually.md* from above: it guides through the installation of self-compiled GHC plus standard libraries and tools from nothing.
 
 [bf]: https://en.wikipedia.org/wiki/Brainfuck
-[lens]: http://hackage.haskell.org/package/lens]
+[lens]: http://hackage.haskell.org/package/lens
