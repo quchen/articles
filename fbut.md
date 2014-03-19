@@ -11,15 +11,16 @@ Frequently brought up topics in #haskell
 Contents
 --------
 
-1. [`ByteString.Char8` is bad][toc-bsbad]
-2. [``(a `op`)`` is not ``\x -> a `op` x``][toc-sections]
-3. ["I don't understand Monads"][toc-monads]
-4. [Tabs vs. spaces][toc-tabspaces]
-5. [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
-6. [I'm looking for a good Regex library][toc-regex]
-7. [`Show` is not for prettyprinting][toc-show]
-8. [Imposing constraints on data types][toc-constraint-types]
-9. [`seq` does not specify an evaluation order][toc-seq]
+1.  [`ByteString.Char8` is bad][toc-bsbad]
+2.  [``(a `op`)`` is not ``\x -> a `op` x``][toc-sections]
+3.  ["I don't understand Monads"][toc-monads]
+4.  [Tabs vs. spaces][toc-tabspaces]
+5.  [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
+6.  [I'm looking for a good Regex library][toc-regex]
+7.  [`Show` is not for prettyprinting][toc-show]
+8.  [Imposing constraints on data types][toc-constraint-types]
+9.  [`seq` does not specify an evaluation order][toc-seq]
+10. [Where is `IO` defined?][toc-io]
 
 
 
@@ -32,6 +33,7 @@ Contents
 [toc-show]:             #show-is-not-for-prettyprinting
 [toc-constraint-types]: #imposing-constraints-on-data-types
 [toc-seq]:              #seq-does-not-specify-an-evaluation-order
+[toc-io]:               #where-is-io-defined
 
 
 
@@ -430,3 +432,31 @@ above simple test always displays the "x" error.
 
 [haskell-report]: http://www.haskell.org/onlinereport/haskell2010/
 [haskell-report-seq]: http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
+
+
+
+Where is `IO` defined?
+======================
+
+This question is hard to answer for multiple reasons.
+
+1. `IO` is all over the place.
+2. Looking at the userland definitions of `IO` most likely doesn't answer
+   basic questions about it.
+3. A lot of `IO` is primitive and hardwired into the GHC source.
+
+In any case, here are a couple of links to some interesting definitions around
+`IO`. I'm providing Github search links so these are somewhat robust against
+a changing code base.
+
+Definition          | Location
+--------------------|-----------------------------------------------------------
+`newtype IO`        | [`libraries/ghc-prim/GHC/Types.hs`][newtype-io]
+`primtype State#`   | [`compiler/prelude/primops.txt.pp`][primtype-state]
+`RealWorld`         | [`compiler/prelude/primops.txt.pp`][primtype-realworld]
+`instance Monad IO` | [`libraries/base/GHC/Base.lhs`][instance-monad-io]
+
+[newtype-io]: https://github.com/ghc/packages-ghc-prim/search?q=newtype%20io
+[primtype-state]: https://github.com/ghc/ghc/search?q=%22primtype+State%23%22&type=Code
+[primtype-realworld]: https://github.com/ghc/ghc/search?q=%22primtype+RealWorld%22&type=Code
+[instance-monad-io]: https://github.com/ghc/packages-base/search?q=%22instance++Monad+IO++where%22&type=Code
