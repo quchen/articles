@@ -70,6 +70,8 @@ example `&&~ x` applies `(&& x)`, and `<>~ x` `mappend`s `x`.
 - `||`
 - `&&`
 - `<>` (= infix `mappend`)
+- `</>` (`FilePath` composition)
+- `<.>` (Add extension to a `FilePath`)
 
 
 
