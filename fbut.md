@@ -13,7 +13,7 @@ Contents
 
 1.  [`ByteString.Char8` is bad][toc-bsbad]
 2.  [``(a `op`)`` is not ``\x -> a `op` x``][toc-sections]
-3.  ["I don't understand Monads"][toc-monads]
+3.  [I don't understand Monads][toc-monads]
 4.  [Tabs vs. spaces][toc-tabspaces]
 5.  [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
 6.  [I'm looking for a good Regex library][toc-regex]
@@ -138,8 +138,8 @@ complaints.
 
 
 
-"I don't understand Monads"
----------------------------
+I don't understand Monads
+-------------------------
 
 There are many articles about Monads and how to use them out there, and as many
 articles pointing that out ("Monad tutorial fallacy"), and probably even more
