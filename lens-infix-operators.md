@@ -16,13 +16,13 @@ correct data type (which in particular starts witha capital letter).
 
 ## General
 
-- `@`:  Provide access to the index of the data field looked at.
+- `@`: Provide access to the index of the data field looked at.
 
  *Example:* `("hello","world","!") ^@. _2` is `(1,"world")`, since "world" is
             the entry at the second (`_2`) entry of the zero-indexed tuple,
             hence the retrieved index `1`.
 
-- `#`:  Takes an `ALens` parameter instead of whatever else the normal operator
+- `#`: Takes an `ALens` parameter instead of whatever else the normal operator
         does. (`#` alone is a synonym for `review`, which builds a data
         structure out of a lens.)
 
@@ -30,9 +30,9 @@ correct data type (which in particular starts witha capital letter).
 
 ## Getting
 
-- `^`:  General "view data" operator.
+- `^`: General "view data" operator.
 
-- `.`:  Single value.
+- `.`: Single value.
 
  *Example*: `(1, "hello") ^. _2` views the second element, `"hello"`.
 
@@ -41,7 +41,7 @@ correct data type (which in particular starts witha capital letter).
  *Example:* `"Hello, World!" ^.. folded . filtered (< 'o')` selects all elements
             lexicogrpahically smaller than 'o', resulting in `"Hell, Wld!"`.
 
-- `?`:  Return the first value of a lookup, or `Nothing` if there is none.
+- `?`: Return the first value of a lookup, or `Nothing` if there is none.
 
  *Example*: `[1..10] ^? folded` picks the first element of the list, resulting
             in `Just 1`. `[] ^? folded` on the other hand is `Nothing`.
@@ -51,7 +51,7 @@ correct data type (which in particular starts witha capital letter).
  *Example:* `[1..10] ^?! folded` is `1`, while `[] ^?! folded` is a runtime
             error.
 
-- `!`:  Perform a monadic action with the data.
+- `!`: Perform a monadic action with the data.
 
  *Example:* `["Hello","World!"] ^! folded . act putStrLn` prints the list, one
             element at a time.
@@ -71,23 +71,23 @@ correct data type (which in particular starts witha capital letter).
 
 ## Setting
 
-- `~`:  General "set value" operator.
+- `~`: General "set value" operator.
 
-- `=`:  Same as `~`, but set an implicit `MonadState` state.
+- `=`: Same as `~`, but set an implicit `MonadState` state.
 
-- `.`:  Specify the new value directly.
+- `.`: Specify the new value directly.
 
  *Example:* `(_2 .~ "Mrs. Robinson") ("Hello", "World")` [greets Mrs. Robinson.]
             [hello-mrs-robinson]
 
-- `?`:  Use `Just` the specified value, i.e. `.` with an added `Just`. This
-        mostly seems to be there for symmetry with the getter-`?`.
+- `?`: Use `Just` the specified value, i.e. `.` with an added `Just`. This
+       mostly seems to be there for symmetry with the getter-`?`.
 
  *Example:* `(_2 ?~ "kidding") ("Hello", "World")` greets someone and takes it
             back immediately. Safe in Haskell, not so safe otherwise.
 
-- `%`:  *Mod*ify, chosen as a pun for other languages use `%` as the *mod*ulo
-        operator.
+- `%`: *Mod*ify, chosen as a pun for other languages use `%` as the *mod*ulo
+       operator.
 
  *Example:* `(traversed %@~ replicate) "Hello"` replaces each character with an
             <index>-time replication of itself, yielding
@@ -95,8 +95,8 @@ correct data type (which in particular starts witha capital letter).
 
 - `%%`: ?
 
-- `<`:  Also return the new value of the modified field. Useful to check on what
-        was actually modified deep inside a structure.
+- `<`: Also return the new value of the modified field. Useful to check on what
+       was actually modified deep inside a structure.
 
  *Example:* `(traversed <%~ Sum . length) (words "let it be")` maps every list
             entry to its length, and also the monoidal summary of all
@@ -151,7 +151,7 @@ example `&&~ x` applies `(&& x)`, and `<>~ x` `mappend`s `x`.
 
 ## Other operators
 
-- `&`:  Like ordinary `$`, but flipped.
+- `&`: Like ordinary `$`, but flipped.
 - `<|`: Prepend (cons).
 - `|>`: Append (snoc).
 - `??`: Obscure way to flip arguments.
