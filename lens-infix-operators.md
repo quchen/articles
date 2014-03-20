@@ -48,7 +48,7 @@ correct data type (which in particular starts witha capital letter).
 
 - `?!`: Unsafe version of `?`: crashes when there is no value.
 
- *Example:* `[1..10] ^?! folded` is `1`, while `[] ^? folded` is a runtime
+ *Example:* `[1..10] ^?! folded` is `1`, while `[] ^?! folded` is a runtime
             error.
 
 - `!`:  Perform a monadic action with the data.
