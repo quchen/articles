@@ -39,7 +39,7 @@ correct data type (which in particular starts witha capital letter).
 - `..`: Multiple values as a list.
 
  *Example:* `"Hello, World!" ^.. folded . filtered (< 'o')` selects all elements
-            lexicogrpahically smaller than 'o', resulting in `"Hell, Wld!"`.
+            (UTF-8-) smaller than 'o', resulting in `"Hell, Wld!"`.
 
 - `?`: Return the first value of a lookup, or `Nothing` if there is none.
 
