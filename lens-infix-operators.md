@@ -90,7 +90,7 @@ correct data type (which in particular starts witha capital letter).
        operator.
 
  *Example:* `(traversed %@~ replicate) "Hello"` replaces each character with an
-            <index>-time replication of itself, yielding
+            *index*-time replication of itself, yielding
             `["","e","ll","lll","oooo"]`.
 
 - `%%`: ?
