@@ -38,8 +38,8 @@ correct data type (which in particular starts witha capital letter).
 
 - `..`: Multiple values as a list.
 
- *Example:* `"Hello, World!" ^.. folded . filtered (< 'o')` selects all elements
-            (UTF-8-) smaller than 'o', resulting in `"Hell, Wld!"`.
+ *Example:* `"Hello, World!" ^.. folded . filtered isLower` keeps only lower
+            case letters, result: `"elloorld"`.
 
 - `?`: Return the first value of a lookup, or `Nothing` if there is none.
 
@@ -117,19 +117,14 @@ The following symbols are all used as shortcuts to do something specific with a
 value. `<op>~ x` generally applies `(<op> x)` to the fields pointed at, so for
 example `&&~ x` applies `(&& x)`, and `<>~ x` `mappend`s `x`.
 
-- `+`
-- `-`
-- `*`
-- `//` (Divide; `/` was not taken because `/=` is not the "divide by" operation,
-       but inequality).
-- `^`
-- `^^`
-- `**`
-- `||`
-- `&&`
-- `<>` (= infix `mappend`)
-- `</>` (`FilePath` composition)
-- `<.>` (Add extension to a `FilePath`)
+- Standard operations
+      - Standard arithmetic: `+`, `-`, `*`, `//` (Divide; `/` was not taken
+        because `/=` is inequality), `^`, `^^`, `**`
+      - Boolean: `||`, `&&`
+      - Monoidal: `<>`
+- Specialized operations (located in *.Lens submodules):
+      - File paths: `</>`, `<.>`
+      - Bitwise arithmetic: `.|.`, `.&.`
 
 
 
@@ -151,11 +146,35 @@ example `&&~ x` applies `(&& x)`, and `<>~ x` `mappend`s `x`.
 
 ## Other operators
 
-- `&`: Like ordinary `$`, but flipped.
-- `<|`: Prepend (cons).
-- `|>`: Append (snoc).
-- `??`: Obscure way to flip arguments.
+- `&`: Like ordinary `$`, but flipped. Useful for chaining lens operations, as
+       they typically read left-to-right.
+
+ *Example:* `(["hello", "world"], 42) & _1.mapped <>~ "!" & _2 +~ 10` first
+            appends "!" to all list elements, and then adds 10 to the second
+            tuple component, resulting in `(["hello!", "world!"], 52)`.
+
+- `<|`, `|>`: Prepend (cons) and append (snoc). Be careful to specify the
+              arguments in the right order or you'll be greeted with a giant
+              error message.
+
+ *Example:* `0 <| [1,2,3]` evaluates to `[0,1,2,3]`,
+             `[1,2,3] |> 4` to `[1,2,3,4]`.
+
+- `??`: Most useful when applied to the function Functor, which allows seeing
+        `??` as a placeholder for the first of a two-argument function.
+
+ *Example:* `f ?? x` is equivalent to `\y -> f y x`.
+
 - `<.>`, `.>`, `<.`: Composition of indexed functions.
+
+- `<~`: Execute a `MonadState` action, and store the result in the state fields
+        pointed at by the lens. Named to resemble with the `<-` symbol, which
+        assigns the result of a monadic action to an ordinary name.
+
+ *Example:* `_2 <~ fmap (uncurry (++)) get }` will execute the action on the
+            right hand side; the result is the concatenation of the two tuple
+            elements of the state. This is then set as the second field of the
+            state.
 
 
 
