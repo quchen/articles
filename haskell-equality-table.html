@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<head>
+      <title>Haskell truth table</title>
+      <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+      <style type="text/css">
+            table#eq tr:first-child th {
+                  height:     3em;
+                  max-width:  1em;
+                  overflow:   hidden;
+                  transform:  rotate(-90deg);
+                  text-align: left;
+                  }
+            table#eq tr th {
+                  text-align:  right;
+                  white-space: pre;
+                  font-weight: normal;
+                  }
+            table#eq tr:first-child th a {
+                  display: block;
+                  }
+            th {
+                  font-weight: bold;
+                  text-align:  left;
+                  }
+            .cell {
+                  height:        1.2em;
+                  width:         1.2em;
+                  max-width:     1.2em;
+                  max-height:    1.2em;
+                  border-radius: 3px;
+                  border-width:  2px;
+                  border-style:  solid;
+                  text-align:    center;
+                  }
+            .true {
+                  background-color: #8fcf70;
+                  border-color:     #599f35;
+                  }
+            .true:before { content: "="; }
+            .false {
+                  background-color: #e0a2a1;
+                  border-color:     #c14746;
+                  }
+            .false:before { content: "≠"; }
+            .typeError {
+                  background-color: #eee;
+                  border-color:     #ccc;
+                  }
+            .ambiguousError {
+                  background-color: #eee;
+                  border-color:     #999;
+                  }
+      </style>
+</head>
+<body>
+
+<h1>Haskell equality table</h1>
+
+<p>(CSS hacks for proper table heads appreciated. You can contact me over
+<a href="https://github.com/quchen/articles">GitHub</a>.)</p>
+
+
+<table id="eq">
+<tr>   <td/>                   <th>True</th>                  <th>False</th>                <th>1 :: Int</th>              <th>0 :: Int</th>              <th>-1 :: Int</th>             <th>1 :: Double</th>           <th>0 :: Double</th>           <th>-1 :: Double</th>          <th>NaN</th>                   <th>"True"</th>                <th>"False"</th>               <th>"1"</th>                   <th>"0"</th>                   <th>"-1"</th>                  <th>""</th>                    <th>[]</th>                         <th>[[]]</th>                       <th>[0 :: Int]</th>            <th>[1 :: Int]</th>       </tr>
+<tr>   <th>True</th>           <td class="cell true"/>        <td class="cell false"/>      <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>False</th>          <td class="cell false"/>       <td class="cell true"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>1 :: Int</th>       <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>0 :: Int</th>       <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>-1 :: Int</th>      <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>1 :: Double</th>    <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>0 :: Double</th>    <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>-1 :: Double</th>   <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>NaN</th>            <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>        <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>"True"</th>         <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>"False"</th>        <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>"1"</th>            <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>"0"</th>            <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>"-1"</th>           <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell false"/>       <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>""</th>             <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell true"/>             <td class="cell typeError"/>        <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>[]</th>             <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell false"/>       <td class="cell true"/>        <td class="cell ambiguousError"/>   <td class="cell ambiguousError"/>   <td class="cell false"/>       <td class="cell false"/>       </tr>
+<tr>   <th>[[]]</th>           <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell ambiguousError"/>   <td class="cell ambiguousError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   </tr>
+<tr>   <th>[0 :: Int]</th>     <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell true"/>        <td class="cell false"/>       </tr>
+<tr>   <th>[1 :: Int]</th>     <td class="cell typeError"/>   <td class="cell typeError">   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell typeError"/>   <td class="cell false"/>            <td class="cell typeError"/>        <td class="cell false"/>       <td class="cell true"/>        </tr>
+</table>
+
+<table>
+<tr>   <th colspan="2">Legend</th>                                                                                   </tr>
+<tr>   <td class="cell true"/>             <td>x == y ↠ True </td>                                                   </tr>
+<tr>   <td class="cell false"/>            <td>x == y ↠ False</td>                                                   </tr>
+<tr>   <td class="cell typeError"/>        <td>Type error (mismatched types)</td>                                    </tr>
+<tr>   <td class="cell ambiguousError"/>   <td>Type error (ambiguous type, requires explicit type annotation)</td>   </tr>
+
+</body>

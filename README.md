@@ -8,6 +8,7 @@ This repository is filled with articles I ([quchen][q]) have written and needed 
 - **crazy_io.md** shows some examples of lazy IO pitfalls in Haskell.
 - **fbut.md** is a list of **F**requently **B**rought **U**p **T**opics in #haskell for easy reference. It's like an FAQ, except that the "F" stands for "frequently" instead of "someone thought this may be worth mentioning".
 - **great_things_about_haskell.md** explains what I thought was cool about Haskell some time ago. Maybe I should update it some day.
+- **haskell-equality-table.html** was created in a time where it seemed to be en vogue to create tables for the `==` operator in various languages. It's a very boring table.
 - **install_haskell_platform_manually.md** was once a small file for myself to walk me through setting up GHC properly in case I needed to. The revised version is this file, explaining how to get from zero to GHC and Haskell Platform.
 - **law-rules.md** is a draft of a not-yet-proposed proposal for a GHC feature.
 - **lens-infix-operators.md** provides an overview of what the individual symbols in infix operators of the [lens][lens] library stand for.
