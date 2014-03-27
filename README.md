@@ -32,7 +32,7 @@ This repository is filled with articles I ([quchen][q]) have written and needed 
 [fbut]:             fbut.md
 [comprehensible]:   functions_comprehensible.md
 [great]:            great_things_about_haskell.md
-[equality]:         haskell-equality-table.md
+[equality]:         haskell-equality-table.html
 [equality-live]:    https://rawgithub.com/quchen/articles/master/haskell-equality-table.html
 [hp]:               install_haskell_platform_manually.md
 [law-rules]:        law-rules.md
