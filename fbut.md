@@ -2,7 +2,7 @@ Frequently brought up topics in #haskell
 ========================================
 
 (This is like an FAQ, except that the *F* stands for *frequently* instead of
-"someone thought this might be worth mentioning".)
+*someone thought this might be worth mentioning*.)
 
 
 
@@ -11,16 +11,17 @@ Frequently brought up topics in #haskell
 Contents
 --------
 
-1.  [`ByteString.Char8` is bad][toc-bsbad]
-2.  [``(a `op`)`` is not ``\x -> a `op` x``][toc-sections]
-3.  [I don't understand Monads][toc-monads]
-4.  [Tabs vs. spaces][toc-tabspaces]
-5.  [`(- 4)` is not `\x -> x - 4`][toc-special-minus]
-6.  [I'm looking for a good Regex library][toc-regex]
-7.  [`Show` is not for prettyprinting][toc-show]
-8.  [Imposing constraints on data types][toc-constraint-types]
-9.  [`seq` does not specify an evaluation order][toc-seq]
-10. [Where is `IO` defined?][toc-io]
+1.  [`ByteString.Char8` is bad]                  [toc-bsbad]
+2.  [``(a `op`)`` is not ``\x -> a `op` x``]     [toc-sections]
+3.  [I don't understand Monads]                  [toc-monads]
+4.  [Tabs vs. spaces]                            [toc-tabspaces]
+5.  [`(- 4)` is not `\x -> x - 4`]               [toc-special-minus]
+6.  [I'm looking for a good Regex library]       [toc-regex]
+7.  [`Show` is not for prettyprinting]           [toc-show]
+8.  [Imposing constraints on data types]         [toc-constraint-types]
+9.  [`seq` does not specify an evaluation order] [toc-seq]
+10. [Where is `IO` defined?]                     [toc-io]
+11. [Don't use ...]                              [toc-dont-use]
 
 
 
@@ -34,6 +35,7 @@ Contents
 [toc-constraint-types]: #imposing-constraints-on-data-types
 [toc-seq]:              #seq-does-not-specify-an-evaluation-order
 [toc-io]:               #where-is-io-defined
+[toc-dont-use]:         #dont-use-
 
 
 
@@ -460,3 +462,32 @@ Definition          | Location
 [primtype-state]: https://github.com/ghc/ghc/search?q=%22primtype+State%23%22&type=Code
 [primtype-realworld]: https://github.com/ghc/ghc/search?q=%22primtype+RealWorld%22&type=Code
 [instance-monad-io]: https://github.com/ghc/packages-base/search?q=%22instance++Monad+IO++where%22&type=Code
+
+
+
+Don't use ...
+=============
+
+These functions have either every few use cases, or none at all. The former
+means that unless you have a very good reason to use them, they are *wrong*.
+(Not good reasons include that the types match conveniently, it's convenient,
+anything involving "probably".)
+
+- `read`. It crashes on a parse error. Use `readMaybe` instead, which has a
+  `Maybe a` result.
+
+- `genericLength`. It's literally the naive `1 + length rest` implementation,
+  and nobody is quite sure why it is in the standard library. `genericLength`
+  uses O(n) stack space so it can overflow, which is just awful behaviour. If
+  you need an `Integer` version of `length`, use `fromIntegral . length`, which
+  runs in constant stack space and is well-optimized. (The *one* valid use case
+  for `genericLength` is for lazy nats, which nobody ever uses.)
+
+- `unsafePerformIO`. It's very useful in advanced Haskell, and very wrong
+  otherwise. Chances are `>>=` is what you want.
+
+- `head`, `tail`, `isJust`, `isNothing`, `fromJust`, ... These should all be
+  substituted by pattern matching. For one, they separate structural code from
+  code that does computations, and even more importantly, the compiler knows
+  when you forget to handle a case (when compiled with `-W`).
+
