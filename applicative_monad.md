@@ -232,3 +232,7 @@ Status report
 - 2013-05-22: SPJ confirmed that adding ad-hoc warnings would be possible
 - 2013-05-23: AMP posted to libraries mailing list
 - 2013-06-17: AMP accepted unanimously, last call sent, wiki updated
+- 2013-09-09: [AMP warnings patch merged][amp-patch], to be released with
+              GHC 7.8
+
+[amp-patch]: https://github.com/ghc/ghc/commit/75a9664af1c4e6f87794b49a215adb235b20696d
