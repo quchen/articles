@@ -438,7 +438,7 @@ above simple test always displays the "x" error.
 
 
 Where is `IO` defined?
-======================
+----------------------
 
 This question is hard to answer for multiple reasons.
 
@@ -466,7 +466,7 @@ Definition          | Location
 
 
 Don't use ...
-=============
+-------------
 
 These functions have either every few use cases, or none at all. The former
 means that unless you have a very good reason to use them, they are *wrong*.
