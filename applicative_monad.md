@@ -234,5 +234,7 @@ Status report
 - 2013-06-17: AMP accepted unanimously, last call sent, wiki updated
 - 2013-09-09: [AMP warnings patch merged][amp-patch], to be released with
               GHC 7.8
+- 2014-04-09: GHC 7.8.1 released. AMP is now in the second stage: warnings are
+              issued, Hackage should adapt to cleaning them up.
 
 [amp-patch]: https://github.com/ghc/ghc/commit/75a9664af1c4e6f87794b49a215adb235b20696d
