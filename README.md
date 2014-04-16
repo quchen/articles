@@ -8,6 +8,7 @@ This repository is filled with articles I ([quchen][q]) have written and needed 
 - [functions_comprehensible.md][comprehensible]: Basic Haskell functions written in easily comprehensible notation. Nice for explaining e.g. `sequence`.
 - [great_things_about_haskell.md][great] explains what I thought was cool about Haskell some time ago. Maybe I should update it some day.
 - [haskell-equality-table.html][equality] [(live version)][equality-live] was created in a time where it seemed to be en vogue to create tables for the `==` operator in various languages. It's a very boring table.
+- [haskell-style.md][haskell-style] describes my Haskell code style and the rationale behind it.
 - [install_haskell_platform_manually.md][hp] was once a small file for myself to walk me through setting up GHC properly in case I needed to. The revised version is this file, explaining how to get from zero to GHC and Haskell Platform.
 - [law-rules.md][law-rules] is a draft of a not-yet-proposed proposal for a GHC feature.
 - [lens-infix-operators.md][lens-infix] provides an overview of what the individual symbols in infix operators of the [lens][lens] library stand for.
@@ -26,22 +27,23 @@ This repository is filled with articles I ([quchen][q]) have written and needed 
 [unmaintain-org]: https://www.thc.org/root/phun/unmaintain.html
 
 [amp]:              applicative_monad.md
+[bf-tut]:           write_yourself_a_brainfuck.md
 [build]:            build.md
+[comprehensible]:   functions_comprehensible.md
 [cont]:             cont.md
 [crazy-io]:         crazy_io.md
-[fbut]:             fbut.md
-[comprehensible]:   functions_comprehensible.md
-[great]:            great_things_about_haskell.md
-[equality]:         haskell-equality-table.html
 [equality-live]:    https://rawgithub.com/quchen/articles/master/haskell-equality-table.html
+[equality]:         haskell-equality-table.html
+[fail]:             monad_fail.md
+[fbut]:             fbut.md
+[great]:            great_things_about_haskell.md
+[haskell-style]:    haskell_style.md
 [hp]:               install_haskell_platform_manually.md
 [law-rules]:        law-rules.md
 [lens-infix]:       lens-infix-operators.md
+[local-ghc]:        zero_to_local_ghc.md
 [loeb]:             loeb-moeb.md
 [modular-keyboard]: modular_keyboard.md
-[fail]:             monad_fail.md
 [reader]:           reader_instance_derived.md
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
-[bf-tut]:           write_yourself_a_brainfuck.md
-[local-ghc]:        zero_to_local_ghc.md
