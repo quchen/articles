@@ -89,3 +89,46 @@ Parentheses
   another parenthesis for them seems unnecessary, as they mostly account for an
   expression's context, and now that it does by itself. In that sense `$` is
   sort of a divider between infrastructure and program logic.
+
+
+API usage
+---------
+
+- For some basic functions, prefer monomorphic implementations over overloaded
+  ones whenever this is possible without loss of generality.
+
+  ```haskell
+  -- Mapping over lists
+  map f [a,b,c]
+  -- instead of
+  fmap f [a,b,c]
+
+  -- Chaining functions
+  fmap . fmap
+  -- instead of
+  fmap fmap fmap
+
+  -- Concatenating Strings
+  "hello" ++ "world"
+  -- instead of
+  "hello" <> "world"
+  ```
+
+  Note that there is only a handful of functions where I recommend doing this;
+  the list above is almost exhaustive.
+
+- Advanced functions, like `traverse`, should always be used in their
+  generalized form. It would just be a burden to the reader to keep all the
+  locally defined `traverseTYPE` functions in mind, and there is no benefit
+  for doing so.
+
+- Import modules with names conflicting with basic modules, such as `Prelude`
+  and `Data.List`, qualified; do this regardless of whether the conflicting
+  basic modules are actually imported.
+
+  ```haskell
+  import qualified Data.Foldable as F
+  -- instead of
+  import Prelude hiding (foldl, foldr, ...)
+  import Data.Foldable
+  ```
