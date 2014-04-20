@@ -473,6 +473,18 @@ means that unless you have a very good reason to use them, they are *wrong*.
 (Not good reasons include that the types match conveniently, it's convenient,
 anything involving "probably".)
 
+- `fail` from the `Monad` typeclass is unambiguously a mistake for multiple
+  reasons. It prefers `String` over better text representations, `Monad` has
+  nothing to do with text anyway, and worst of all, many monads *cannot* have
+  an implementation of `fail`. As a rule of thumb, all `Monad`s that are not
+  also `MonadPlus` have a crash baked in because `fail` does simply not exist
+  for them.
+
+  Now turn back to Haskell's type system: If a type signature says `Monad m`,
+  the function should work for any `Monad` `m`. If the function uses `fail` it
+  does not, hence the function is partial, and partial functions in Haskell are
+  bad.
+
 - `read`. It crashes on a parse error. Use `readMaybe` instead, which has a
   `Maybe a` result.
 
