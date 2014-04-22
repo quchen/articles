@@ -22,6 +22,7 @@ Contents
 9.  [`seq` does not specify an evaluation order] [toc-seq]
 10. [Where is `IO` defined?]                     [toc-io]
 11. [Don't use ...]                              [toc-dont-use]
+12. [How to start learning Haskell]              [toc-haskell-start]
 
 
 
@@ -36,6 +37,7 @@ Contents
 [toc-seq]:              #seq-does-not-specify-an-evaluation-order
 [toc-io]:               #where-is-io-defined
 [toc-dont-use]:         #dont-use-
+[toc-haskell-start]:    #how-to-start-learning-haskell
 
 
 
@@ -503,3 +505,28 @@ anything involving "probably".)
   code that does computations, and even more importantly, the compiler knows
   when you forget to handle a case (when compiled with `-W`).
 
+
+
+How to start learning Haskell
+-----------------------------
+
+The usual Haskell beginner books are [Hutton][hutton], [LYAH][lyah] (free to
+read online) and [RWH][rwh] (dito). I recommend starting with Hutton or LYAH,
+which cover the absolute basics better than RWH. The latter on the other hand
+is something in between a practical reference guide for some libraries and an
+introductory book. Some of the chapters use outdated libraries (the book is from
+2008), but it's still conceptually right and definitely worth a read after
+you've had a good look at the other books.
+
+Hutton and RWH provide exercises to each chapter. Regardless of which book
+you're actually reading, you should look these exercises up and solve them
+whenever you feel you've learned enough to do so. Another good place to start
+writing little functions is by implementing functions from [Prelude][prelude]
+and [Data.List][data.list].
+
+
+[hutton]: http://www.cs.nott.ac.uk/~gmh/book.html
+[lyah]: http://learnyouahaskell.com/
+[rwh]: http://book.realworldhaskell.org/
+[prelude]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Prelude.html
+[data.list]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Data-List.html
