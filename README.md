@@ -43,6 +43,8 @@ online for various reasons.
 - [reader_instance_derived.md][reader] shows step by step how the golfed
   instance of Reader (as presented in LYAH, for example) can be derived from
   something sensible and readable.
+- [seqm_proposal.md][seqm-proposal] contains the proposal text for a new basic
+  Haskell function to force strictness of a monadic computation.
 - [unmaintainable_haskell.md][unmaintain] describes how to write unmaintainable
   Haskell code in the spirit of [How to write unmaintainable code][unmaintain-org]
 - [useful_techniques.md][useful] shows some neat little Haskell tricks I've
@@ -91,3 +93,4 @@ online for various reasons.
 [reader]:           reader_instance_derived.md
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
+[seqm-proposal]:    seqm_proposal.md
