@@ -2,17 +2,18 @@ Strictifying Monadic values
 ===========================
 
 Half a year ago, Johan Tibell proposed adding a strict
-equivalent to fmap. This discussion has ended in
-bikeshedding, it was reopened, it ended in bikeshedding
-again. This is a third attempt to get this through, with
-individual options and no alternatives proposed, compiled
-from the two more popular responses in the other threads.
+equivalent to fmap ([link][orig-proposal]). This discussion
+got lost in details, it was reopened, it ended in
+bikeshedding again. This is a third attempt to get
+this through, with individual options and no alternatives
+proposed, compiled from the two more popular responses
+in the other threads.
 
 Please do not propose alternative implementations here,
-we've been through this twice already. Vote -1 to show
-disagreement. I think this functionality should be in
-the standard libraries in one way or another, regardless
-of how it's named in the end.
+we've been through this twice already. Vote ±1 on each
+point to show (dis)agreement. I think this functionality
+should be in the standard libraries in one way or
+another, regardless of how it's named in the end.
 
 
 
@@ -24,11 +25,18 @@ of how it's named in the end.
   (<$!>) :: Monad m => (a -> b) -> m a -> m b
   f <$!> m = do x <- m
                 return $! f x
-  {-# INLINE (<$!>) #-}
   ```
 
   This is closely related to fmap in terms of functionality,
-  but requires a more restrictive Monad constraint.
+  but requires a Monad constraint.
+
+  This would allow defining
+
+  ```haskell
+  seqM m = id <$!> m
+  ```
+
+  if such a function is needed.
 
 
 
@@ -58,5 +66,8 @@ of how it's named in the end.
 
 
 
-A voting period of two weeks (until 09-05-2014) should be
+A voting period of two weeks (until 10-05-2014) should be
 sufficient to allow everyone to join in.
+
+
+[orig-proposal]: http://www.haskell.org/pipermail/libraries/2013-November/021728.html
