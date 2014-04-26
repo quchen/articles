@@ -6,11 +6,15 @@ online for various reasons.
 
 
 
-## Haskell related
 
-- [applicative_monad.md][amp] is the original text of the 2013 Applicative-Monad
-  proposal, which finally got things going to make Applicative a superclass of
-  Monad.
+
+Haskell related
+---------------
+
+
+
+### General, tutorials
+
 - [build.md][build] explains how the `build` function, which is used in rewrite
   rules for list-based functions, works.
 - [cont_monad.md][cont] is my shot at explaining the `Cont` Monad.
@@ -32,19 +36,13 @@ online for various reasons.
   walk me through setting up GHC properly in case I needed to. The revised
   version is this file, explaining how to get from zero to GHC and Haskell
   Platform.
-- [law-rules.md][law-rules] is a draft of a not-yet-proposed proposal for a GHC
-  feature.
 - [lens-infix-operators.md][lens-infix] provides an overview of what the
   individual symbols in infix operators of the [lens][lens] library stand for.
 - [loeb-moeb.md][loeb] is about an interesting function that calculates the
   result of a function when applied to the result of the function.
-- [monad_fail.md][fail] is a proposal similar to the AMP, with the goal of
-  removing `fail` from the `Monad` typeclass.
 - [reader_instance_derived.md][reader] shows step by step how the golfed
   instance of Reader (as presented in LYAH, for example) can be derived from
   something sensible and readable.
-- [seqm_proposal.md][seqm-proposal] contains the proposal text for a new basic
-  Haskell function to force strictness of a monadic computation.
 - [unmaintainable_haskell.md][unmaintain] describes how to write unmaintainable
   Haskell code in the spirit of [How to write unmaintainable code][unmaintain-org]
 - [useful_techniques.md][useful] shows some neat little Haskell tricks I've
@@ -59,9 +57,27 @@ online for various reasons.
 
 
 
-## Other topics
+### Proposals
 
-- [modular_keyboard.md][modular-keyboard] describes a keyboard I'd like to have. I encourage everyone to steal this idea so I can buy one from him.
+- [applicative_monad.md][amp] is the original text of the 2013 Applicative-Monad
+  proposal, which finally got things going to make Applicative a superclass of
+  Monad.
+- [law-rules.md][law-rules] is a draft of a not-yet-proposed proposal for a GHC
+  feature.
+- [monad_fail.md][fail] is a proposal similar to the AMP, with the goal of
+  removing `fail` from the `Monad` typeclass.
+- [seqm_proposal.md][seqm-proposal] contains the proposal text for a new basic
+  Haskell function to force strictness of a monadic computation.
+
+
+
+
+
+Other topics
+------------
+
+- [modular_keyboard.md][modular-keyboard] describes a keyboard I'd like to have.
+  I encourage everyone to steal this idea so I can buy one from him.
 
 
 
