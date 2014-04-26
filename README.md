@@ -92,7 +92,7 @@ Other topics
 [bf-tut]:           write_yourself_a_brainfuck.md
 [build]:            build.md
 [comprehensible]:   functions_comprehensible.md
-[cont]:             cont.md
+[cont]:             cont_monad.md
 [crazy-io]:         crazy_io.md
 [equality-live]:    https://rawgithub.com/quchen/articles/master/haskell-equality-table.html
 [equality]:         haskell-equality-table.html
