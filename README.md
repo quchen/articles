@@ -36,6 +36,8 @@ Haskell related
   walk me through setting up GHC properly in case I needed to. The revised
   version is this file, explaining how to get from zero to GHC and Haskell
   Platform.
+- [instances.md][instances] is an informal description of what various class
+  instances of basic Haskell types do.
 - [lens-infix-operators.md][lens-infix] provides an overview of what the
   individual symbols in infix operators of the [lens][lens] library stand for.
 - [loeb-moeb.md][loeb] is about an interesting function that calculates the
@@ -110,3 +112,4 @@ Other topics
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
 [seqm-proposal]:    seqm_proposal.md
+[instances]:        instances.md
