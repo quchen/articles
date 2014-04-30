@@ -19,6 +19,8 @@ Haskell related
   rules for list-based functions, works.
 - [cont_monad.md][cont] is my shot at explaining the `Cont` Monad.
 - [crazy_io.md][crazy-io] shows some examples of lazy IO pitfalls in Haskell.
+- [fix.md][fix] is a tutorial on what `fix`, Haskell's version of the fixed
+  point combinator, does and how it can be used.
 - [fbut.md][fbut] is a list of **F**requently **B**rought **U**p **T**opics in
   Freenode's #haskell channel for easy reference. It's like an FAQ, except that
   the "F" stands for "frequently" instead of "someone thought this may be worth
@@ -110,3 +112,4 @@ Other topics
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
 [seqm-proposal]:    seqm_proposal.md
+[fix]:              fix.md
