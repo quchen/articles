@@ -1,6 +1,3 @@
-**DRAFT. None of the code here has been tested.**
-
-
 The `fix` function
 ==================
 
