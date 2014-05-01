@@ -194,7 +194,7 @@ zipWith f = go where
       go _ _ = []
 
 zipWith f = fix go where
-      go rec (x:xs), (y:ys) = f x y : rec xs ys
+      go rec (x:xs) (y:ys) = f x y : rec xs ys
       go _ _ _ = []
 ```
 
