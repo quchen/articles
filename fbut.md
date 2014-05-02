@@ -94,7 +94,7 @@ Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion
 `String -> ByteString`, then use a serialization library such as
 [Binary][binary] that takes care of the conversion from `[Char]` to `[Word8]`
 to `ByteString` and back. The same goes for `Text`, which can be serialized
-using `ByteString.Encoding`.
+using `Text.Encoding`.
 
 `ByteString.Char8` has very few limited uses, for example if you're
 communicating over a HTTP connections the headers are all ASCII. Using
