@@ -91,6 +91,21 @@ Parentheses
   sort of a divider between infrastructure and program logic.
 
 
+
+Naming
+------
+
+- Name your unused patterns. An underscore is often hard to see, and naming it
+  makes it explicit which part of the data you're not using.
+
+  ```haskell
+  case foo of
+        Just (Left (_filename, handle)) -> doSomething handle
+        _else -> ...
+  ```
+
+
+
 API usage
 ---------
 
