@@ -104,6 +104,16 @@ Naming
         _else -> ...
   ```
 
+- Specify imports block-wise, separated by a blank line, in several sections:
+
+  - Base
+  - Semi-standard (e.g. included in the Haskell Platform)
+  - Other
+  - Locally defined, i.e. part of the current project
+
+  This can sometimes be divided up some more, for example the Lens/Pipes
+  ecosystems may get their own blocks.
+
 
 
 API usage
