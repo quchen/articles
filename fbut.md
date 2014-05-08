@@ -475,35 +475,71 @@ means that unless you have a very good reason to use them, they are *wrong*.
 (Not good reasons include that the types match conveniently, it's convenient,
 anything involving "probably".)
 
-- `fail` from the `Monad` typeclass is a mistake for multiple reasons. It
-  prefers `String` over better text representations, `Monad` has nothing to do
-  with text anyway, and worst of all, many monads *cannot* have an
-  implementation of `fail`. As a rule of thumb, all `Monad`s that are not also
-  `MonadPlus` have a crash baked in because `fail` does simply not exist for
-  them.
+### `fail`
+`fail` from the `Monad` typeclass is a mistake for multiple reasons. It
+prefers `String` over better text representations, `Monad` has nothing to do
+with text anyway, and worst of all, many monads *cannot* have an
+implementation of `fail`. As a rule of thumb, all `Monad`s that are not also
+`MonadPlus` have a crash baked in because `fail` does simply not exist for
+them.
 
-  Now turn back to Haskell's type system: If a type signature says `Monad m`,
-  the function should work for any `Monad` `m`. If the function uses `fail` it
-  does not, hence the function is partial, and partial functions in Haskell are
-  bad.
+Now turn back to Haskell's type system: If a type signature says `Monad m`,
+the function should work for any `Monad` `m`. If the function uses `fail` it
+does not, hence the function is partial, and partial functions in Haskell are
+bad.
 
-- `read`. It crashes on a parse error. Use `readMaybe` instead, which has a
-  `Maybe a` result.
+### `read`
+`read`. It crashes on a parse error. Use `readMaybe` instead, which has a
+`Maybe a` result.
 
-- `genericLength`. It's literally the naive `1 + length rest` implementation,
-  and nobody is quite sure why it is in the standard library. `genericLength`
-  uses O(n) stack space so it can overflow, which is just awful behaviour. If
-  you need an `Integer` version of `length`, use `fromIntegral . length`, which
-  runs in constant stack space and is well-optimized. (The *one* valid use case
-  for `genericLength` is for lazy nats, which nobody ever uses.)
+### `genericLength`
+`genericLength` is literally the naive `1 + length rest` implementation,
+and nobody is quite sure why it is in the standard library. `genericLength`
+uses O(n) stack space so it can overflow, which is just awful behaviour. If
+you need an `Integer` version of `length`, use `fromIntegral . length`, which
+runs in constant stack space and is well-optimized. (The *one* valid use case
+for `genericLength` is for lazy nats, which nobody ever uses.)
 
-- `unsafePerformIO`. It's very useful in advanced Haskell, and very wrong
-  otherwise. Chances are `>>=` is what you want.
+### `unsafePerformIO`
+`unsafePerformIO` is very useful in advanced Haskell, and very wrong
+otherwise. Chances are `>>=` is what you want.
 
-- `head`, `tail`, `isJust`, `isNothing`, `fromJust`, ... These should all be
-  substituted by pattern matching. For one, they separate structural code from
-  code that does computations, and even more importantly, the compiler knows
-  when you forget to handle a case (when compiled with `-W`).
+### `head`, `tail`, `isJust`, `isNothing`, `fromJust`, ...
+These should all be substituted by pattern matching. For one, they separate
+structural code from code that does computations, and even more importantly,
+the compiler knows when you forget to handle a case (when compiled with `-W`).
+
+### `nub`
+`nub` has terrible performance (quadratic), since its type is overly general,
+requiring only an `Eq` constraint. If your data satisfies `Ord`, then you can
+implement much better algorithms that run in O(n*log(n)) time.
+
+```haskell
+nub1, nub2, nub3 :: Ord a -> [a] -> [a]
+
+-- Naive implementation; has to traverse entire list before
+-- returning a result, does not maintain input order
+nub1 = map head . group . sort
+-- Bonus question: why is using 'head' safe here?
+-- This is one of the rare occasions where using it
+-- is not a mistake.
+
+-- Using Data.Set and explicit recursion. This is very similar
+-- to the standard 'nub', but uses a Set instead of a List
+-- to cache previously encountered elements.
+nub2 = go Set.empty where
+      go [] _ = []
+      go (x:xs) cache
+            | x `Set.member` cache = go xs cache
+            | otherwise            = x : go xs (Set.insert x cache)
+
+-- nub2, implemented as a fold. Coming up with this yourself is
+-- a good exercise, try doing it before reading the code!
+nub3 xs = foldr go (const []) xs Set.empty where
+      go x xs cache
+            | x `Set.member` cache = xs cache
+            | otherwise            = x : xs (Set.insert x cache)
+```
 
 
 
