@@ -73,7 +73,10 @@ data List a = []
 
 ## Reader/`(r ->)`
 
-- Functor: Function composition, `fmap = (.)`
+
+- Functor: Function composition, `fmap = (.)`. Picture a function `a -> b` as
+  a collection of `b` indexed by `a`. Feeding an `a` to the function looks up
+  the corresponding `b`. `fmap` thus modifies the contents of the container.
 - Applicative
       - "Value contained" is the action applied to the environment.
       - Functions are related to [SKI calculus][ski calculus],
