@@ -80,7 +80,7 @@ data List a = []
 - Applicative
       - "Value contained" is the action applied to the environment.
       - Functions are related to [SKI calculus][ski calculus],
-        `K = const`, `S = (<*>)`
+        `K = pure`, `S = (<*>)`
 - Monad
       - `join`: `join f x = f x x`
       - Value extracted and piped on by `>>=`: LHS applied to the environment
