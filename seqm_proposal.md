@@ -1,3 +1,10 @@
+Edit: This proposal was implemented via `<$!>` in May 2014
+      ([Trac ticket][ticket]).
+
+[ticket]: https://ghc.haskell.org/trac/ghc/ticket/9099
+
+
+
 Strictifying Monadic values
 ===========================
 
@@ -64,10 +71,6 @@ another, regardless of how it's named in the end.
   reinvanted) very often by different people, reconsider
   adding them as well.
 
-
-
-A voting period of two weeks (until 10-05-2014) should be
-sufficient to allow everyone to join in.
 
 
 [orig-proposal]: http://www.haskell.org/pipermail/libraries/2013-November/021728.html
