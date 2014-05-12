@@ -184,19 +184,19 @@ Tabs vs. spaces
 Short version: use spaces.
 
 Long version: You can write valid Haskell with spaces, tabs, or anything in
-between. The between part is a pain in the ass, but you can make
-only-tab-indented code work. So why shouldn't you do that?
+between. You can write valid programs with all of these styles, so why stick to
+spaces?
 
 1. If you were referred to this document, you're most likely a beginner.
    Beginners make *lots* of mistakes with tabs and are surprised why their code
-   breaks.
+   breaks, since Haskell is sensitive to whitespace.
 
 2. Spaces look the same to everyone, tabs don't. Chances are your tabbed code
-   looks like bad with different settings for tab size; if it doesn't you have
+   looks bad with different settings for tab size; if it doesn't you have
    lots of newlines at the appropriate locations so it looks bad in the first
    place.
 
-3. The Haskell community has decided to use spaces. All common libraries use
+3. **The Haskell community has decided to use spaces.** All common libraries use
    spaces, and the only reason there are a few tabs left in GHC's source is
    because of potential merge conflicts when editing them all out in bulk.
 
