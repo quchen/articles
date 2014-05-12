@@ -426,13 +426,16 @@ seqR | randomBool = seq1
      where randomBool = unsafePerformIO randomIO
 ```
 
-It is worth noting that evaluating `seq (error "x") (error "y")` superficially
-allows inspection of which argument is actually evaluated first. However, the
-errors are identical from within the program's perspective; it takes an
-intervention of the runtime to extract anything useful from it. In addition,
-the compiler may (and does!) choose which argument to evaluate first as an
-optimization, so there really is no guarantee of evaluation order even if the
-above simple test always displays the "x" error.
+It is worth noting that evaluating `seq (error "x") (error "y")` seemingly
+allows inspection of which argument is actually evaluated first, since only one
+of the errors is printed. This is a red herring though: he compiler may (and
+does!) choose which argument to evaluate first as an optimization, so there
+really is no guarantee of evaluation order even if the above simple test always
+displays the "x" error. Even worse, that behaviour can change as the compiler
+pleases; it would not be wrong to crash with "x" in August, and with "y"
+during all the other months. In other words, do not rely on `seq` having an
+evaluation order even if you're absolutely sure you found it out using some
+voodoo magic.
 
 [haskell-report]: http://www.haskell.org/onlinereport/haskell2010/
 [haskell-report-seq]: http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
@@ -547,7 +550,7 @@ How to start learning Haskell
 -----------------------------
 
 The usual Haskell beginner books are [Hutton][hutton], [LYAH][lyah] (free to
-read online) and [RWH][rwh] (dito). I recommend starting with Hutton or LYAH,
+read online) and [RWH][rwh] (ditto). I recommend starting with Hutton or LYAH,
 which cover the absolute basics better than RWH. The latter on the other hand
 is something in between a practical reference guide for some libraries and an
 introductory book. Some of the chapters use outdated libraries (the book is from
