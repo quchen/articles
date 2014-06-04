@@ -36,8 +36,9 @@ Similarly, you can generate the free theorem for `fmap`, which reads
 ```
 
 In other words, this says that whenever functions compose, fmapping all of them
-still composes. This is a bit more complicated than the `[a] -> [a]` example,
-but luckily we don't need the full thing. We also have another trivial law,
+still composes.
+
+We also have another trivial law,
 
 ```haskell
          p . q  =       f . g  -- Given this (same as above) ...
@@ -54,7 +55,7 @@ fmap (id . q) = fmap (f . g)       -- (3) specialized
 ```
 
 Using the first `Functor` law, we can evaluate the first line, and in the
-second line `p` is simply composed with the identity. So evaluating both of
+second line `q` is simply composed with the identity. So evaluating both of
 these one step yields
 
 ```haskell
