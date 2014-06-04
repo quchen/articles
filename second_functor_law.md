@@ -72,7 +72,10 @@ fmap f . fmap g = fmap (f . g)
 
 This is precisely the second Functor law. Note how we used nothing but `fmap`'s
 type (to generate the free theorem) and the first `Functor` law (to eliminate
-`fmap id`) to derive this.
+`fmap id`) to derive this. [It is worth mentioning that this only holds up to
+fast and loose reasoning, i.e. assuming no ⊥ are involved][fastandloose],
+otherwise e.g. ``fmap f x = f `seq` x `seq` (Identity . f . runIdentity) x``
+satisfies the first, but not the second, Functor law.
 
 If you want to know more about free theorems or just play around with them:
 
@@ -83,3 +86,4 @@ If you want to know more about free theorems or just play around with them:
 
 [ftgen]: http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
 [tff]: http://homepages.inf.ed.ac.uk/wadler/papers/free/free.ps
+[fastandloose]: http://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.html
