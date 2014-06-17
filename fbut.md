@@ -492,8 +492,8 @@ does not, hence the function is partial, and partial functions in Haskell are
 bad.
 
 ### `read`
-`read`. It crashes on a parse error. Use `readMaybe` instead, which has a
-`Maybe a` result.
+`read` crashes at runtime on a parse error. Use `readMaybe` instead, which
+has a `Maybe a` result.
 
 ### `genericLength`
 `genericLength` is literally the naive `1 + length rest` implementation,
