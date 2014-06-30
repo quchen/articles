@@ -31,51 +31,34 @@ Pretty cool how something like that can be derived from a type alone!
 Similarly, you can generate the free theorem for `fmap`, which reads
 
 ```haskell
-        p .      q =      f .      g -- (1) Given this ...
-=> fmap p . fmap q = fmap f . fmap g -- (2) ... this holds
+        f .      g =      p .      q -- (1) Given this ...
+=> fmap f . fmap g = fmap p . fmap q -- (2) ... this holds
 ```
 
 In other words, this says that whenever functions compose, fmapping all of them
 still composes.
 
-We also have another trivial law,
+Now choose `p = id` and `q = f . g` in (2),
 
-```haskell
-         p . q  =       f . g  -- Given this (same as above) ...
-=> fmap (p . q) = fmap (f . g) -- (3) ... we can just apply fmap on
-                               -- both sides; referential transparency
-                               -- guarantees both sides stay equal
+``haskell
+  fmap f . fmap g
+= fmap id . fmap (f . g)
+= id . fmap (f . g)      -- by the first functor law
+= fmap (f . g)
 ```
 
-Now let's choose `p = id`, and we'll get
-
-```haskell
-fmap id . fmap q = fmap f . fmap g -- (2) specialized
-fmap (id . q) = fmap (f . g)       -- (3) specialized
-```
-
-Using the first `Functor` law, we can evaluate the first line, and in the
-second line `q` is simply composed with the identity. So evaluating both of
-these one step yields
-
-```haskell
-fmap q = fmap f . fmap g
-fmap q = fmap (f . g)
-```
-
-Since the left hand sides of both lines are equal so are their right hand sides,
-yielding
+This is precisely the second Functor law,
 
 ```haskell
 fmap f . fmap g = fmap (f . g)
 ```
 
-This is precisely the second Functor law. Note how we used nothing but `fmap`'s
-type (to generate the free theorem) and the first `Functor` law (to eliminate
-`fmap id`) to derive this. [It is worth mentioning that this only holds up to
-fast and loose reasoning, i.e. assuming no ⊥ are involved][fastandloose],
-otherwise e.g. ``fmap f x = f `seq` x `seq` (Identity . f . runIdentity) x``
-satisfies the first, but not the second, Functor law.
+Note how we used nothing but `fmap`'s type (to generate the free theorem) and
+the first `Functor` law (to eliminate `fmap id`) to derive this. [It is worth
+mentioning that this only holds up to fast and loose reasoning, i.e. assuming
+no ⊥ are involved][fastandloose], otherwise e.g.
+``fmap f x = f `seq` x `seq` (Identity . f . runIdentity) x`` satisfies the
+first, but not the second, Functor law.
 
 If you want to know more about free theorems or just play around with them:
 
