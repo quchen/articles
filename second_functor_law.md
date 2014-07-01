@@ -40,7 +40,7 @@ still composes.
 
 Now choose `p = id` and `q = f . g` in (2),
 
-``haskell
+```haskell
   fmap f . fmap g
 = fmap id . fmap (f . g)
 = id . fmap (f . g)      -- by the first functor law
