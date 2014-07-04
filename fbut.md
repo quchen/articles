@@ -22,22 +22,33 @@ Contents
 9.  [`seq` does not specify an evaluation order] [toc-seq]
 10. [Where is `IO` defined?]                     [toc-io]
 11. [Don't use ...]                              [toc-dont-use]
+    - [`fail`]                                   [toc-dont-use-fail]
+    - [`read`]                                   [toc-dont-use-read]
+    - [`unsafePerformIO`]                        [toc-dont-use-unsafeperformio]
+    - [`head`, `isJust`, ...]                    [toc-dont-use-headtail]
+    - [`nub`]                                    [toc-dont-use-nub]
 12. [How to start learning Haskell]              [toc-haskell-start]
 
 
 
-[toc-bsbad]:            #bytestringchar8-is-bad
-[toc-sections]:         #a-op-is-not-x---a-op-x
-[toc-monads]:           #i-dont-understand-monads
-[toc-tabspaces]:        #tabs-vs-spaces
-[toc-special-minus]:    #--4-is-not-x---x---4
-[toc-regex]:            #im-looking-for-a-good-regex-library
-[toc-show]:             #show-is-not-for-prettyprinting
-[toc-constraint-types]: #imposing-constraints-on-data-types
-[toc-seq]:              #seq-does-not-specify-an-evaluation-order
-[toc-io]:               #where-is-io-defined
-[toc-dont-use]:         #dont-use-
-[toc-haskell-start]:    #how-to-start-learning-haskell
+[toc-bsbad]:                    #bytestringchar8-is-bad
+[toc-sections]:                 #a-op-is-not-x---a-op-x
+[toc-monads]:                   #i-dont-understand-monads
+[toc-tabspaces]:                #tabs-vs-spaces
+[toc-special-minus]:            #--4-is-not-x---x---4
+[toc-regex]:                    #im-looking-for-a-good-regex-library
+[toc-show]:                     #show-is-not-for-prettyprinting
+[toc-constraint-types]:         #imposing-constraints-on-data-types
+[toc-seq]:                      #seq-does-not-specify-an-evaluation-order
+[toc-io]:                       #where-is-io-defined
+[toc-dont-use]:                 #dont-use-
+[toc-dont-use-fail]:            #fail
+[toc-dont-use-read]:            #read
+[toc-dont-use-genericlength]:   #genericlength
+[toc-dont-use-unsafeperformio]: #unsafeperformio
+[toc-dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
+[toc-dont-use-nub]:             #nub
+[toc-haskell-start]:            #how-to-start-learning-haskell
 
 
 
