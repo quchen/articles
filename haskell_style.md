@@ -116,6 +116,23 @@ Naming
 
 
 
+Type signatures
+---------------
+
+- Types always have the form `name ::`, making it much easier to find the
+  definition of something in a large source file.
+
+- Long types can be broken into multiple lines that each start with an arrow:
+
+  ```haskell
+  liftM :: Monad m
+        => (a -> b)
+        -> m a
+        -> m b
+  ```
+
+
+
 API usage
 ---------
 
