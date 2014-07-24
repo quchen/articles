@@ -514,6 +514,12 @@ you need an `Integer` version of `length`, use `fromIntegral . length`, which
 runs in constant stack space and is well-optimized. (The *one* valid use case
 for `genericLength` is for lazy nats, which nobody ever uses.)
 
+One person mentioned that `genericLength` works for lists with even larger
+numbers of elements than `maxBound :: Int`. Assuming a 4-byte `Int` on a system,
+that single list would have to be a little over 16 GiB in memory (each entry
+is an `Int` value, and an `Int` pointer to the next value). At this point,
+lists are probably not the right representation for your data.
+
 ### `unsafePerformIO`
 `unsafePerformIO` is very useful in advanced Haskell, and very wrong
 otherwise. Chances are `>>=` is what you want.
