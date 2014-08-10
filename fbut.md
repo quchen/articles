@@ -24,6 +24,7 @@ Contents
 11. [Don't use ...]                              [toc-dont-use]
     - [`fail`]                                   [toc-dont-use-fail]
     - [`read`]                                   [toc-dont-use-read]
+    - [`genericLength`]                          [toc-dont-use-genericlength]
     - [`unsafePerformIO`]                        [toc-dont-use-unsafeperformio]
     - [`head`, `isJust`, ...]                    [toc-dont-use-headtail]
     - [`nub`]                                    [toc-dont-use-nub]
