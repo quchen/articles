@@ -587,3 +587,38 @@ and [Data.List][data.list].
 [rwh]: http://book.realworldhaskell.org/
 [prelude]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Prelude.html
 [data.list]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Data-List.html
+
+
+
+`f x = ...` is not `f = \x -> ...`
+----------------------------------
+
+Although theory tells us these two should be identical, there are some subtle
+differences between the two, in particular in GHC.
+
+- The Haskell Report demands a difference between the two; refer to the section
+  about the Monomorphism Restriction for further information.
+
+- GHC only inlines fully applied functions, i.e. when all parameters in the
+  definition are filled with values.
+
+  ```haskell
+  f x = <expression(x)>
+
+  aaa    = f                        -- No inlining
+
+  bbb  x = f x                      -- f may be inlined to ...
+  bbb' x = <expression(x)>          -- ... this
+
+
+
+  f = \x -> <expression(x)>
+
+  sss   = f                         -- f may be inlined to ...
+  sss'  = \x -> <expression(x)>     -- ... this
+
+  ttt  x = f x                       -- f may be inlined to ...
+  ttt' x = (\y -> <expression(y)>) x -- ... this
+  ```
+
+- GHC's sharing behaviour depends on the two forms TODO
