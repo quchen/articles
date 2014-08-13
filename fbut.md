@@ -603,22 +603,30 @@ differences between the two, in particular in GHC.
   definition are filled with values.
 
   ```haskell
-  f x = <expression(x)>
+  f x = <expr(x)>
 
-  aaa    = f                        -- No inlining
+  aaa    = f                   -- No inlining
 
-  bbb  x = f x                      -- f may be inlined to ...
-  bbb' x = <expression(x)>          -- ... this
+  bbb  x = f x                 -- f may be inlined to ...
+  bbb' x = <expr(x)>           -- ... this
 
 
 
-  f = \x -> <expression(x)>
+  f = \x -> <expr(x)>
 
-  sss   = f                         -- f may be inlined to ...
-  sss'  = \x -> <expression(x)>     -- ... this
+  sss   = f                    -- f may be inlined to ...
+  sss'  = \x -> <expr(x)>      -- ... this
 
-  ttt  x = f x                       -- f may be inlined to ...
-  ttt' x = (\y -> <expression(y)>) x -- ... this
+  ttt  x = f x                 -- f may be inlined to ...
+  ttt' x = (\y -> <expr(y)>) x -- ... this
+  ```
+
+- `where` clauses span over the current definition, so parameters have different
+  scope.
+
+  ```haskell
+  f    x =  <expr> where <decls> -- x is in scope in <decls>
+  f = \x -> <expr> where <decls> -- but here it's not
   ```
 
 - GHC's sharing behaviour depends on the two forms TODO
