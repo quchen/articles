@@ -29,6 +29,7 @@ Contents
     - [`head`, `isJust`, ...]                    [toc-dont-use-headtail]
     - [`nub`]                                    [toc-dont-use-nub]
 12. [How to start learning Haskell]              [toc-haskell-start]
+13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
 
 
 
@@ -50,6 +51,7 @@ Contents
 [toc-dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
 [toc-dont-use-nub]:             #nub
 [toc-haskell-start]:            #how-to-start-learning-haskell
+[toc-lambda-vs-normal]:         #f-x---is-not-f--x---
 
 
 
@@ -587,3 +589,64 @@ and [Data.List][data.list].
 [rwh]: http://book.realworldhaskell.org/
 [prelude]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Prelude.html
 [data.list]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Data-List.html
+
+
+
+`f x = ...` is not `f = \x -> ...`
+----------------------------------
+
+**I did not have this section proof-read by anyone else yet, so read with
+care. Corrections would be very appreciated.**
+
+Although theory tells us these two should be identical, there are some subtle
+differences between the two, in particular in GHC.
+
+- The Haskell Report demands a difference between the two; refer to the section
+  about the Monomorphism Restriction for further information.
+
+- GHC only inlines fully applied functions, i.e. when all parameters in the
+  definition are filled with values.
+
+  ```haskell
+  f x = <expr(x)>
+
+  aaa    = f                   -- No inlining
+
+  bbb  x = f x                 -- f may be inlined to ...
+  bbb' x = <expr(x)>           -- ... this
+
+  -------------------------------------------------------
+
+  f = \x -> <expr(x)>
+
+  sss   = f                    -- f may be inlined to ...
+  sss'  = \x -> <expr(x)>      -- ... this
+
+  ttt  x = f x                 -- f may be inlined to ...
+  ttt' x = (\y -> <expr(y)>) x -- ... this
+  ```
+
+- `where` clauses span over the current definition, so parameters have different
+  scope.
+
+  ```haskell
+  f    x =  <expr> where <decls> -- x is in scope in <decls>
+  f = \x -> <expr> where <decls> -- but here it's not
+  ```
+
+- Sharing of values in `where` clauses is different.
+
+  ```haskell
+  f    x =  <expr> where <decls> -- A function that is re-evaluated on every
+                                 -- invocation, including the <decls>. This may
+                                 -- be improved by compiler optimizations
+                                 -- automatically, but better not rely on it.
+  f = \x -> <expr> where <decls> -- A constant that has a function as its value.
+                                 -- Since the "where" spans over the entire
+                                 -- constant, it does not need to be
+                                 -- recalculated on every invocation.
+  ```
+
+  This behaviour becomes a little more difficult in the presence of typeclasses;
+  for brevity's sake, consider a typeclass as an implicit argument passed
+  similar to the `x` in the first case above.
