@@ -593,6 +593,9 @@ and [Data.List][data.list].
 `f x = ...` is not `f = \x -> ...`
 ----------------------------------
 
+**I did not have this section proof-read by anyone else yet, so read with
+care. Corrections would be very appreciated.**
+
 Although theory tells us these two should be identical, there are some subtle
 differences between the two, in particular in GHC.
 
@@ -629,4 +632,19 @@ differences between the two, in particular in GHC.
   f = \x -> <expr> where <decls> -- but here it's not
   ```
 
-- GHC's sharing behaviour depends on the two forms TODO
+- Sharing of values in `where` clauses is different.
+
+  ```haskell
+  f    x =  <expr> where <decls> -- A function that is re-evaluated on every
+                                 -- invocation, including the <decls>. This may
+                                 -- be improved by compiler optimizations
+                                 -- automatically, but better not rely on it.
+  f = \x -> <expr> where <decls> -- A constant that has a function as its value.
+                                 -- Since the "where" spans over the entire
+                                 -- constant, it does not need to be
+                                 -- recalculated on every invocation.
+  ```
+
+  This behaviour becomes a little more difficult in the presence of typeclasses;
+  for brevity's sake, consider a typeclass as an implicit argument passed
+  similar to the `x` in the first case above.
