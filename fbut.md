@@ -505,6 +505,11 @@ the function should work for any `Monad` `m`. If the function uses `fail` it
 does not, hence the function is partial, and partial functions in Haskell are
 bad.
 
+There are some valid use cases of `fail` though: when you're in monadic code
+that is specific to one instance that supports it. For example, using `fail` is
+safe in `Data.Binary`'s `Get`, and the API does not expose a dedicated
+failing function.
+
 ### `read`
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
 has a `Maybe a` result.
