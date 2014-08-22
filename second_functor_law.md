@@ -58,7 +58,28 @@ the first `Functor` law (to eliminate `fmap id`) to derive this. [It is worth
 mentioning that this only holds up to fast and loose reasoning, i.e. assuming
 no ⊥ are involved][fastandloose], otherwise e.g.
 ``fmap f x = f `seq` x `seq` (Identity . f . runIdentity) x`` satisfies the
-first, but not the second, Functor law.
+first, but not the second, Functor law:
+
+```haskell
+fmap id x = id `seq` x `seq` (Identity . id . runIdentity) x
+          = x `seq` (Identity . runIdentity) x
+          = x `seq` x
+          = x
+
+-- but
+(fmap (const ()) . fmap ⊥) x
+      = fmap (const ()) (fmap ⊥ x)
+      = fmap (const ()) (⊥ `seq` <stuff>)
+      = fmap (const ()) ⊥
+      = <stuff> `seq` ⊥ `seq` ...
+      = ⊥
+fmap (const () . ⊥) x
+      = (const () . ⊥) `seq` x `seq` (Identity . (const ()) . ⊥) . runIdentity) x
+      = (Identity . (const ()) . ⊥) . runIdentity) x
+      = Identity (((const ()) . ⊥) (runIdentity x))
+      = Identity (const () (⊥ (runIdentity x)))
+      = Identity ()
+```
 
 If you want to know more about free theorems or just play around with them:
 
