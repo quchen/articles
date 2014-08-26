@@ -57,12 +57,20 @@ Note how we used nothing but `fmap`'s type (to generate the free theorem) and
 the first `Functor` law (to eliminate `fmap id`) to derive this. [It is worth
 mentioning that this only holds up to fast and loose reasoning, i.e. assuming
 no ⊥ are involved][fastandloose], otherwise e.g.
-``fmap f x = f `seq` x `seq` (Identity . f . runIdentity) x`` satisfies the
-first, but not the second, Functor law:
 
 ```haskell
-fmap id x = id `seq` x `seq` (Identity . id . runIdentity) x
-          = x `seq` (Identity . runIdentity) x
+newtype Id a = Id a
+
+instance Functor Id where
+      fmap f x = f `seq` x `seq` (Id . f . runId) x
+```
+
+satisfies the first, but not the second, Functor law:
+
+```haskell
+fmap id x = id `seq` x `seq` (Id . id . runId) x
+          = id `seq` (x `seq` (Id . id . runId) x) -- seq is infixr 0
+          = x `seq` (Id . runId) x
           = x `seq` x
           = x
 
@@ -74,11 +82,12 @@ fmap id x = id `seq` x `seq` (Identity . id . runIdentity) x
       = <stuff> `seq` ⊥ `seq` ...
       = ⊥
 fmap (const () . ⊥) x
-      = (const () . ⊥) `seq` x `seq` (Identity . (const ()) . ⊥) . runIdentity) x
-      = (Identity . (const ()) . ⊥) . runIdentity) x
-      = Identity (((const ()) . ⊥) (runIdentity x))
-      = Identity (const () (⊥ (runIdentity x)))
-      = Identity ()
+      = (const () . ⊥) `seq` x `seq` (Id . (const ()) . ⊥) . runId) x
+      = const () . ⊥ `seq` (x `seq` (Id . const () . ⊥ . runId) x)
+      = x `seq` (Id . const () . ⊥ . runId) x
+      = x `seq` Id (const () (⊥ (runId x)))
+      = x `seq` Id ()
+      -- This is ⊥ if and only if x is ⊥.
 ```
 
 If you want to know more about free theorems or just play around with them:
