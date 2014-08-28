@@ -707,3 +707,18 @@ instance Monad id where
       return = pure
       Id x >>= f = f x
 ```
+
+Another example, `Eq` in terms of `Ord`:
+
+```haskell
+newtype Nat = Z | S Nat
+
+instance Eq Nat where
+      a == b = compare a b == EQ
+
+instance Ord Nat where
+      compare (S x) (S y) = compare x y
+      compare  Z     Z    = EQ
+      compare (S x)  Z    = GT
+      compare  Z    (S x) = LT
+```
