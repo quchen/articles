@@ -30,6 +30,7 @@ Contents
     - [`nub`]                                    [toc-dont-use-nub]
 12. [How to start learning Haskell]              [toc-haskell-start]
 13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
+14. [Reversed type class instances]              [toc-reversed-instances]
 
 
 
@@ -52,6 +53,7 @@ Contents
 [toc-dont-use-nub]:             #nub
 [toc-haskell-start]:            #how-to-start-learning-haskell
 [toc-lambda-vs-normal]:         #f-x---is-not-f--x---
+[toc-reversed-instances]:       #reversed-type-class-instances
 
 
 
@@ -655,3 +657,35 @@ differences between the two, in particular in GHC.
   This behaviour becomes a little more difficult in the presence of typeclasses;
   for brevity's sake, consider a typeclass as an implicit argument passed
   similar to the `x` in the first case above.
+
+
+
+Reversed type class instances
+-----------------------------
+
+It is a common misconception that parent classes cannot be defined using their
+child classes. For example, I've often heard the phrase "When `Applicative`
+becomes a parent class of `Monad` I can't define `Applicative` using `Monad`'s
+`ap` anymore, which is very convenient". This is incorrect! The following code
+compiles and is well-behaved (with and without `Applicative => Monad`):
+
+```haskell
+import Control.Applicative
+import Control.Monad
+
+newtype Id a = Id a
+
+-- Functor defined using Applicative
+instance Functor Id where
+      fmap = liftA
+
+-- Applicative defined using Monad
+instance Applicative Id where
+      pure = Id
+      (<*>) = ap
+
+-- Monad defined using Applicative
+instance Monad id where
+      return = pure
+      Id x >>= f = f x
+```
