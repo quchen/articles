@@ -718,7 +718,7 @@ instance Eq Nat where
 
 instance Ord Nat where
       compare (S x) (S y) = compare x y
+      compare (S _)  Z    = GT
       compare  Z     Z    = EQ
-      compare (S x)  Z    = GT
-      compare  Z    (S x) = LT
+      compare  Z    (S _) = LT
 ```
