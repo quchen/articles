@@ -423,7 +423,7 @@ advice before: constrain functions, not the data declarations.
 `seq` does not specify an evaluation order
 ------------------------------------------
 
-[The `seq` function is defined by the following equations in the Haskell Report][haskell-report-seq]:
+[The `seq` function is defined by the following mathematical equations in the Haskell Report][haskell-report-seq]:
 
 ```
 seq ⊥ x = ⊥
@@ -431,11 +431,12 @@ seq y x = x   (if y ≠ ⊥)
 ```
 
 Any function that satisfies these properties is a valid implementation of `seq`.
-In particular, no evaluation order is specified; in other words, implementations
-can choose whether to evaluate `seq x y` by evaluating `x` first, `y` first, or
-even choosing randomly. In case such an order is desirable, there is the `pseq`
-function from Control.Concurrent, which guarantees evaluation of the first
-parameter first. These would all be valid implementations for `seq`:
+In particular, as mathematical equations, no evaluation order is specified:
+implementations can choose whether to evaluate `seq x y` by evaluating `x`
+first, `y` first, or even choosing randomly. In case such an order is
+desirable, there is the `pseq` function from Control.Concurrent, which
+guarantees evaluation of the first parameter first. These would all be valid
+implementations for `seq`:
 
 ```haskell
 -- Evaluate x first
