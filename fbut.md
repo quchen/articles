@@ -704,7 +704,7 @@ instance Applicative Id where
       (<*>) = ap
 
 -- Monad defined using Applicative
-instance Monad id where
+instance Monad Id where
       return = pure
       Id x >>= f = f x
 ```
