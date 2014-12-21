@@ -40,11 +40,11 @@ Indentation, alignment
 - Literal tabs are syntax errors.
 
 - Whenever expressions are short and the current indentation level isn't too
-  large, expressions continue on the same line as the start of the block.
+  large, expressions continue on the same column as the start of the block.
 
   ```haskell
   main = do name <- getLine
-            putStrLn $ "Hello, " ++ name
+            putStrLn ("Hello, " ++ name)
   ```
 
 - `let` definitions are aligned with the `in` body, which requires an additional
@@ -119,8 +119,8 @@ Naming
 Type signatures
 ---------------
 
-- Types always have the form `name ::`, making it much easier to find the
-  definition of something in a large source file.
+- Types always have the form `name ::` with a single space, making it much
+  easier to find the definition of something in a large source file.
 
 - Long types can be broken into multiple lines that each start with an arrow:
 
