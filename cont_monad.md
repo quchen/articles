@@ -15,19 +15,19 @@ I am convinced that many complicated things in Haskell can - and have to be - un
 The concept of continuations
 ----------------------------
 
-You surely know the transformation to introduce tail recursion by packing the result into an accumulator. For example
+You surely know the transformation to introduce better recursion by packing the result into an accumulator. For example
 
 ```haskell
 length []     = 0
 length (_:xs) = 1 + length xs
 ```
 
-is not tail recursive, but can be made so by packing the "1+" in another parameter, so that there's some cheap form of state (namely the length so far) in the function:
+will build a large stack of `1+1+1+...` operations, but this issue can be fixed by packing the "1+" in another parameter, so that there's some cheap form of state (namely the length so far) in the function:
 
 ```haskell
-length = length' 0
-      where length' l []     = l
-            length' l (_:xs) = length' (l+1) xs
+length = length' 0 where
+      length' l []     = l
+      length' l (_:xs) = length' (l+1) xs
 ```
 
 This converts the return value of the function to a parameter containing what has been done already - its past, so to speak.
@@ -59,310 +59,371 @@ square 2 $ \twoSquare -> (...)
 This means that wherever you are in `(...)`, you have the result of `square 2` at hand by using `twoSquare`. So the intuitive understanding is that **continuations put the result value in a lambda argument** (instead of returning it like ordinary functions). Let's see that in action:
 
 ```haskell
+square :: Num a => a -> (a -> r) -> r
 square x = \k -> k (x^2)
+
+add :: Num a => a -> a -> (a -> r) -> r
 add x y  = \k -> k (x + y)
-pythagoras x y = \k -> square x $ \xSquare ->
-                       square y $ \ySquare ->
-                       add xSquare ySquare $ \result ->
-                       k result
+
+pythagoras :: Num a => a -> a -> (a -> r) -> r
+pythagoras x y = \k ->
+      square x $ \xSquare ->
+      square y $ \ySquare ->
+      add xSquare ySquare $ \result ->
+      k result
 ```
+
+In the end the result of the addition is bound to `result`, which is what we want to have. Since we're staying in continuation-passing style, that result is applied to `pythagoras`' continuation `k`.
 
 Now calling `pythagoras 3 4` will result in the hypothetical result of `3^2 + 4^2`, so `pythagoras 3 4 id = 25`.
 
-
-
-
-
-
-
-
-
-
-
-
-What the `Cont` monad does
---------------------------
-
-The purpose of the `Cont` monad is getting rid of all the explicit `\k -> k ...` you would have to introduce manually, much like `State` takes care of dragging along the `\s -> ...` explicitly. `Cont` itself is simply a wrapper around the type signature of a continuation like above in the Pythagoras example; note that `square` took a parameter to produce a continuation, so it had an additional `a ->`.
+The important take-away message here, again, is that the following two lines are equivalent: both of them calculate `f x`, and then make the result available inside the `(...)` under the name `y`.
 
 ```haskell
-newtype Cont r a = Cont {runCont :: ((a -> r) -> r)}
+y = f x
+(...)
+
+f x $ \y -> (...)
+```
+
+The same piece of pythagoras code written using the `Cont` type would look like this:
+
+```haskell
+square :: Num a => a -> Cont r a
+square x = Cont $ \k -> k (x^2)
+
+add :: Num a => a -> a -> Cont r a
+add x y = Cont $ \k -> k (x + y)
+
+pythagoras, pythagoras' :: Num a => a -> a -> Cont r a
+pythagoras x y = do
+      xSquare <- square x
+      ySquare <- square y
+      result <- add xSquare ySquare
+      pure result
+-- or in equivalent explicit bind notation:
+pythagoras' x y =
+      square x >>= \xSquare ->
+      square y >>= \ySquare ->
+      add xSquare ySquare >>= \result ->
+      pure result
+```
+
+But now this can be refactored because of all the typeclasses `Cont` ships with. All of the functions now take `Cont` as parameters, and the intermediate continuations are passed through automatically.
+
+```haskell
+-- Square a Cont
+square :: Num a => Cont r a -> Cont r a
+square = fmap (^2)
+
+-- Add two Conts
+add :: Num a => Cont r a -> Cont r a -> Cont r a
+add = liftA2 (+)
+
+-- Pythagoras two conts
+pythagoras :: Num a => Cont r a -> Cont r a -> Cont r a
+pythagoras x y = add (square x)
+                     (square y)
+
+-- GHCi
+>>> (`runCont` id) (pythagoras (pure 3) (pure 4))
+25
 ```
 
 
-### `return`
-
-`return` is what has been used in the Pythagoras example to wrap some expression in a `k` application,
-
-```haskell
-square :: (Num a) -> a -> (a -> r) -> r
-square x = \k -> k (x^2)
-
-squareCont :: (Num a) -> a -> Cont r a
-squareCont x = return (x^2)
-```
-
-In other words, **`return` encodes the future of a constant**.
 
 
 
-### `Cont`
 
-`Cont` is our newtype wrapper that can be used to make a continuation out of arbitrary (well-typed) expressions. You can always **read the `k` in `Cont $ \k -> ` as "what to do afterwards"**; it is the starting point for further calculations.
 
-What is also important about this is that in the code
+
+
+
+What `Cont` does
+----------------
+
+The purpose of `Cont` is getting rid of all the explicit `\k -> k ...` you would have to introduce manually, much like `State` takes care of dragging along the `\s -> ...` explicitly. `Cont` itself is simply a wrapper around the type signature of a continuation like above in the Pythagoras example; note that `square` took a parameter to produce a continuation, so it had an additional `a ->`.
 
 ```haskell
-Cont $ \k -> (...)
+newtype Cont r a = Cont { runCont :: (a -> r) -> r }
 ```
 
-the rest of the computation is run for each appearance of `k` in `(...)` independently. Consider the following examples:
+We will now be building our way up to the `Monad` instance, defining `Functor` and `Applicative` on the way.
+
+
+
+### Functor
+
+The Functor instance is probably the most important one you have to learn for `Cont`: once you understand it, `Applicative` and `Monad` will come naturally. I was very surprised myself once I realized this.
+
+We'll be constructing the `Functor` based on the unwrap-apply-wrap idea. The box picture of certain Haskell types might sometimes be awkward, but for certain computations it's a helpful model nevertheless. So for a `Functor` instance, what we want to do to get `fmap :: (a -> b) -> Cont r a -> Cont r b` is:
+
+1. Extract the value of type `a` out of the `Cont` we're given.
+2. Apply the function `f` to that value, yielding a new value of type `b`.
+3. Wrap this value in a `Cont` again.
+
+The hardest part is the first one, I believe. But let's start simple: by writing as much as we know down. We know that we want a `Cont` again in the end, so the code will look like this:
 
 ```haskell
--- k isn't used at all. If this happens, the rest of the computation is
--- skipped entirely, and the final value is x.
-exit x = Cont $ \k -> x
-
--- k is used once. This corresponds to the normal case, and serves as the
--- definition of the return function.
-return x = Cont $ \k -> k x
-
--- k is used multiple times; the computation effectively splits up in two
--- independent calculations, one done with x, the other with y, and the results
--- are added.
-twice x y = Cont $ \k -> k x + k y
+fmap f cx = Cont ...
 ```
 
-This behavior is a little similar to the list monad, which performs the rest of the monadic calculation for each list element indpendently; here, it's done for each appearance of `k`. For example
+Because of `Cont`s type `((a -> r) -> r) -> Cont r a`, we can see that the argument given to `Cont` is of type `(a -> r) -> r`. The `a -> r` part of that can be bound to a value named `k`:
 
 ```haskell
-flip runCont id $ do x <- twice 1 2
-                     return (x^2)
+fmap f cx = Cont $ \k -> ...
 ```
 
-will evaluate to `1^2 + 2^2 = 5`.
-
-
-### `runCont`
-
-`runCont` may just be an unwrapping function, but nevertheless there's an important interpretation of it: in
+Now let's tackle the first problem: extracting a value `x :: a` out of the given `cx :: Cont r a`. Remember the pythagoras example from above, where instead of returning values they were provided to us as a lambda parameter? That's exactly what happens here again.
 
 ```haskell
-runCont m $ \mVal -> (...)
+fmap f cx = Cont $ \k ->
+                   runCont cx $ \x ->
+                   ...
 ```
 
-**the lambda parameter `mVal` is the resulting value of the continuation of `m` when fully evaluated.** Contrary to ordinary functions, this value is not an independent object but exists only as a lambda parameter, but in the `(...)` block that doesn't make much of a difference.
-
-
-
-
-### `>>=`
-
-`>>=` composes two continuations. It takes a continuation and calculates its hypothetical result, then passes that result to a function generating a new continuation, and returns that continuation as its result, or short: **`>>=` passes the hypothetical result on**. This may be clearer when you compare it to the non-monadic way of writing things:
+This gives us access to `x :: a`, so 1. is finished! The second issue is applying `f` to that value, which is trivial:
 
 ```haskell
--- Cont version (No 'do' notation to illustrate where >>= jumps in)
-pythagoras :: (Num a) => a -> a -> Cont r a
-pythagoras x y = return (x^2) >>= \xSquare ->
-                 return (y^2) >>= \ySquare ->
-                 return (xSquare + ySquare) >>= \result ->
-                 return result
+fmap f cx = Cont $ \k ->
+                   runCont cx $ \x ->
+                   let result = f x
+                   in  ...
 ```
+
+now we have our result as a value, next is step 3, making a proper `Cont` again.We could simply return `result` from the function.  But that would completely ignore the `k`, and thus break the continuation (ignoring all future continuations). But what have we learned before? "Don't return values directly, return them wrapped in the continuation parameter!"
 
 ```haskell
--- Non-Cont version
-pythagoras x y = \k -> ($ x^2) $ \xSquare ->
-                       ($ y^2) $ \ySquare ->
-                       ($ xSquare + ySquare) $ \result ->
-                       k result
+fmap f cx = Cont $ \k ->
+                   runCont cx $ \x ->
+                   let result = f x
+                   in  k result
 ```
 
-When you compare these, there's not much difference - basically the `\k` isn't there in the monadic version, and all `>>=` and `return` are `$` in the non-monadic one. In both cases, hypothetical results are calculated, and then passed on (via explicitly named lambda parameters) to the rest of the computation.
-
-
-
-### `callCC`
-
-`callCC` on the conceptual side of things is actually quite easy to understand. Suppose you have the previously mentioned function
+And that's it! Inlining `result` gives us a readable Functor instance:
 
 ```haskell
-exit x = Cont $ \_ -> x
+instance Functor (Cont r) where
+      fmap f cx = Cont $ \k ->
+                         runCont cx $ \x ->
+                         k (f x)
 ```
 
-When you evaluate this anywhere in a long `Cont` calculation, the end result will be `x`, no matter what the rest of the statements evaluate to. In imperative terms, this is like an early return statement. But breaking out all the way is not always what you want: sometimes you'd like to control where to break out from and to. If you're in a loop, a break statement might be much more useful than terminating the entire procedure. This concept in a more general version is what `callCC` is for.
+To reiterate, here are the three steps we've done again:
 
-Using `callCC` generally has the form of being applied to an explicit lambda, with a parameter called `exit`:
+1. Extract the value out of a computation `cx`. This is done by `runCont cx $ \x ->`, which gives us access to said vaue in the lambda's body.
+2. Transform that value using the mapping function `f`.
+3. Wrap the new value in the continuation parameter `k` again.
+
+
+
+### Applicative
+
+I promised this would be easy when you've understood the `Functor` instance, let's hope I can stand true to my promise.
+
+`pure` does not have to do any extraction or transformation, so steps 1 and 2 fall away. All that's left to do is to take our general form
+
+```haskell
+pure :: a -> Cont r a
+pure x = Cont $ \k -> ...
+```
+
+The resulting value is provided by `x` already, and instead of returning it directly in the lambda's body, we wrap it in `k`.
+
+```haskell
+pure x = Cont $ \k -> k x
+```
+
+Done.
+
+Up next: `<*>`. This time, we have two `Cont` values: one holding a function, and one holding the value to apply it to. We'll extract the function, then extract the value, apply the function to the value, and wrap it in `k` again.
+
+```haskell
+cf <*> cx = Cont $ \k ->
+                   runCont cf $ \f ->   -- extract f
+                   runCont cx $ \x ->   -- extract x
+                   k (f x)              -- apply f to x, wrap in k
+```
+
+And we're done!
+
+(Bonus joke for the experienced Haskeller: imagine what happens when we switch the second and third lines above. Nothing? Now imagine a `ContT` transformer doing this.)
+
+
+
+### Monad
+
+Since we already have the `Applicative` we can set `return = pure`. Now for `cx >>= f`, you guessed it: extract the value `x` out of the provided `Cont` `cx`, apply the function `f` to it (yielding a new `Cont`), extract the value out of that `Cont`, and wrapp it up in `k` again.
+
+```haskell
+cx >>= f = Cont $ \k ->
+                  runCont cx $ \x ->
+                  runCont (f x) $ \fx ->
+                  k fx
+```
+
+As a bonus, we could also define `join`, which is similarly simple.
+
+```haskell
+join' :: Cont r (Cont r a) -> Cont r a
+join' ccx = Cont $ \k ->
+                   runCont ccx $ \cx ->   -- extract inner continuation
+                   runCont cx $ \x ->     -- extract value of inner continuation
+                   k x                    -- wrap value in k again
+```
+
+
+
+
+
+### Special API function: `callCC`
+
+
+
+#### Purpose
+
+Suppose you want a `Cont` value to break out of the evaluation and return a value `x`. You would implement this by simply ignoring the continuation parameter `k`:
+
+```haskell
+exit x = Cont $ \_k -> x
+```
+
+If you place this anywhere in a large `Cont` calculation, the final result will simply be `x` if `exit` is evaluated at any point.
+
+`callCC` creates a sandboxed environment for this idea: instead of leaving the entire calculation, only the sandbox is jumped out of. It is usually used like this:
 
 ```haskell
 foo :: Cont r a
-foo = callCC $ \exit -> (...)
+foo = callCC $ \exit -> ...
 ```
 
-The `(...)` is a normal `Cont` computation, but now with a twist: you have the `exit` "function" at hand to break out early (admittedly it may sound weird to see `exit` parameter *itself* as a function at first). Suppose you want to convert some data to PDF format, but if there is an error it should abort and return an empty result.
+inside the `...`, you now have an `exit` function that you can use. When this function is evaluated, its argument will become the value of the `callCC` block.
+
+An example: suppose you want to convert some data to PDF format, but if there is an error it should abort and return an empty result.
 
 ```haskell
 -- Create a PDF represented as a String from some Data
 toPDF :: Data -> Cont r String
 toPDF d = callCC $ \exit -> do
-      when (broken d) $ exit ""
+      when (broken d) (exit "ERROR")
       makePDF d
 ```
 
-The nice thing about `callCC` is that it is easily nestable, providing the functionality of short-circuiting arbirary levels. The following example first checks whether the data is broken (and terminates the procedure entirely). If it is fine, it examines whether it's not too long (resulting in a worded error message); if the data is alright but the format is dirty, it cleans it, and if everything works out alright it adds annoying eye candy.
+The nice thing about `callCC` is that it is nestable, providing the functionality of short-circuiting arbirary levels. The following example first checks whether the data is broken (and terminates the procedure entirely). If it is fine, it examines whether it's not too long (resulting in a worded error message); if the data is alright but the format is dirty, it cleans it, and if everything works out alright it adds annoying eye candy.
 
 ```haskell
 toPDF :: Data -> Cont r String
 toPDF d = callCC $ \exit1 -> do
-      when (broken d) $ exit1 "Data corrupt"
+      when (broken d) (exit1 "Data corrupt")
       d' <- callCC $ \exit2 -> do
-            -- when = Control.Monad.when
-            when (tooLong d) $ exit1 "Data too long" -- Jump out of everything
-            when (dirty d) $ exit2 (clean d) -- Jump out of the inner callCC
-            return $ decorateWithFlowers d
-      return $ makePDF d'
+            when (tooLong d) (exit1 "Data too long") -- Jump out of everything
+            when (dirty d) (exit2 (clean d)) -- Jump out of the inner callCC
+            return (decorateWithFlowers d)
+      return (makePDF d')
 ```
 
 To sum it up, **each `callCC` carries around its own `exit` function**, callable by the name of the lambda parameter. If you use this `exit` anywhere in its scope, the result of the corresponding `callCC` block will be `exit`'s argument; if you do not use it, the program works as if there was no `callCC $ \exit ->` in the first place.
 
+Some readers coming from an imperative background might recognize this jumping-around-behaviour as similar to statements like `break`, `continue` and `goto`. `callCC` can indeed be seen as a generalization of these concepts. `callCC` should not be used too lightheartedly, or the control flow of the program might become an obfuscated mess.
 
 
 
+#### Implementation
 
-
-
-
-
-
-
-
-The inner workings
-------------------
-
-
-
-
-
-
-### `return`
-
-There's not much to say about `return`, the intuitive explanation pretty much directly translates to the code
+Recall we had our "hard exit function"
 
 ```haskell
-return x = Cont ($ x)
-         = Cont (\k -> k x)
+exit x = Cont $ \_ -> x
 ```
 
-A constant `x` is wrapped in a continuation, which represents what is to be done next to that value.
+and the idea that `callCC` gives us a sandbox where a function like this is locally contained.
 
-
-
-### `>>=`
-
-`>>=` always encapsulates the idea of taking a value out of a monadic expression, and feeding it to a monad-producing function. This is no different in the `Cont` case. First, the type signature is
+The idea behind the implementation is building an almost fully contained `Cont` calculation (which is evaluated inside the `callCC`). Once it terminates, its value is extracted, and fed to the parent `Cont` calculation (the one containing `callCC`). This gives us the structure
 
 ```haskell
-(>>=) :: Cont r a -> (a -> Cont r b) -> Cont r b
+callCC' = Cont $ \k ->
+                 runCont "<sandboxed calculation>" $ \result ->
+                 k result
 ```
 
-We surely need a new continuation as a result due to that type, so it should look like
+where as before we have the usual `Cont $ \k ->` wrapper in which we build a value, and then return `k <value>` in the end. What's left to ask now is how the sandboxed calculation should be built up.
+
+The most primitive calculation that has to go in there somehow is simpy `exit`.
 
 ```haskell
-m >>= f = Cont $ \after -> (... after, f ...)
+callCC' :: Cont String a
+callCC' = Cont $ \k ->
+                 runCont (exit "foobar") $ \result ->
+                 k result
 ```
 
-`after` is short for *what to do afterwards*, as mentioned in intuitive section on the `Cont` wrapper. Now in order to get to that end result, we have to get the value out of the `m` first, and the only method at hand to do so is `runCont`,
+When evaluating this, the inner continuation encounters the `exit`, the final result of everything `Cont` is set to `"foobar"` by ignoring `k`, and thus everything after the second `($)` is never evaluated. How dull. But can we can fix this! If we abort the inner `Cont` calculation not with `"foobar"` but with `k "foobar"`, then calling `exit` short-circuits out once more, but since it's using `k` now, it will continue as if its value was `"foobar"`!
 
 ```haskell
-m >>= f = Cont $ \after -> runCont m (... after, f ...)
+callCC' :: Cont r String
+callCC' = Cont $ \k ->
+                 runCont (exit (k "foobar")) $ \result ->
+                 k result
 ```
 
-`runCont m` is a function waiting to receive its continuation function. Let's give it one, keeping in mind that providing a continuation with a lambda parameter allows us to access its value, as discussed in the previous section on `runCont`:
+You can see that this is actually equivalent to `return "foobar"` when you refactor the code a bit:
 
 ```haskell
-m >>= f = Cont $ \after -> runCont m (\mVal -> (... after, f, mVal ...))
--- Types:                              ^ :: a
+callCC' = Cont $ \k -> runCont (exit (k "foobar")) $ \result -> k result
+        = Cont $ \k -> runCont (Cont $ \_ -> k "foobar") $ \result -> k result
+        = Cont $ \k ->         (       \_ -> k "foobar") $            k
+        = Cont $ \k -> (\_ -> k "foobar") k
+        = Cont $ \k -> k "foobar"
+        = return "foobar"
 ```
 
-Now that extracted value `mVal` has to be applied to `f`, which is the function we want to feed with the result of the computation so far,
+Great, so now we've achieved a detour version of `return` using `exit`: instead of directly returning a value, we construct a new computation that short-circuits out with that value.
+
+And now the key idea: what if we only conditionally evaluate `exit` here?
 
 ```haskell
-m >>= f = Cont $ \after -> runCont m (\mVal -> (... after, (f mVal) ...))
+callCC' f = Cont $ \k ->
+                   runCont (f (exit (k "foobar"))) $ \result ->
+                   k result
 ```
 
-To recap, up to this point we have done two things: given the continuation we'd like to produce the name `after`, and extracted the value `mVal` out of `m`. What's left is building a connection between the two, so that when the result is requested afterwards, the whole extraction stuff happens first:
+Now it depends on `f` what happens:
+
+1. `f` uses its argument. The `runCont` will evaluate the result of whatever `f` produces, and eventually encounter the `exit` function. The entire thing short-circuits with `k "foobar"`, so `"foobar"` is the value passed on to `result`.
+2. `f` ignores its argument, i.e. `f` is a constant function that maps to `Cont r a`. Whatever that value is, it is passed to `result`. No short-circuiting here.
+
+This is already very close to `callCC`, only one last step is missing: abstracting the `"foobar"` away, since that's hardly the only value we ever want to short-circuit with.
 
 ```haskell
-m >>= f = Cont $ \after -> runCont m (\mVal -> runCont (f mVal) after)
+callCC f = Cont $ \k ->
+                  runCont (f (\x -> exit (k x))) $ \result ->
+                  k result
+
+      where exit x = Cont $ \_ -> x
 ```
 
-Again, what this *does* is getting the value out of `m` by, applying `f` to it, and wrapping the whole thing in a final continuation.
-
-
-
-### `callCC`
-
-Unfortunately `callCC` does a remarkable thing: beating `>>=` both in type signature as in implementation when it comes to not being intuitive. The inner workings of `callCC` can be described like this: it performs an ordinary new `Cont` calculation, but returns its final result with a crux. Instead of returning its own continuation, the continuation parameter of the *parent* block is inserted. You can view `callCC` as an independent calculation that in the end is merged into the parent continuation. This is also hinted by what `callCC` stands for, namely *call with current continuation*.
-
-So let's build this function like we've done it with `>>=` before. First, the desired type signature:
-
-```haskell
-callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
-```
-
-At least we can see that the result will be of type `Cont r a`, so we know that
-
-```haskell
-callCC f = Cont $ \k -> runCont (...)
--- Types:          ^ :: a
-```
-
-We also know `f`'s type, it is `(a -> Cont r b) -> Cont r a`, so we have to apply it to some function; with the resulting `Cont r a`, all we can do is feeding it to `runCont` (which is already there from above), which gives us
-
-```haskell
-callCC f = Cont $ \k -> runCont (f $ \a -> (...)) (...)
--- Types:                             ^ :: a
---                                   |---------| :: a -> Cont r b
---                               ^ :: (a -> Cont r b) -> Cont r a
---                              |---------------| :: Cont r a
-```
-
-`a` has to map to a `Cont r b` due to `f`'s type signature,
-
-```haskell
-callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\m -> (...))) (...)
---                                                ^ m :: b
-```
-
-Up to this point, basically everything got more complicated based on type-level arguments. `m` is the hypothetical value of the continuation we get by applying `f` to `a`; it's the `b` in the type signature, and as such stands for the future if the `exit` parameter is called. Now here comes the crucial step: we want a call to `exit` to merge back into the outermost continuation, instead of forking off its own future. For this reason, we *discard* `m`, and supply `k` instead:
-
-```haskell
-callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\m -> k a)) (...)
---                                                     ^ k, not m!
-```
-
-So again, if `exit` is called with a value `a`, that `a` is simply put into the outer continuation `k` instead of using `m`, jumping out of the `callCC` continuation block with `a`'s value. What's left as a final step is merging the result of this to the outer control flow by applying the `runCont` to `k`, and we arrive at the definition of `callCC`,
-
-```haskell
-callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
-callCC f = Cont $ \k -> runCont (f $ \a -> Cont (\_ -> k a))) k
-```
-
-
-
+And there you have it: `callCC`! Let's reiterate the design: take a `Cont` computation that might short-circuit out by discarding its own continuation (the `_` in `exit`), but wrap the value to exit with with the parent continuation `k`. On short-circuiting, the parent continuation is used for further calculations. On not short-circuiting, the `exit` function is never called, and the inner `Cont` is evaluated as if there was no `callCC` around in the first place, and it was simply evaluated along with its parent calculation.
 
 
 
 `Cont` in the Haskell libraries
 -------------------------------
 
-One thing worth mentioning is that `Cont` in the Haskell library [`Control.Monad.Trans.Cont`][cont-docs] is defined in terms of a monad transformer (on `Identity`). The general purpose `Cont` wrapper I've used in this article is only a smart constructor named `cont` (lower case c), and the type signatures are all a little more general to account for possible uses as a transformer. Apart from these small items, it's pretty much what I've described above; most notably, the explanations still all hold even in the more general scenario.
+One thing worth mentioning is that `Cont` in the Haskell library [`Control.Monad.Trans.Cont`][cont-docs] is defined in terms of a monad transformer (on `Identity`). The general purpose `Cont` wrapper I've used in this article is only a smart constructor named `cont` (lower case c), and the type signatures are all a little more general to account for possible uses as a transformer. Apart from these small items, the other notable difference is the pointfree style. For example, `fmap` would be defined as
+
+```haskell
+fmap f cx = Cont $ \k -> runCont cx (k . f)
+```
+
+I find this to be completely incomprehensible, so I chose to present the more pointful version here. Similar thoughts apply to all the other sections.
 
 [cont-docs]: http://hackage.haskell.org/packages/archive/transformers/latest/doc/html/Control-Monad-Trans-Cont.html
 
 
 
+Acknowledgements
+----------------
 
-Thanks
-------
+I would probably still be in the dark about continuations if it wasn't for `#haskell`, most notably due to parcs' and [Chris Done][chrisdone]'s explanations. Thanks for that!
 
-I would probably still be in the dark about continuations if it wasn't for `#haskell`, most notably due to parcs's explanations. Thanks for that!
+[chrisdone]: http://chrisdone.com/
