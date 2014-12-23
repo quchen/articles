@@ -32,7 +32,7 @@ length = length' 0 where
 
 This converts the return value of the function to a parameter containing what has been done already - its past, so to speak.
 
-Now continuations can be seen as a similar transformation: you put something ordinary in a parameter instead of directly dealing with it. In case of a continuation, that parameter is what's do be done next.
+Now continuations can be seen as a similar transformation: you put something ordinary in a parameter instead of directly dealing with it. In case of a continuation, that parameter is what's to be done next.
 
 ```haskell
 --                      |-----------| <- "Continuation" type. ("square maps an
