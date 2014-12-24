@@ -7,8 +7,8 @@ This describes my Haskell code style and the rationale behind it.
 with it.**
 
 
-Indentation, alignment
-----------------------
+Indentation, alignment, whitespace
+----------------------------------
 
 - One indentation level is 6 spaces. It aligns nicely with `where` clauses and I
   find 4 spaces too small to tell indentation levels apart. If not for the `where`
@@ -66,6 +66,15 @@ Indentation, alignment
   case x of
         Left  l -> ...
         Right r -> ...
+  ```
+
+- Operators should be grouped using spaces (or their absence).
+
+  ```haskell
+  collatz n | n <= 1 = [n]
+  collatz n = let n' | even n    = n `quot` 2
+                     | otherwise = 3*n + 1
+              in  n' : collatz n'
   ```
 
 
