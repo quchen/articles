@@ -73,7 +73,7 @@ pythagoras x y = \k ->
       k result
 ```
 
-In the end the result of the addition is bound to `result`, which is what we want to have. Since we're staying in continuation-passing style, that result is applied to `pythagoras`' continuation `k`.
+In the end the result of the addition is bound to `result`, which is what we want to have. Since we're staying in continuation-passing style, `pythagoras`' continuation `k` is applied to the result.
 
 Now calling `pythagoras 3 4` will result in the hypothetical result of `3^2 + 4^2`, so `pythagoras 3 4 id = 25`.
 
