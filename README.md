@@ -103,7 +103,7 @@ Other topics
 [comprehensible]:   functions_comprehensible.md
 [cont]:             cont_monad.md
 [crazy-io]:         crazy_io.md
-[equality-live]:    https://rawgithub.com/quchen/articles/master/haskell-equality-table.html
+[equality-live]:    http://htmlpreview.github.io/?https://github.com/quchen/articles/blob/master/haskell-equality-table.html
 [equality]:         haskell-equality-table.html
 [fail]:             monad_fail.md
 [fbut]:             fbut.md
