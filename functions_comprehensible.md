@@ -94,6 +94,16 @@ foldM f a1 [x1, x2, ..., xm] = do
       f am xm
 ```
 
+Another way of seeing it is as a chain of `>>=`:
+
+```haskell
+foldM f a1 [x1, x2, ..., xm] = let f' = flip f
+                               in return a1 >>= f' x1
+                                            >>= f' x2
+                                            ...
+                                            >>= f' xm
+```
+
 ```haskell
 filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
 filterM _ [] = return []
