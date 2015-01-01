@@ -10,9 +10,9 @@ with it.**
 Indentation, alignment, whitespace
 ----------------------------------
 
-- One indentation level is 6 spaces. It aligns nicely with `where` clauses and I
-  find 4 spaces too small to tell indentation levels apart. If not for the `where`
-  I would probably use 8 spaces.
+- One indentation level is 6 spaces. It aligns nicely with `where` clauses and
+  I find 4 spaces too small to tell indentation levels apart. If not for the
+  `where` I would probably use 8 spaces.
 
   ```haskell
   main = do

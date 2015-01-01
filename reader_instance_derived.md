@@ -6,7 +6,8 @@ The Reader Monad instance
 `return`
 --------
 
-`return` is a function that yields an action that, applied to whatever environment, yields the same value:
+`return` is a function that yields an action that, applied to whatever
+environment, yields the same value:
 
 ```haskell
 return x = \environment -> x -- Ignore environment, result is always x
@@ -24,7 +25,8 @@ Remember that `\_ -> x` is just `const x`, giving us
 return x = const x
 ```
 
-And now we've got a trailing `x` on both sides so let's get rid of that as well, and we have
+And now we've got a trailing `x` on both sides so let's get rid of that as
+well, and we have
 
 ```haskell
 return = const
@@ -36,7 +38,14 @@ return = const
 Bind/`>>=`
 ----------
 
-I always picture `>>=` as a vacuum tube that sucks a value out of `m` and puts it into `f`. We'll take this idea to construct `m >>= f` in three parts: first, we're getting a value "out" of `m`; in the case of `(->) r` this means applying `m` to the environment (of type `r`). Next, we'll apply `f` to the obtained value to get a new monadic action, and finally it's all packed up again so the type system is happy (and nothing remains dangling or unused). That idea in code then looks like the following (you can read it top-to-bottom, imperative-like):
+I always picture `>>=` as a vacuum tube that sucks a value out of `m` and puts
+it into `f`. We'll take this idea to construct `m >>= f` in three parts: first,
+we're getting a value "out" of `m`; in the case of `(->) r` this means applying
+`m` to the environment (of type `r`). Next, we'll apply `f` to the obtained
+value to get a new monadic action, and finally it's all packed up again so the
+type system is happy (and nothing remains dangling or unused). That idea in
+code then looks like the following (you can read it top-to-bottom,
+imperative-like):
 
 ```haskell
 m >>= f = \environment ->        -- `m >>= f` is a function that takes one
@@ -60,7 +69,9 @@ m >>= f = \environment ->        -- `m >>= f` is a function that takes one
                                  -- environment, we pass that to `fResult` too.
 ```
 
-That's it, this is a valid implementation of `>>=`. We can refactor the code a little though, and you'll see how it's the same as the standard Reader instance. First, let's get rid of all the comments and rename `environment` to `r`:
+That's it, this is a valid implementation of `>>=`. We can refactor the code a
+little though, and you'll see how it's the same as the standard Reader instance.
+First, let's get rid of all the comments and rename `environment` to `r`:
 
 ```haskell
 m >>= f = \r ->
@@ -69,7 +80,9 @@ m >>= f = \r ->
       in  fResult r
 ```
 
-Now it's time for some inlining. `fResult` is calculated and immediately applied to `r`, so we can combine the last two lines into one (replace all `fResult` with `f mValue`), giving us
+Now it's time for some inlining. `fResult` is calculated and immediately applied
+to `r`, so we can combine the last two lines into one (replace all `fResult`
+with `f mValue`), giving us
 
 ```haskell
 m >>= f = \r ->
@@ -77,7 +90,8 @@ m >>= f = \r ->
       in  f mValue r
 ```
 
-The same step again with `mValue` in the last two lines (insert `m r` wherever you see `mValue`) yields
+The same step again with `mValue` in the last two lines (insert `m r` wherever
+you see `mValue`) yields
 
 ```haskell
 m >>= f = \r ->
@@ -90,4 +104,6 @@ And once you put that into one line, you'll end up with
 m >>= f = \r -> f (m r) r
 ```
 
-And that is the cryptic definition of `>>=` you see everywhere. Again, the thinking has been done in the very first code snippet, the rest is just refactoring.
+And that is the cryptic definition of `>>=` you see everywhere. Again, the
+thinking has been done in the very first code snippet, the rest is just
+refactoring.

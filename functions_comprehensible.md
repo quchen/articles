@@ -37,7 +37,9 @@ mapM f [a, b, ..., c] = do
 Foldl/foldr
 -----------
 
-`foldr f z xs` replaces every `(:)` in `xs` with `f`, and the `[]` with `z`. This also explains how `foldr (:) []` is the identity on lists: it replaces `(:)` with `(:)` and `[]` with `[]`.
+`foldr f z xs` replaces every `(:)` in `xs` with `f`, and the `[]` with `z`.
+This also explains how `foldr (:) []` is the identity on lists: it replaces
+`(:)` with `(:)` and `[]` with `[]`.
 
 ```haskell
 -- (\x acc -> newAcc) -> initialValue -> list -> result

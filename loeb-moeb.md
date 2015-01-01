@@ -1,14 +1,16 @@
 Löb and möb: strange loops in Haskell
 =====================================
 
-Every once in a while, people recognize [strange loops][strange-loops] in unexpected places. This is one of them, in the form of a Haskell function.
+Every once in a while, people recognize [strange loops][strange-loops] in
+unexpected places. This is one of them, in the form of a Haskell function.
 
 
 
 `loeb`
 ------
 
-`loeb` is one of those functions in Haskell that are amazing, crazy, simple and complicated in equal parts.
+`loeb` is one of those functions in Haskell that are amazing, crazy, simple and
+complicated in equal parts.
 
 1. The implementation is very simple to write.
 2. The implementation is hard to understand.
@@ -26,17 +28,23 @@ loeb :: Functor f => f (f a -> a) -> f a
 loeb x = go where go = fmap ($ go) x
 ```
 
-That settles the first two points from above (the first one being accomplished using trial-and-error typechecker abuse).
+That settles the first two points from above (the first one being accomplished
+using trial-and-error typechecker abuse).
 
 
 
 ### What `loeb` does
 
-Short version: `loeb` calculates a result in terms of itself, but with more crazy than what you felt when you first heard about recursion.
+Short version: `loeb` calculates a result in terms of itself, but with more
+crazy than what you felt when you first heard about recursion.
 
-Long version: what is this thing useful for? It can be used to implement spreadsheet-like behaviour if the functor is `[]`:
+Long version: what is this thing useful for? It can be used to implement
+spreadsheet-like behaviour if the functor is `[]`:
 
-Take a list of functions mapping lists to values, `fs :: [[a] -> a]`. These functions can each be applied to some other list `xs :: [a]`. For each function `f` in `fs`, applying it to `xs` results in a value `r`; call this collection of values `rs`. This in code form reads
+Take a list of functions mapping lists to values, `fs :: [[a] -> a]`. These
+functions can each be applied to some other list `xs :: [a]`. For each function
+`f` in `fs`, applying it to `xs` results in a value `r`; call this collection
+of values `rs`. This in code form reads
 
 ```haskell
 xs :: [a]
@@ -51,7 +59,8 @@ rs = [ f xs | f <- fs ]  -- r = f xs
 
 This computes `rs` out of the given lists `xs` and `fs`.
 
-Now the crux: it is possible to not take `xs` as given, using `rs` instead. In other words, the `f` are applied to the list of results they produce.
+Now the crux: it is possible to not take `xs` as given, using `rs` instead. In
+other words, the `f` are applied to the list of results they produce.
 
 ```haskell
 fs :: [[a] -> a]
@@ -61,13 +70,17 @@ rs :: [a]
 rs = [ f rs | f <- fs ]
 ```
 
-This of course relies heavily on laziness, as it computes `rs` in terms of itself. Instead of having `fs` as its own definition, let's supply it as a parameter to `rs`:
+This of course relies heavily on laziness, as it computes `rs` in terms of
+itself. Instead of having `fs` as its own definition, let's supply it as a
+parameter to `rs`:
 
 ```haskell
 rs fs = [ f (rs fs) | f <- fs ]
 ```
 
-and as it turns out, `rs = loeb`. Therefore, `loeb` takes a list of functions, and calculates the list of results they produce when applied to the list of results they produce. Strange? Check! Loop? You bet!
+and as it turns out, `rs = loeb`. Therefore, `loeb` takes a list of functions,
+and calculates the list of results they produce when applied to the list of
+results they produce. Strange? Check! Loop? You bet!
 
 An example should make using it clearer:
 
@@ -79,13 +92,21 @@ fs = [ const 1
      ]
 ```
 
-This describes a list where the list elements are defined in terms of the previous result value. `const 1` is the first element of the function list, and applied to the resulting list it is always `1`; therefore the resulting list's first element is `1`. `succ . (!! 0)` applied to the resulting list can now be calculated: the indexing results in the previously calculated `1`, and `succ` makes it a `2`. The second result element will therefore be `2`. This pattern repeats itself, resulting in
+This describes a list where the list elements are defined in terms of the
+previous result value. `const 1` is the first element of the function list, and
+applied to the resulting list it is always `1`; therefore the resulting list's
+first element is `1`. `succ . (!! 0)` applied to the resulting list can now be
+calculated: the indexing results in the previously calculated `1`, and `succ`
+makes it a `2`. The second result element will therefore be `2`. This pattern
+repeats itself, resulting in
 
 ```haskell
 loeb fs ==> [1,2,3,4]
 ```
 
-The interesting part is that the order of the functions is not necessarily left-to-right. The list elements can be swapped around, as long as the circularity is still resolved (otherwise the function won't terminate):
+The interesting part is that the order of the functions is not necessarily
+left-to-right. The list elements can be swapped around, as long as the
+circularity is still resolved (otherwise the function won't terminate):
 
 
 ```haskell
@@ -98,12 +119,16 @@ fs = [ succ . (!! 1)
 loeb fs ==> [3,2,4,1]
 ```
 
-So this is like a spreadsheet, right? One cell's value is known, and the other cells refer to each other in some way. When the evaluation terminates, each cell has a defined value. In a sense this is like a generalization of a fixed point combinator.
+So this is like a spreadsheet, right? One cell's value is known, and the other
+cells refer to each other in some way. When the evaluation terminates, each
+cell has a defined value. In a sense this is like a generalization of a fixed
+point combinator.
 
 
 ### Spreadsheets!
 
-The lists mentioned above are a little like spreadsheets with only one line. But there are other functors closer to the real thing, arrays for example!
+The lists mentioned above are a little like spreadsheets with only one line.
+But there are other functors closer to the real thing, arrays for example!
 
 ```haskell
 import Data.Array
@@ -156,7 +181,9 @@ Run it! The output will be
 ```
 
 where in the first column you'll see the prices (declared using `val` above),
-the second column is the added tax to the price on its left, the third lists the effective price, and below the effective prices there's the total sum you have to pay in order to buy everything. Magic! :-)
+the second column is the added tax to the price on its left, the third lists
+the effective price, and below the effective prices there's the total sum you
+have to pay in order to buy everything. Magic! :-)
 
 
 
@@ -164,7 +191,9 @@ the second column is the added tax to the price on its left, the third lists the
 `moeb`
 ------
 
-`moeb` is the result of playing around with `loeb`'s definition: what if we abstract over the `fmap` too? First and foremost, it makes the type signature go crazy:
+`moeb` is the result of playing around with `loeb`'s definition: what if we
+abstract over the `fmap` too? First and foremost, it makes the type signature
+go crazy:
 
 ```haskell
 -- [m]oeb = multi-loeb :-)
@@ -172,7 +201,8 @@ moeb :: (((a -> b) -> b) -> c -> a) -> c -> a
 moeb f x = go where go = f ($ go) x
 ```
 
-`loeb` can now be recovered as `moeb fmap`. But are there other parameters that are useful for `f`? Well,
+`loeb` can now be recovered as `moeb fmap`. But are there other parameters that
+are useful for `f`? Well,
 
 ```haskell
 moeb id x = id ($ moeb id x) x
@@ -186,7 +216,8 @@ moeb id x = id ($ moeb id x) x
 
 This shows how `moeb` is a generalization of `fix`.
 
-There are other functions that can be used as parameter to `moeb` such as `traverse` and `foldMap`, but I don't know of any useful applications for them.
+There are other functions that can be used as parameter to `moeb` such as
+`traverse` and `foldMap`, but I don't know of any useful applications for them.
 
 
 

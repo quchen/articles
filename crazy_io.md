@@ -1,7 +1,9 @@
 Haskell crazy IO quiz
 =====================
 
-This is a collection of weird bugs in Haskell programs due to lazy IO. The answer to all these snippets is "don't use lazy IO". The quiz part is finding out what goes wrong.
+This is a collection of weird bugs in Haskell programs due to lazy IO. The
+answer to all these snippets is "don't use lazy IO". The quiz part is finding
+out what goes wrong.
 
 Provided by Peaker in Freenode/#haskell:
 
