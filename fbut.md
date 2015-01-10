@@ -453,7 +453,7 @@ seqR | randomBool = seq1
 
 It is worth noting that evaluating `seq (error "x") (error "y")` seemingly
 allows inspection of which argument is actually evaluated first, since only one
-of the errors is printed. This is a red herring though: he compiler may (and
+of the errors is printed. This is a red herring though: the compiler may (and
 does!) choose which argument to evaluate first as an optimization, so there
 really is no guarantee of evaluation order even if the above simple test always
 displays the "x" error. Even worse, that behaviour can change as the compiler
