@@ -10,32 +10,26 @@ with it.**
 Indentation, alignment, whitespace
 ----------------------------------
 
-- One indentation level is 6 spaces. It aligns nicely with `where` clauses and
-  I find 4 spaces too small to tell indentation levels apart. If not for the
-  `where` I would probably use 8 spaces.
+- One indentation level is 4 spaces. (I used to use 6, but the Haskell
+  community seems to be mostly standardized to 4.)
 
   ```haskell
   main = do
-        name <- getLine
-        putStrLn ("Hello, " ++ name)
+      name <- getLine
+      putStrLn ("Hello, " ++ name)
   ```
 
-  'where' placement depends on the main focus of a definition: is it after the
-  first "=", or inside the 'where'?
+- 'where' placement is on its own line, intented half a level. This gives it
+  a prominent place without consuming a full indentation level for itself.
 
   ```haskell
   -- 'where' centric: Small main function body using lots of 'where' definitions.
   -- This style keeps the indentation level of the sub-definitions low.
-  where1 = definition where
-        foo = <...>
-        bar = <...>
-        <...>
-
-  -- Top centric: 'where' defines auxiliary values, but the main work (actually
-  -- or conceptually) is done at the topmost level.
-  where2 = definition
-        where foo = <...>
-  ```
+  where1 = definition
+    where
+      foo = <...>
+      bar = <...>
+      <...>
 
 - Literal tabs are syntax errors.
 
@@ -64,8 +58,8 @@ Indentation, alignment, whitespace
   together    = ...
 
   case x of
-        Left  l -> ...
-        Right r -> ...
+      Left  l -> ...
+      Right r -> ...
   ```
 
 - Operators should be grouped using spaces (or their absence).
@@ -109,8 +103,8 @@ Naming
 
   ```haskell
   case foo of
-        Just (Left (_filename, handle)) -> doSomething handle
-        _else -> ...
+      Just (Left (_filename, handle)) -> doSomething handle
+      _else -> ...
   ```
 
 - Specify imports block-wise, separated by a blank line, in several sections:
@@ -129,7 +123,8 @@ Type signatures
 ---------------
 
 - Types always have the form `name ::` with a single space, making it much
-  easier to find the definition of something in a large source file.
+  easier to find the definition of something in a large source file, even
+  without editor support.
 
 - Long types can be broken into multiple lines that each start with an arrow:
 
