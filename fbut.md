@@ -218,8 +218,8 @@ spaces?
    place.
 
 3. **The Haskell community has decided to use spaces.** All common libraries use
-   spaces, and the only reason there are a few tabs left in GHC's source is
-   because of potential merge conflicts when editing them all out in bulk.
+   spaces, and as of 7.10, GHC's Haskell source is fully de-tabbed, and the
+   compiler issues a warning if there are literal tabs in source files.
 
 
 
