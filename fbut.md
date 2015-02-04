@@ -1,8 +1,10 @@
 Frequently brought up topics in #haskell
 ========================================
 
-(This is like an FAQ, except that the *F* stands for *frequently* instead of
-*someone thought this might be worth mentioning*.)
+This is a collection of various questions, statements, and antipatterns I've
+encountered in Freenode's #haskell over the years. It's a lot like an FAQ,
+except that the *F* stands for *frequently* instead of *someone thought this
+might be worth mentioning*.
 
 
 
