@@ -66,7 +66,9 @@ Contents
 ### Short version
 
 "The short answer is 'any time you write `Data.ByteString.Char8` in your code,
-your code is probably wrong'" - *merijn on #haskell*
+your code is probably wrong'" - [*merijn on #haskell*][merijnquote]
+
+[merijnquote]: http://ircbrowse.net/browse/haskell?id=16225289&timestamp=1375966557#t1375966557
 
 ### The problem
 
