@@ -358,7 +358,7 @@ such as `doStuff $ fold ...`!
 3. (Harder) Find the index of the list element after which all further elements
    have already occurred before (and including) that element. Example:
    `covering [1,2,3,4,3,5,2,1,1]  ==>  5`, because `[1,2,3,4,3,5]` contains all
-   unique elements of the list. (Equivalently, `sort . covering == sort . nub`.)
+   unique elements of the list.
 
 Solutions for these are given in the last section in this file.
 
