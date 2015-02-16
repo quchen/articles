@@ -96,7 +96,8 @@ Discussion
 
 - The case of one data constructor should emit a warning if the data type is
   defined via `data` (as opposed to `newtype`): adding another data constructor
-  can make patterns in unrelated modules refutable.
+  can make patterns in unrelated modules refutable. Built-ins like tuples
+  should be excluded from this rule, as they will never be changed.
 
 - Some monads use the pattern matching to force evaluation of the binding, for
   example lazy/strict `StateT`. I'm not sure what exactly the consequences of
@@ -132,12 +133,15 @@ Other things to consider
 Applying the change
 -------------------
 
-Like the AMP,
+The roadmap is similar to the AMP.
 
-1. Implement ad-hoc warnings that code will receive a `MonadFail` constraint
-   in a future version. "Either make the patterns irrefutable, or keep in mind
-   that the next compiler version will require a `MonadFail` instance". Since
-   `MonadFail` does not clash with an existing name, it could be introduced to
-   `Control.Monad` right away.
+1. Implement ad-hoc warnings explaining how to future-proof the code:
 
-2. Do the switch.
+   - `Monad` that implements `fail` will break in future release
+   - `do` block of a `Monad` that has no `MonadFail` instance contains a
+     fallible pattern
+   - Custom local definition of the new `fail` name (if it is renamed)
+
+2. Wait for Hackage to adapt one major release or two.
+
+3. Do the switch.
