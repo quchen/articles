@@ -26,39 +26,61 @@ To fix this, introduce a new typeclass:
 
 ```haskell
 class Monad m => MonadFail m where
-      fail :: String -> m a
+      mfail :: String -> m a
 ```
 
-Desugaring is then changed to the following:
+Desugaring then has to be changed to produce this constraint when necessary:
 
-```haskell
--- Explicitly irrefutable pattern: do not add MonadFail constraint
+- Explicitly irrefutable pattern: do not add `MonadFail` constraint
 
-do ~pat <- computation     >>>     let f ~pat = more
-   more                    >>>     in  computation >>= f
-
-
-
--- Only one data constructor: do not add MonadFail constraint.
--- This rule should apply recursively for nested patterns,
--- e.g.  Only (Only' x).
-
-do (Only x) <- computation     >>>     let f (Only x) = more
-   more                        >>>     in  computation >>= f
-
--- In particular, this means that tuples don't produce constraints.
-
-do (a,b) <- computation     >>>     let f (a,b) = more
-   more                     >>>     in  computation >>= f
+    ```haskell
+    do ~pat <- action     >>>     let f ~pat = more
+       more               >>>     in  action >>= f
+    ```
 
 
 
--- Otherwise: add MonadFail constraint
+- Only one data constructor: do not add `MonadFail` constraint. This rule
+  should apply recursively for nested patterns, e.g. `Only (Only' x)`.
 
-do pat <- computation     >>>     let f pat = more
-   more                   >>>         f _   = fail "..."
-                          >>>     in  computation >>= f
-```
+    ```haskell
+    do (Only x) <- action     >>>     let f (Only x) = more
+       more                   >>>     in  action >>= f
+    ```
+
+  In particular, this means that tuples don't produce constraints.
+
+    ```haskell
+    do (a,b) <- action     >>>     let f (a,b) = more
+       more                >>>     in  action >>= f
+    ```
+
+
+
+- `ViewPatterns`: add `MonadFail` constraint depending on the pattern and *not*
+  the view. In other words, patterns like `(Just -> Just x)` should generate a
+  `MonadFail` constraint even when it's "obvious" from the view's
+  implementation that the pattern will always match.
+
+    ```haskell
+    do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
+       more                         >>>         f _              = fail "..."
+                                    >>>     in  action >>= f
+
+    do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
+       more                         >>>         f _              = fail "..."
+                                    >>>     in  action >>= f
+    ```
+
+
+
+- Otherwise: add `MonadFail` constraint
+
+    ```haskell
+    do pat <- computation     >>>     let f pat = more
+       more                   >>>         f _   = fail "..."
+                              >>>     in  computation >>= f
+    ```
 
 
 
