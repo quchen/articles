@@ -623,9 +623,6 @@ and [Data.List][data.list].
 `f x = ...` is not `f = \x -> ...`
 ----------------------------------
 
-**I did not have this section proof-read by anyone else yet, so read with
-care. Corrections would be very appreciated.**
-
 Although theory tells us these two should be identical, there are some subtle
 differences between the two, in particular in GHC.
 
