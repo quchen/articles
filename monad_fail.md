@@ -62,7 +62,9 @@ Desugaring then has to be changed to produce this constraint when necessary:
 - `ViewPatterns`: add `MonadFail` constraint depending on the pattern and *not*
   the view. In other words, patterns like `(Just -> Just x)` should generate a
   `MonadFail` constraint even when it's "obvious" from the view's
-  implementation that the pattern will always match.
+  implementation that the pattern will always match. From an implementor's
+  perspective, this means that only types (and their constructors) have to be
+  looked at, not arbitrary values (like functions).
 
     ```haskell
     do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
@@ -70,7 +72,6 @@ Desugaring then has to be changed to produce this constraint when necessary:
                                     >>>     in  action >>= f
 
     do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
-       more                         >>>         f _              = fail "..."
                                     >>>     in  action >>= f
     ```
 
