@@ -18,7 +18,8 @@ Knowing about these patterns is very useful even at small scales, and suitable f
 
 ### Tying the knot
 
-TODO
+In immutable languages, certain tasks seem like very peculiar problems. How would you create a cyclic list if there was no way to modify the last element to point to the first one again? *Tying the knot* is the name for how to create such self-referential structures.
+
 
 
 
