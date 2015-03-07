@@ -17,8 +17,26 @@ Basic programming patterns
 Knowing about these patterns is very useful even at small scales, and suitable for users of all skill levels.
 
 ### Tying the knot
+
+TODO
+
+
+
+
+
 ### Avoiding side effects
+
+TODO
+
+
+
+
+
 ### Stacking effects
+
+TODO
+
+
 
 
 
@@ -28,7 +46,7 @@ Let me start this section with a parable. Why is it that trains have way fewer a
 
 All these things are restrictions imposed on the train that allow it to make certain practical and very strong assumptions about its environment, but the price it pays for that is that it cannot usually freely choose where to go except in some rare scenarios.
 
-So what are the tracks in programming?
+So what are the tracks in programming, and how can we make the best use of them?
 
 -------------------------------------------------------------------------------
 
@@ -132,9 +150,29 @@ My solution to this problem is simple: all functions I use for debugging are in 
 Advanced programming patterns
 -----------------------------
 
+These patterns range from being useful to most advanced Haskell users, to being very situational.
+
 ### Free structures
+
+TODO
+
+
+
+
+
 ### Mutable updates
+
+TODO
+
+
+
+
+
 ### Continuation-passing style
+
+TODO
+
+
 
 
 
@@ -143,7 +181,15 @@ Architectural patterns
 
 An architectural pattern is not so much concerned about how actual code is written, but in what way it is aggregated and presented to the maintainer or user. Because of this, these patterns are likely applicable even outside of the functional domain.
 
+
+
+
+
 ### Extending modules
+
+TODO
+
+
 
 
 
@@ -154,6 +200,9 @@ The point of an API is only exposing the necessary functionality to accomplish a
 The concept of an internal module, as opposed to a hidden one, is a social convention: modules with "internal" in their names are exposed and usable just like the API, but don't necessarily provide safety guarantees or feature stability. Internal modules should only be used if one is *certain* that this is what one wants.
 
 To give an example, the API of many compilers consists of converting source code to executables. It would be silly to test that and only that, as internals have their own invariants, and it is very insightful to detect the errors on the lowest possible level. Hence it is useful to expose internals purely for the sake of scoping in, and since the testsuite is shipped with the code of the same version API instability is not a concern.
+
+
+
 
 
 ### Barrier modules
