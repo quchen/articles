@@ -121,7 +121,11 @@ It's not all rainbows and unicorns though, because a well-typed program doesn't 
 
 ### Deliberately unnecessary modules
 
-TODO: "Contains stuff that should be safe to delete in production code so there are errors when usages were forgotten"
+Sometimes, the easiest way of debugging is using dirty "printf style", where you just insert various reporting and bookkeeping functions in places you'd like to scope in. But it's easy to forget that these functions are used, and sometimes one that's in an obscure place might not be noticed for some time, until one day it turns out it made its way into a release.
+
+My solution to this problem is simple: all functions I use for debugging are in one module that contains only that. Before releasing, that module can simply be removed, and the compiler will complain about all usages that were forgotten. Simple, but it saved me from bad mistakes numerous times.
+
+
 
 
 
