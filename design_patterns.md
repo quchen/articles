@@ -11,10 +11,18 @@ This is a collection of design patterns that I've come across using functional l
 
 
 
+
+
 Basic programming patterns
 --------------------------
 
+
+
 Knowing about these patterns is very useful even at small scales, and suitable for users of all skill levels.
+
+
+
+
 
 ### Tying the knot
 
@@ -28,7 +36,6 @@ In immutable languages, certain tasks seem like very peculiar problems. How woul
 ### Avoiding side effects
 
 TODO
-
 
 
 
@@ -170,6 +177,22 @@ TODO
 
 
 ### Continuation-passing style
+
+TODO
+
+
+
+
+
+### Phantom types
+
+TODO
+
+
+
+
+
+### Zippers
 
 TODO
 
