@@ -54,9 +54,11 @@ At this point, a sufficiently smart compiler could already tell us that instead 
 ```haskell
 map : (a -> b, List a) -> List b
 map(f, list) =
-  if (isEmpty list)
+  if isEmpty list
     then: emptyList
-    else: ?combine (f (firstElement list), ?rest)
+    else: ?combine (f (head list), ?rest)
+
+-- head gives us the first element of a list
 ```
 
 Our compiler might now say that it expects `?combine` to have type
@@ -67,7 +69,10 @@ map : (a -> b, List a) -> List b
 map(f, list) =
   if (isEmpty list)
     then: emptyList
-    else: cons (f (firstElement list), ?rest)
+    else: cons (f (head list), ?rest)
+
+-- head gives us everything but the first element of a list.
+-- In other words: cons (head list) (tail list) == list.
 ```
 
 The compiler accepts the program, but complains that there's a placeholder `?rest` left, which as you remember had type `anything`, but our previous choice narrowed it down to `List b`. If only we had a `List b` lying around ... but wait, we're mapping over something, and the result of the operation should be a `List b`! Since we've accounted for the first element already, we'll just add "map over the rest" in the placeholder, yielding
@@ -77,7 +82,7 @@ map : (a -> b, List a) -> List b
 map(f, list) =
   if (isEmpty list)
     then: emptyList
-    else: cons (f (firstElement list), map (f, rest list))
+    else: cons (f (head list), map (f, tail list))
 ```
 
 Now we're done: this is a correct implementation of the `map` function. Now these steps may have seemed complicated, but evaluate them again carefully, taking note which steps required *us* to think, as opposed to having the compiler think *for us*. Here is everything put together:
