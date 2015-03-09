@@ -246,5 +246,5 @@ This can be visualized as each import building up a barrier against modules it i
 This has a number of consequences:
 
 - A higher-level module stands for all the functionality provided by its children put together. There is no necessity to worry about which chunk of an entire hierarchy has to be imported.
-- If lower-level functionality is required somewhere, then the imports are available. However, with doing so, one loses the ability to rely on the higher abstraction level.
+- If lower-level functionality is required somewhere, then the imports are available. However, with doing so, one loses the ability to rely on the higher abstraction level. This ensures that each level serves a specific purpose in the abstraction hierarchy, and not just bookkeeping.
 - Exceptions from the rule are possible, should the need arise. In this sense, the barrier rule is a guideline to module structure, and can be ignored on a per-case basis if necessary. This point is particularly important to mention, because it allows selectively opting out of usually present order, as opposed to selectively introducing it in presentn disorder.
