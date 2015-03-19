@@ -1,6 +1,8 @@
 Removing `fail` from `Monad`
 ============================
 
+(Just dreaming around here.)
+
 
 
 The problem
@@ -28,7 +30,7 @@ To fix this, introduce a new typeclass:
 
 ```haskell
 class Monad m => MonadFail m where
-      mfail :: String -> m a
+    mfail :: String -> m a
 ```
 
 Desugaring then has to be changed to produce this constraint when necessary:
@@ -120,11 +122,15 @@ Discussion
 Other things to consider
 ------------------------
 
-- Rename `fail`? It's quite a generic name that would be nice to have in APIs.
-  `failM`? `mfail`?
+- ~~Rename `fail`?~~ **Yes.** Introducing `mfail` allows us to do a smooth
+  transition easily (see below section), and removing the "m" again afterwards
+  is simply not worth the hassle.
 
-- Remove the `String` argument? (May hurt error reporting on pattern
-  mismatch ..?)
+- ~~Remove the `String` argument?~~ **No.** The `String` helps might help
+  error reporting and debugging. `String` may be ugly, but it's the de facto
+  standard for simple text in GHC. Also, no high performance string operations
+  are to be expected with `mfail`, so this breaking change would in no way be
+  justified.
 
 - How sensitive would existing code be to subtle changes in the strictness
   behaviour of `do` notation pattern matching?
@@ -134,15 +140,27 @@ Other things to consider
 Applying the change
 -------------------
 
-The roadmap is similar to the AMP.
+The roadmap is similar to the AMP, the main difference being that since `mfail`
+does not exist yet, we have to introduce new functionality and then switch to
+it.
 
-1. Implement ad-hoc warnings explaining how to future-proof the code:
+1. Preliminaries. Might ship with a minor version bump in the 7.10 release
+   already.
 
-   - `Monad` that implements `fail` will break in future release
-   - `do` block of a `Monad` that has no `MonadFail` instance contains a
-     fallible pattern
-   - Custom local definition of the new `fail` name (if it is renamed)
+   - Add `MonadFail` with `mfail`
+   - Warn when a Monad defines `fail` but has no `MonadFail` instance
 
-2. Wait for Hackage to adapt one major release or two.
+2. Nag for change
 
-3. Do the switch.
+   - Warn when a pattern is used that would require a `MonadFail` constraint,
+     but the `Monad` has none. Make it opt-in at first (e.g. as part of `-W`),
+     then switch it to on by default.
+
+3. The switch
+
+   - Move `fail` out of the `Monad` class into a top-level synonym for `mfail`
+   - Deprecate `fail`
+
+4. Cleanup
+
+   - Remove the now deprecated `fail` version
