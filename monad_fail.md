@@ -70,7 +70,7 @@ Desugaring then has to be changed to produce this constraint when necessary:
 
     ```haskell
     do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
-       more                         >>>         f _              = fail "..."
+       more                         >>>         f _              = mfail "..."
                                     >>>     in  action >>= f
 
     do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
@@ -83,7 +83,7 @@ Desugaring then has to be changed to produce this constraint when necessary:
 
     ```haskell
     do pat <- computation     >>>     let f pat = more
-       more                   >>>         f _   = fail "..."
+       more                   >>>         f _   = mfail "..."
                               >>>     in  computation >>= f
     ```
 
@@ -93,29 +93,24 @@ Discussion
 ----------
 
 - Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class
-  should be created. A parser might fail with an error message involving
-  positional information, and for STM failure uses the default `fail = error`
-  although it is `MonadPlus`.
+  should be created instead of just using that. A parser might fail with an
+  error message involving positional information, and for STM failure uses the
+  default `fail = error` although it is `MonadPlus`.
 
 - The case of one data constructor should emit a warning if the data type is
   defined via `data` (as opposed to `newtype`): adding another data constructor
-  can make patterns in unrelated modules refutable. Built-ins like tuples
-  should be excluded from this rule, as they will never be changed.
+  can make patterns in unrelated modules change meaning, resulting in broken
+  code. However, this isn't different from usual library update breakages when
+  definitions change, so it's not a special concern here either.
 
 - Some monads use the pattern matching to force evaluation of the binding, for
   example lazy/strict `StateT`. I'm not sure what exactly the consequences of
   the above are here; I suspect a strictness annotation or `(>>=)` instead of
   `do` notation might be sufficient.
 
-- Getting the change to work should be boring but painless: all Monad instance
-  declarations involving `fail` will break because the function is removed, and
-  many monadic computations have to be annotated using `~` because they were
-  written under the assumption that `fail` is never called. In both these cases
-  compilation errors/warnings carry sufficient information to fix the source
-  code easily.
-
 - Backwards compatibility with many old modules will be broken; I don't see a
   way around this.
+
 
 
 
@@ -126,15 +121,24 @@ Other things to consider
   transition easily (see below section), and removing the "m" again afterwards
   is simply not worth the hassle.
 
-- ~~Remove the `String` argument?~~ **No.** The `String` helps might help
-  error reporting and debugging. `String` may be ugly, but it's the de facto
-  standard for simple text in GHC. Also, no high performance string operations
-  are to be expected with `mfail`, so this breaking change would in no way be
-  justified.
+- ~~Remove the `String` argument?~~ **No.** The `String`  might help error
+  reporting and debugging. `String` may be ugly, but it's the de facto standard
+  for simple text in GHC. Also, no high performance string operations are to be
+  expected with `mfail`, so this breaking change would in no way be justified.
 
 - How sensitive would existing code be to subtle changes in the strictness
   behaviour of `do` notation pattern matching?
 
+- The `Monad` constraint for `MonadFail` is completely unnecessary. What other
+  things should be considered?
+
+  - Applicative `do` notation is coming sooner or later, `fail` might be useful
+    in this more general scenario.
+  - The class might be misused for a strange pointed type if left without
+    any constraint.
+
+- What laws should `mfail` follow? The first thing that comes to mind is
+  following the laws similar to `empty`/`mzero`, i.e. being an identity(ish) for `<|>`/`mplus` and a left zero for `<*>`/`>>=`.
 
 
 Applying the change
