@@ -1,11 +1,14 @@
-Functional design patterns
-==========================
+Haskell patterns
+================
 
-A *design pattern in the negative sense* "is a concept that is intuitively clear, but not easily expressed in a language" [(source)][hodapp-quote]. Most of us are familiar with design patterns in imperative languages, many of which simply don't exist in functional settings, as they are captured naturally by the paradigm. Other things aren't as natural, and so some tasks that would be easy in an imperative setting become a design pattern.
+*Attention conservation notice.* This article covers practical patterns I've
+come across or up with.
 
-In contrast to that, there are also *design patterns in the positive sense*. They don't overcome problems, but make the most out of a language's features in order to capture complex behaviour in a simple, elegant way. Some would say that this simply means writing idiomatic code, but sometimes new ways of doing so have first to be discovered, and until they become mainstream, it's fair to regard them as patterns as well.
+A *design pattern* ["is a concept that is intuitively clear, but not easily expressed in a language"][hodapp-quote]. Most of us are familiar with design patterns in imperative languages, many of which simply don't exist in functional settings, as they are captured naturally by the paradigm. Other things aren't as natural, and so some tasks that would be easy in an imperative setting become a design pattern.
 
-This is a collection of design patterns that I've come across using functional languages. For the sake of clarity, for me a "functional language" means a focus on using functions as control structures, avoiding mutable state, and strong type systems.
+In contrast to that, there are also positive patterns, patterns that don't overcome problems, but make the most out of a language's features in order to capture complex behaviour in a simple, elegant way. Some would say that this simply means writing idiomatic code, but sometimes new ways of doing so have first to be discovered, and until they become mainstream, it's fair to regard them as patterns as well. The more powerful a language is, the more these patterns can be packaged up into libraries, and eventually become so common and simple you don't even realize you're using them anymore.
+
+This is a collection of patterns that I've come across using functional languages. For the sake of clarity, for me a "functional language" means a focus on using functions as control structures, avoiding mutable state, and strong type systems.
 
 [hodapp-quote]: http://ircbrowse.net/browse/haskell?id=19809422&timestamp=1420581031#t1420581031
 
