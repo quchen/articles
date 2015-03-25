@@ -74,7 +74,7 @@ Desugaring then has to be changed to produce this constraint when necessary:
                                     >>>     in  action >>= f
 
     do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
-                                    >>>     in  action >>= f
+       more                         >>>     in  action >>= f
     ```
 
 
