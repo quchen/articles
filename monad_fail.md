@@ -138,7 +138,8 @@ Other things to consider
     any constraint.
 
 - What laws should `mfail` follow? The first thing that comes to mind is
-  following the laws similar to `empty`/`mzero`, i.e. being an identity(ish) for `<|>`/`mplus` and a left zero for `<*>`/`>>=`.
+  following the laws similar to `empty`/`mzero`, i.e. being an identity(ish)
+  for `<|>`/`mplus` and a left zero for `<*>`/`>>=`.
 
 
 Applying the change
