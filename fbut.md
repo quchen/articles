@@ -34,6 +34,7 @@ Contents
 13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
 14. [Reversed type class instances]              [toc-reversed-instances]
 15. [Folding direction of `foldl` and `foldr`]   [toc-foldl-foldr]
+15. [`($)` has special powers]                   [toc-special-dollar]
 
 
 
@@ -58,6 +59,7 @@ Contents
 [toc-lambda-vs-normal]:         #f-x---is-not-f--x---
 [toc-reversed-instances]:       #reversed-type-class-instances
 [toc-foldl-foldr]:              #folding-direction-of-foldl-and-foldr
+[toc-special-dollar]:           #-has-special-powers
 
 
 
@@ -747,3 +749,53 @@ foldl f z (x:xs) = foldl f (f z x) xs -- x is the first list element,
 foldr _ z [] = z
 foldr f z (x:xs) = z `f` foldr f z xs -- dito
 ```
+
+
+
+
+
+`($)` has special powers
+------------------------
+
+The definition you can find in the Prelude
+
+```haskell
+($) :: (a -> b) -> a -> b
+f $ x = f x
+```
+
+isn't really all there is to the function. GHC's current typechecker requires
+some aid to work with Rank-2-types occasionally, so GHC contains a hack that
+gives `($)` special powers in that context.
+
+```haskell
+runST (return ())     -- OK
+runST $ return ()     -- OK
+($) runST (return ()) -- Type error. Wat
+```
+
+This special `($)` behaviour is very useful in the presence of the
+`f . g . h $ do {...}` idiom, but leads to a confusing error message.
+
+The reason for this is that in order to check the type of `($)`
+
+```haskell
+($) :: (a -> b) -> a -> b
+```
+
+GHC has to unify `forall s. ST s c` with `a`, but then the first and second
+`a` in `($)`'s type will have two different `s`, as in
+
+```haskell
+($) :: ((forall s. ST s c) -> b) -> (forall s. ST s c) -> b
+```
+
+But note that both the `forall`s close over their `s` argument, so the above
+is equivalent to
+
+```haskell
+($) :: ((forall s. ST s c) -> b) -> (forall t. ST t c) -> b
+```
+
+Because of this, GHC *cannot* unify the two terms as demanded by `($)`'s type
+signature, and the typecheck fails.
