@@ -298,5 +298,7 @@ Status report
               issued, Hackage should adapt to cleaning them up.
 - 2014-09-09: AMP merged into GHC master branch: `Applicative` is now a
               superclass of `Monad` in the compiler.
+- 2015-03-27: GHC 7.10.1 released. The AMP is officially implemented. Thanks
+              to all participants in its creation!
 
 [amp-patch]: https://github.com/ghc/ghc/commit/75a9664af1c4e6f87794b49a215adb235b20696d
