@@ -33,6 +33,7 @@ Contents
 12. [How to start learning Haskell]              [toc-haskell-start]
 13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
 14. [Reversed type class instances]              [toc-reversed-instances]
+15. [Folding direction of `foldl` and `foldr`]   [toc-foldl-foldr]
 
 
 
@@ -56,7 +57,7 @@ Contents
 [toc-haskell-start]:            #how-to-start-learning-haskell
 [toc-lambda-vs-normal]:         #f-x---is-not-f--x---
 [toc-reversed-instances]:       #reversed-type-class-instances
-
+[toc-foldl-foldr]:              #folding-direction-of-foldl-and-foldr
 
 
 
@@ -723,4 +724,24 @@ instance Ord Nat where
       compare (S _)  Z    = GT
       compare  Z     Z    = EQ
       compare  Z    (S _) = LT
+```
+
+
+
+
+
+Folding direction of `foldl` and `foldr`
+----------------------------------------
+
+Both functions traverse a list from left to right. To stress it some more, any angle under which this seems not to be the case is *wrong*.
+
+In each step, both functions look at the head of the list (if present) exclusively, and combine it with something else using the stepping function.
+
+```haskell
+foldl _ z [] = z
+foldl f z (x:xs) = foldl f (f z x) xs -- x is the first list element,
+                                      -- no others are considered.
+
+foldr _ z [] = z
+foldr f z (x:xs) = z `f` foldr f z xs -- dito
 ```
