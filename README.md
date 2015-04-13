@@ -74,6 +74,7 @@ Haskell related
   removing `fail` from the `Monad` typeclass.
 - [seqm_proposal.md][seqm-proposal] contains the proposal text for a new basic
   Haskell function to force strictness of a monadic computation.
+- [Stuff I want to see in/for Haskell][stuff-i-want]
 
 
 
@@ -119,3 +120,4 @@ Other topics
 [fix]:              fix.md
 [instances]:        instances.md
 [functor-law]:      second_functor_law.md
+[stuff-i-want]:     stuff_i_would_like_in_haskell.md.md
