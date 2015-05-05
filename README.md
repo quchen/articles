@@ -49,6 +49,9 @@ Haskell related
 - [reader_instance_derived.md][reader] shows step by step how the golfed
   instance of Reader (as presented in LYAH, for example) can be derived from
   something sensible and readable.
+- [second_functor_law.md][functor-law] explains how in most practical scenarios,
+  checking the second Functor law is redundant, as it is a consequence of the
+  first one.
 - [unmaintainable_haskell.md][unmaintain] describes how to write unmaintainable
   Haskell code in the spirit of [How to write unmaintainable code][unmaintain-org]
 - [useful_techniques.md][useful] shows some neat little Haskell tricks I've
