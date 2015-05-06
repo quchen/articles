@@ -474,6 +474,53 @@ voodoo magic.
 
 
 
+One rather strange consequence of this is the fact that functions like `foldl'`
+do not *guarantee* no space leaks even when applied correctly! This would be a
+valid reduction strategy:
+
+```haskell
+  foldl' (+) 0 [1,2,3]
+
+= let x = 0 + 1
+  in  x `seq` foldl' (+) x [2,3]
+
+= let x = 0 + 1
+  in x `seq`
+      let y = x + 2
+      in y `seq` foldl' (+) y [3]
+
+= let x = 0 + 1
+  in x `seq`
+      let y = x + 2
+      in y `seq`
+          let z = y + 3
+          in z `seq` foldl' (+) z []
+
+= let x = 0 + 1
+  in x `seq`
+      let y = x + 2
+      in y `seq`
+          let z = y + 3
+          in z `seq` z
+
+= let x = 0 + 1
+  in x `seq`
+      let y = x + 2
+      in y `seq`
+          let z = y + 3
+          in z
+
+-- And now it's business as usual
+```
+
+As you can see, the length of the expression grows as we walk down the list,
+despite the fact that one would expect the `seq` to take care of that sort of
+issue. In fact, `foldl'` not blowing up the stack is an optimization done by
+our dear friend, the sufficiently smart compiler, which GHC is an example of.
+
+
+
+
 
 
 Where is `IO` defined?
