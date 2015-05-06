@@ -161,6 +161,23 @@ additional wrapper around the application of `op`, and this wrapper is already
 WHNF. For this reason, `op` is never forced, and the `seq` terminates without
 complaints.
 
+This GHC behaviour violates the Haskell standard, [which literally demands that
+"the following identities hold"][report-sections]:
+
+```haskell
+(op e)  =  \ x -> x op e
+(e op)  =  \ x -> e op x
+
+-- where op is a binary operator, e is an expression,
+-- and x is a variable that does not occur free in e.
+```
+
+However, the problems arising from this don't seem bad enough to demand a fix,
+so it'll probably stay a small quirk in GHC for the forseeable future.
+
+[report-sections]: https://www.haskell.org/onlinereport/haskell2010/haskellch3.html#x8-300003.5
+
+
 
 
 
