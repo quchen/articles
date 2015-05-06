@@ -135,10 +135,10 @@ general.
 ``(a `op`)`` is not ``\x -> a `op` x``
 --------------------------------------
 
-These two forms are seemingly identical, but there is a subtle difference. The
-first one is just sugar for `op a`, while the second one is a lambda (and not
-direct application of `op`). This leads to different strictness properties in
-the presence of ⊥:
+These two forms are seemingly identical, but there is a subtle difference in
+GHC. The first one is just sugar for `op a`, while the second one is a lambda
+(and not direct application of `op`). This leads to different strictness
+properties in the presence of ⊥:
 
 ```haskell
 > let op = undefined
