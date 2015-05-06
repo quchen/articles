@@ -733,9 +733,11 @@ instance Ord Nat where
 Folding direction of `foldl` and `foldr`
 ----------------------------------------
 
-Both functions traverse a list from left to right. To stress it some more, any angle under which this seems not to be the case is *wrong*.
+Both functions traverse a list from left to right. To stress it some more, any
+angle under which this seems not to be the case is *wrong*.
 
-In each step, both functions look at the head of the list (if present) exclusively, and combine it with something else using the stepping function.
+In each step, both functions look at the head of the list (if present)
+exclusively, and combine it with something else using the stepping function.
 
 ```haskell
 foldl _ z [] = z
