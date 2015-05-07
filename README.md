@@ -17,49 +17,44 @@ Haskell related
 
 ### General, tutorials
 
-- [build.md][build] explains how the `build` function, which is used in rewrite
-  rules for list-based functions, works.
-- [cont_monad.md][cont] is my shot at explaining the `Cont` Monad.
-- [crazy_io.md][crazy-io] shows some examples of lazy IO pitfalls in Haskell.
-- [fix.md][fix] is a tutorial on what `fix`, Haskell's version of the fixed
-  point combinator, does and how it can be used.
-- [fbut.md][fbut] is a list of **F**requently **B**rought **U**p **T**opics in
-  Freenode's #haskell channel for easy reference. It's like an FAQ, except that
-  the "F" stands for "frequently" instead of "someone thought this may be worth
-  mentioning".
-- [functions_comprehensible.md][comprehensible]: Basic Haskell functions written
-  in easily comprehensible notation. Nice for explaining e.g. `sequence`.
-- [great_things_about_haskell.md][great] explains what I thought was cool about
-  Haskell some time ago. Maybe I should update it some day.
-- [haskell-equality-table.html][equality] [(live version)][equality-live] was
-  created in a time where it seemed to be en vogue to create tables for the `==`
-  operator in various languages. It's a very boring table.
-- [haskell-style.md][haskell-style] describes my Haskell code style and the
-  rationale behind it.
-- [install_haskell_platform_manually.md][hp] was once a small file for myself to
-  walk me through setting up GHC properly in case I needed to. The revised
-  version is this file, explaining how to get from zero to GHC and Haskell
-  Platform.
-- [instances.md][instances] is an informal description of what various class
-  instances of basic Haskell types do.
-- [lens-infix-operators.md][lens-infix] provides an overview of what the
-  individual symbols in infix operators of the [lens][lens] library stand for.
-- [loeb-moeb.md][loeb] is about an interesting function that calculates the
-  result of a function when applied to the result of the function.
-- [reader_instance_derived.md][reader] shows step by step how the golfed
-  instance of Reader (as presented in LYAH, for example) can be derived from
-  something sensible and readable.
-- [second_functor_law.md][functor-law] explains how in most practical scenarios,
-  checking the second Functor law is redundant, as it is a consequence of the
-  first one.
-- [unmaintainable_haskell.md][unmaintain] describes how to write unmaintainable
-  Haskell code in the spirit of [How to write unmaintainable code][unmaintain-org]
-- [useful_techniques.md][useful] shows some neat little Haskell tricks I've
-  collected.
-- [write_yourself_a_brainfuck.md][bf-tut] is a tutorial on how to write a basic
-  [Brainfuck][bf] interpreter in Haskell. It also includes enough exercises to
-  keep readers busy.
-- [zero_to_local_ghc.md][local-ghc] is the advanced version of
+- [The `build` function explained][build], which is an important piece in a
+  popular optimization technique
+- [The `Cont` monad explained][cont]
+- [Some lazy IO pitfalls][crazy-io]
+- [THe `fix` function][fix], one possible fundamental building block of
+  recursion
+- [**F**requently **B**rought **U**p **T**opics in Freenode's #haskell
+  channel][fbut]
+- [Basic Haskell functions written in easily comprehensible
+  notation.][comprehensible] Nice for explaining e.g. `sequence`.
+- [What I thought was cool about Haskell some time ago.][great] I should
+  update this one day.
+- [Equality table of Haskell values.][equality] [(live version)][equality-live]
+  Created in a time where it seemed to be en vogue to create tables for the `==`
+  operator in various languages. Spoiler, it's terribly boring, because it
+  should be.
+- [My Haskell code style][haskell-style] and the rationale behind it
+- [Installing the Haskell platform manually.][hp] This is mostly a guide for
+  myself to walk me through setting up GHC properly in case I needed to, hoping
+  it will be useful to others as well.
+- [Informal description of class instances][instances] gives non-technical
+  descriptions of various common class instances.
+- [Lens infix operators cheat sheet][lens-infix] provides an overview of what
+  the individual symbols in infix operators of the [lens][lens] library stand
+  for.
+- [Löb/Möb][loeb] is about an interesting, simple, complicated and quirky
+  recursive function.
+- [Reader instance derived][reader] shows  how to write the usual `Reader`
+  monad instance starting from something readable and comprehensible.
+- [The second `Functor` law is redundant][functor-law]
+- [How to write unmaintainable Haskell][unmaintain], inspired by
+  [How to write unmaintainable code][unmaintain-org]
+- [Useful techniques][useful] I've found over the years and haven't seen
+  described elsewhere
+- [Write yourself a Brainfuck in an hour][bf-tut] implements a very simple
+  [Brainfuck][bf] interpreter in Haskell, with plenty of room to go on
+  afterwards.
+- [Install GHC from zero][local-ghc] is the advanced version of
   [install_haskell_platform_manually.md][hp] from above: it guides through the
   installation of self-compiled GHC plus standard libraries and tools from
   nothing.
@@ -68,16 +63,13 @@ Haskell related
 
 ### Proposals
 
-- [applicative_monad.md][amp] is the original text of the 2013 Applicative-Monad
-  proposal, which finally got things going to make Applicative a superclass of
-  Monad.
-- [law-rules.md][law-rules] is a draft of a not-yet-proposed proposal for a GHC
-  feature.
-- [monad_fail.md][fail] is a proposal similar to the AMP, with the goal of
-  removing `fail` from the `Monad` typeclass.
-- [seqm_proposal.md][seqm-proposal] contains the proposal text for a new basic
-  Haskell function to force strictness of a monadic computation.
-- [Stuff I want to see in/for Haskell][stuff-i-want]
+- [Applicative-Monad proposal (AMP)][amp] is the original text of the 2013
+  Applicative-Monad proposal, which was the starting point for Applicative
+  becoming a superclass of Monad in GHC 7.10.
+- [Rules for typeclass laws][law-rules] wasn't proosed yet
+- [Removing `fail` from `Monad`][fail] is a proposal similar to the AMP,
+  with the goal of removing `fail` from the `Monad` typeclass.
+- [Stuff I would like to see in/for Haskell][stuff-i-want]
 
 
 
@@ -86,7 +78,7 @@ Haskell related
 Other topics
 ------------
 
-- [modular_keyboard.md][modular-keyboard] describes a keyboard I'd like to have.
+- [Modular keyboard][modular-keyboard] describes a keyboard I'd like to have.
   I encourage everyone to steal this idea so I can buy one from him.
 
 
