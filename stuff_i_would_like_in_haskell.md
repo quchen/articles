@@ -15,18 +15,7 @@ do with Haskell.
 
     1. Colours.
 
-    2. Ability to suppress messages like
-
-        ```
-        Loading package ghc-prim ... linking ... done.
-        Loading package integer-gmp ... linking ... done.
-        Loading package base ... linking ... done.
-        ```
-
-       when loading packages in GHCi. Importing something from Edwardverse
-       is embarassing in presentations.
-
-    3. Vim syntax (jumping from Zsh to GHCi is a pain).
+    2. Vim syntax (jumping from Zsh to GHCi is a pain).
 
 
 - Haddock
@@ -45,5 +34,18 @@ do with Haskell.
        that work around this issue, [one by myself][cib], but it should really
        be part of Cabal.
 
+
+- Infrastructure
+
+    1. A build service that modifies your package bounds and tries to compile
+       the package again, in order to find out the maximum dependency version
+       range that should go into the .cabal file
+
+- Libraries
+
+    1. A library for handling graphs with less embarassing documentation and
+       code than [fgl][fgl]
+
 [hmf]: https://www.haskell.org/haddock/doc/html/module-attributes.html
 [cib]: https://github.com/quchen/cabal-install-bin/
+[fgl]: http://hackage.haskell.org/package/fgl
