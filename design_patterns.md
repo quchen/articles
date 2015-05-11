@@ -51,7 +51,71 @@ TODO
 
 ### Smart constructors
 
+Constructors and pattern matching grant structural access capabilities for values. But sometimes structural is not enough, and we want to have more control over what values we apply constructors to. A smart constructor is an informally defined term for a function that often has the same type as the real data constructor, but performs a small additional computation to the input. The two most common such computations are refinement and convenience.
 
+#### Refinement
+
+How would you define a type of nonnegative `Integer`s? There are multiple approaches to solving such problems. The main three are
+
+- Documenting the invariants, giving descriptive names, etc. This is a very poor solution because it requires the user to know exactly what subset of well-typed values are legal in the context of the program.
+- Venturing into dependent types. While many amazing things can be done with this approach, the cost of time and knowledge is often prohibitively expensive, and there are many practical drawbacks, such as that everything has to be known at compile time.
+- Refinement types are available to some languages as an addon, but seldomly as part of the core language.
+- Smart constructors.
+
+The idea of a refining smart constructor is providing a way to construct a value of a type (which may possibly fail in a defined way, such as using `Maybe`) such that the created value is guaranteed to respect the invariant. For example, one might define a nonnegative integer type via
+
+```haskell
+newtype Natural = Natural Integer
+natural :: Integer -> Maybe Natural
+
+natural n | n < 0 = Nothing
+          | otherwise = Natural n
+```
+
+When you're receiving a `Natural` that was created this way, you can be sure that it will always be nonnegative. Therefore, using smart constructors removes the need to worry about whether a value was constructed with the invariant in mind, because this can be guaranteed by design.
+
+There are a couple of prices to pay for this kind of safety though.
+
+- The construction site has to do the error checking properly, or the guarantee is void.
+- You cannot pattern match on smart constructors, since they are just ordinary functions. A popular pattern is exporting only the type, but not its constructors, from a module; constructors and deconstructors (for field access) are provided separately.
+- A proper data constructor guarantees that nothing is done to the data, while a smart constructor, being an opaque function, could do arbitrarily complicated calculations.
+
+#### Convenience
+
+Convenience is another use case for smart constructors. One very common use case you might not be aware of is the way `Integer` is commonly defined, which is like so:
+
+```haskell
+data Integer = Small Int
+             | Large BitArray
+```
+
+Calculations using `Integer` try to stay in the efficient domain of `Int` as much as possible, but when a computation threatens to overflow, the internal data constructor is switched to `Large`.
+
+A smart constructor in this case is a constructor that chooses the right representation for its argument. For example, one might imagine a function that takes a `Large` `Integer`, and if it fits in an `Int`, it converts it to a `Small` one. This kind of smart constructor chooses the right data constructor based on the input.
+
+Another example of a convenient smart constructor is the `state` function, which converts stateful computations to to a value implementing `MonadState`. That `MonadState` can be any instance, such as `State`, `StateT`, `RWST`, or some other stateful monad or stack of transformers. `state` unifies all these different constructors under one single name, and chooses the right one based on the type it is supposed to map to.
+
+#### Pattern synonyms
+
+Since this is specific to recent versions of GHC, I will only mention [pattern synonyms][pat-synonyms] briefly. With a pattern synonym, one can define an identifier that acts as if it was a constructor you can pattern match on and that can be used to construct values, despite the fact that it is just a wrapper around a smart constructor.
+
+```haskell
+pattern Nat n <- Natural n
+  where
+    Natural n = Nat N
+```
+
+With this definition, you can use `Nat` as if it was a constructor for values of type `Natural`, like so:
+
+```haskell
+addOne (Nat n) = Nat (n+1)
+--        ^        ^--- constructor
+--        +--- pattern
+```
+
+This provides a lot of convenience and implementation hiding, but the price is using a non-standard compiler extension.
+
+[pat-synonyms]: https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/syntax-extns.html#pattern-synonyms
 
 
 
