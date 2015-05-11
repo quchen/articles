@@ -306,11 +306,15 @@ TODO
 
 ### Internal modules
 
-The point of an API is only exposing the necessary functionality to accomplish an abstract task, while keeping the implementation details hidden. Sometimes, one would like to have access to these implementation details anyway, however. Valid reasons for this include testing unexposed functionality, and quick and dirty hacks (for some value of "valid", at least).
+All languages I know lack a distinctive feature: marking certain functions as API. See, exporting something "publically" is not precise enough: is it required elsewhere that way in the library, or might external programmers be using a certain definition? Am I free to move this piece of code around without breaking dependants?
 
-The concept of an internal module, as opposed to a hidden one, is a social convention: modules with "internal" in their names are exposed and usable just like the API, but don't necessarily provide safety guarantees or feature stability. Internal modules should only be used if one is *certain* that this is what one wants.
+The concept of an internal module, as opposed to a hidden/invisible one, is a social convention: modules with "internal" in their names are exposed and usable just like the API, but don't necessarily provide safety guarantees or feature stability. Internal modules should only be used if one is *certain* that this is what one wants.
 
-To give an example, the API of many compilers consists of converting source code to executables. It would be silly to test that and only that, as internals have their own invariants, and it is very insightful to detect the errors on the lowest possible level. Hence it is useful to expose internals purely for the sake of scoping in, and since the testsuite is shipped with the code of the same version API instability is not a concern.
+One important consequence of allowing access to these modules is that it shifts responsibility from the library author, who might wrongfully be hiding useful functionality, to the library user, who has to be careful which of the functions marked as internal to be used. Furthermore, having access to "uninentionally useful" functionality allows a user to step around the process of requesting a certain function be made public five dependencies up the toolchain, often a very tiring and difficult political process.
+
+Another way this is useful is for testing: the tests can be delivered as a standalone library with additional dependencies (such as the test framework), which has access to non-API internals. The main library does not need to depend on the testsuite's dependencies this way, and only those people who want to develop and test need to install them.
+
+To give an example, the public API of many compilers consists of converting source code to executables. It would be silly to test that and only that, as internals have their own invariants, and it is very insightful to detect the errors on the lowest possible level. Hence it is useful to expose internals purely for the sake of scoping in, and since the testsuite is shipped with the code of the same version API instability is not a concern. There is also a lot of tooling that hooks into a compiler's internals, e.g. to get access to the abstract syntax tree of a program (to detect common antipatterns, for example), or in order to find out where a function is defined in the source code.
 
 
 
