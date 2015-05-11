@@ -239,9 +239,25 @@ TODO
 
 
 
-### Mutable updates
+### Local mutability: the cobuilder pattern
 
-TODO
+One form of the builder pattern in OOP is having a collection of methods that allow modifying some base object, and can be chained after one another. Finalizing the builder then takes that chain of modifications and creates the desired object out of it.
+
+Functional programming has a related concept. Some pure languages allow introducing local mutable state in a special code block. This can be very useful to implement algorithms that are very much based on mutability, such as the ingenious Quicksort algorithm.
+
+This is done in two steps. A special *thawing* function creates a mutable copy of a data structure. That mutable structure can be modified arbitrarily before it is *frozen*, yielding an immutable value again. Someo versions of Haskell can guarantee that the contents of a locally mutable code block are indistinguishable from an immutable version from the outside, or in other words: no mutability can leak out of it.
+
+Suppose all had was an immutable array with a getting and setting operation in its API. This is how squaring each element might look like:
+
+```haskell
+square vec = do
+    mutableCopy <- thaw vec
+    for (\i -> do value <- readIndex mutableCopy i
+                  writeIndex i (value^2))
+    freeze mutableCopy
+```
+
+The type of `square` would be the same as if we took the vector, and copied it for each element as we modify it piece by piece; using local mutability, we need to make only a single copy, namely during the thawing step. (There is no need to copy again for the freeze, since when the `vecMutable` runs out of scope, there is no way to modify it anymore anyway.)
 
 
 
