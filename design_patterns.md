@@ -273,8 +273,37 @@ TODO
 
 ### Phantom types
 
-TODO
+A phantom type is a type whose values are not important, and that is used solely to satisfy the type checker.
 
+Let's say you're writing a banking application, and you're dealing with lots of different currencies. Sure, you could represent everything as a `Double`, but then you would have to be extremely careful that you never add euros to dollars anywhere in your code, or you'd get a rather nasty bug. The next approach would be writing newtype wrappers for `USD` and `EUR` that each contain a `Double`, but now you have to define each typeclass instance you want to have for each of your currencies, resulting in a large amount of boilerplate and a potential maintenance headache. Using a phantom type, you can parameterize a single newtype, write all instances just once, but still have all the type safety of individual newtypes.
+
+```haskell
+-- One empty data type per currency.
+data EUR
+data USD
+data GBP
+
+-- The "c" parameter is ignored on the right hand side, and
+-- will only be used in type signatures to ensure currencies
+-- match.
+newtype Currency c = Amount Double
+
+instance Num (Currency c) where
+    Amount x + Amount y = Amount (x+y)
+    -- etc.
+
+convertEurUsd :: Currency EUR -> Currency USD
+convertEurUsd (Amount eur) = Amount (eur * 1.1)
+
+-- Type error!
+let usd :: Currency USD
+    usd = Amount 11
+    eur :: Currency EUR
+    usd = Amount 22
+in usd + eur
+```
+
+-- TODO: finish the section
 
 
 
