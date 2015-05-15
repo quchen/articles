@@ -34,7 +34,8 @@ Contents
 13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
 14. [Reversed type class instances]              [toc-reversed-instances]
 15. [Folding direction of `foldl` and `foldr`]   [toc-foldl-foldr]
-15. [`($)` has special powers]                   [toc-special-dollar]
+16. [`($)` has special powers]                   [toc-special-dollar]
+17. [Comment syntax]                             [toc-comment-syntax]
 
 
 
@@ -60,6 +61,7 @@ Contents
 [toc-reversed-instances]:       #reversed-type-class-instances
 [toc-foldl-foldr]:              #folding-direction-of-foldl-and-foldr
 [toc-special-dollar]:           #-has-special-powers
+[toc-comment-syntax]:           #comment-syntax
 
 
 
@@ -863,3 +865,39 @@ is equivalent to
 
 Because of this, GHC *cannot* unify the two terms as demanded by `($)`'s type
 signature, and the typecheck fails.
+
+
+
+
+
+Comment syntax
+--------------
+
+### Line comments
+
+Haskell has line comment syntax that is stranger than you might think. For some
+reason, the developers wanted to allow operators starting with `--`, which
+leads to a couple of odd special cases.
+
+```haskell
+-- This is a comment.
+--- So is this.
+------ And this.
+----------------------------------------------------------------------------
+-- Some people like to separate their code blocks with lines like these.
+
+--. This is an operator called "--." and not a comment.
+|-- This is an operator as well.
+--| In particular, this is not a Haddock comment but an operator called "--|"
+    followed by some oddly human language looking code.
+--^ Likewise.
+```
+
+The practical advice here is that you should surround your `--` in whitespace
+to be sure it's a comment.
+
+### Block comments
+
+Luckily, block comments are easy. They all look like `{- -}`, and they can be
+nested. The absence of special cases here is that curly braces aren't part of
+valid operators, so there is no room for ambiguity.
