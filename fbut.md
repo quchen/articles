@@ -30,6 +30,7 @@ Contents
     - [`unsafePerformIO`]                        [toc-dont-use-unsafeperformio]
     - [`head`, `isJust`, ...]                    [toc-dont-use-headtail]
     - [`nub`]                                    [toc-dont-use-nub]
+    - [`String`]                                 [toc-dont-use-string]
 12. [How to start learning Haskell]              [toc-haskell-start]
 13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
 14. [Reversed type class instances]              [toc-reversed-instances]
@@ -56,6 +57,7 @@ Contents
 [toc-dont-use-unsafeperformio]: #unsafeperformio
 [toc-dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
 [toc-dont-use-nub]:             #nub
+[toc-dont-use-string]:          #string
 [toc-haskell-start]:            #how-to-start-learning-haskell
 [toc-lambda-vs-normal]:         #f-x---is-not-f--x---
 [toc-reversed-instances]:       #reversed-type-class-instances
@@ -656,6 +658,52 @@ nub3 xs = foldr go (const []) xs Set.empty where
             | x `Set.member` cache = xs cache
             | otherwise            = x : xs (Set.insert x cache)
 ```
+
+### `String`
+
+`String` is literally a singly linked list of individual characters. To state
+the obvious, this is a *terrible* way to represent text in general. `String`
+suffers from the following problems:
+
+- Its memory footprint is pretty bad.
+
+    - One `(:)` cell per character, one machine word (typically 8 byte) each.
+    - One pointer from the `(:)`'s first argument to the `Char` value of the
+      unicode code point in memory. One word per character.
+    - One pointer from the `Char` value to the memory address holding the raw
+      value. One word per character.
+    - Another pointer per `(:)` cell to point to the rest of the list to
+      follow. One word per character.
+
+    That makes a total overhead of 32 byte per character just for storage. (You
+    need to store the actual raw `Char#` value as well of course.)
+
+- No cache locality at all; pretty much every new character needs to be read
+  from RAM, and not from one of the faster CPU caches.
+
+- Many very common string operations are pretty expensive for lists,
+  concatenation being the most obvious example (which runs in linear time of
+  its first argument's length).
+
+[`Text`][text-lib] is a mature library that has none of the problems `String`
+has. It is preferrable in almost all scenarios where nontrivial string handling
+is required.
+
+And since `ByteString` is also often added to the string confusion:
+
+- `String` is the simplest string type you could have in Haskell. It is
+  convenient to use, since there are lots of functions working for lists in the
+  standard library. You can use list comprehensions, you can pattern match.
+- [`Text`][text-lib] is for when you want to do serious things with strings.
+  Many people argue that it should be the default people use, instead of
+  `String`.
+- [`ByteString`][bytestring-lib] does not have much to do with strings; it's a
+  sequence of bytes. It is what you would serialize your data to, what you read
+  from a network socket or a raw file.
+
+[text-lib]: http://hackage.haskell.org/package/text/
+[bytestring-lib]: http://hackage.haskell.org/package/bytestring/
+
 
 
 
