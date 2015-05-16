@@ -602,7 +602,8 @@ failing function.
 
 ### `read`
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
-has a `Maybe a` result.
+has a `Maybe a` result. Better yet, use `Data.Text.readMaybe`, because you
+should not use `String`, [as mentioned in another section here][toc-dont-use-string].
 
 ### `genericLength`
 `genericLength` is literally the naive `1 + length rest` implementation,
