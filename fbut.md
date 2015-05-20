@@ -582,7 +582,7 @@ means that unless you have a very good reason to use them, they are *wrong*.
 anything involving "probably".)
 
 
-### `fail`
+### [`fail`][fail]
 
 `fail` from the `Monad` typeclass is a mistake for multiple reasons. It
 prefers `String` over better text representations, `Monad` has nothing to do
@@ -602,14 +602,14 @@ safe in `Data.Binary`'s `Get`, and the API does not expose a dedicated
 failing function.
 
 
-### `read`
+### [`read`][read]
 
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
 has a `Maybe a` result. Better yet, use `Data.Text.readMaybe`, because you
 should not use `String`, [as mentioned in another section here][toc-dont-use-string].
 
 
-### `genericLength`
+### [`genericLength`][genericLength]
 
 `genericLength` is literally the naive `1 + length rest` implementation,
 and nobody is quite sure why it is in the standard library. `genericLength`
@@ -625,7 +625,7 @@ is an `Int` value, and an `Int` pointer to the next value). At this point,
 lists are probably not the right representation for your data.
 
 
-### `unsafePerformIO`
+### [`unsafePerformIO`][unsafePerformIO]
 
 `unsafePerformIO` is very useful in advanced Haskell, and very wrong
 otherwise. Chances are you're looking for a very basic introduction to `IO`
@@ -636,10 +636,10 @@ roughly works. In addition to being pretty damn sure that you actually need a
 function of type `IO a -> a`, you should also understand how your compiler
 handles inlining, in which cases it evaluates expressions and how many times,
 and how errors should be detectable in case you make one using this dangerous
-function. Relly, don't use it lightheartedly.
+function. Really, don't use it lightheartedly.
 
 
-### `head`, `tail`, `isJust`, `isNothing`, `fromJust`, ...
+### [`head`][head], [`tail`][tail], [`isJust`][isJust], [`isNothing`][isNothing], [`fromJust`][fromJust], ...
 
 These should all be substituted by pattern matching. For one, they separate
 structural code from code that does computations, and even more importantly,
@@ -736,6 +736,15 @@ And since `ByteString` is also often added to the string confusion:
   sequence of bytes. It is what you would serialize your data to, what you read
   from a network socket or a raw file.
 
+[fail]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Control-Monad.html#v:fail
+[read]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Text-Read.html#v:read
+[genericLength]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:genericLength
+[unsafePerformIO]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/System-IO-Unsafe.html#v:unsafePerformIO
+[head]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:head
+[tail]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:tail
+[isJust]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isJust
+[isNothing]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isNothing
+[fromJust]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:fromJust
 [text-lib]: http://hackage.haskell.org/package/text/
 [bytestring-lib]: http://hackage.haskell.org/package/bytestring/
 
