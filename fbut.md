@@ -645,6 +645,20 @@ These should all be substituted by pattern matching. For one, they separate
 structural code from code that does computations, and even more importantly,
 the compiler knows when you forget to handle a case (when compiled with `-W`).
 
+For example, instead of
+
+```haskell
+map f xs | null xs = []
+         | otherwise = f (head xs) : tail xs
+```
+
+you should write
+
+```haskell
+map f (x:xs) = f x : map f xs
+map _ [] = []
+```
+
 
 ### `nub`
 
