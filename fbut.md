@@ -429,8 +429,8 @@ used), enabling the following:
 {-# LANGUAGE GADTs #-} -- GHC extension, non-standard Haskell!
 
 data OrdList a where
-      Nil  :: OrdList a
-      (:<) :: Ord a => a -> OrdList a -> OrdList a
+    Nil  :: OrdList a
+    (:<) :: Ord a => a -> OrdList a -> OrdList a
 
 ordLength :: OrdList a -> Int -- No Ord constraint!
 ordLength Nil = 0
@@ -680,17 +680,17 @@ nub1 = map head . group . sort
 -- to the standard 'nub', but uses a Set instead of a List
 -- to cache previously encountered elements.
 nub2 = go Set.empty where
-      go [] _ = []
-      go (x:xs) cache
-            | x `Set.member` cache = go xs cache
-            | otherwise            = x : go xs (Set.insert x cache)
+    go [] _ = []
+    go (x:xs) cache
+        | x `Set.member` cache = go xs cache
+        | otherwise            = x : go xs (Set.insert x cache)
 
 -- nub2, implemented as a fold. Coming up with this yourself is
 -- a good exercise, try doing it before reading the code!
 nub3 xs = foldr go (const []) xs Set.empty where
-      go x xs cache
-            | x `Set.member` cache = xs cache
-            | otherwise            = x : xs (Set.insert x cache)
+    go x xs cache
+        | x `Set.member` cache = xs cache
+        | otherwise            = x : xs (Set.insert x cache)
 ```
 
 
@@ -849,17 +849,17 @@ newtype Id a = Id a
 
 -- Functor defined using Applicative
 instance Functor Id where
-      fmap = liftA
+    fmap = liftA
 
 -- Applicative defined using Monad
 instance Applicative Id where
-      pure = Id
-      (<*>) = ap
+    pure = Id
+    (<*>) = ap
 
 -- Monad defined using Applicative
 instance Monad Id where
-      return = pure
-      Id x >>= f = f x
+    return = pure
+    Id x >>= f = f x
 ```
 
 Another example, `Eq` in terms of `Ord`:
@@ -868,13 +868,13 @@ Another example, `Eq` in terms of `Ord`:
 newtype Nat = Z | S Nat
 
 instance Eq Nat where
-      a == b = compare a b == EQ
+    a == b = compare a b == EQ
 
 instance Ord Nat where
-      compare (S x) (S y) = compare x y
-      compare (S _)  Z    = GT
-      compare  Z     Z    = EQ
-      compare  Z    (S _) = LT
+    compare (S x) (S y) = compare x y
+    compare (S _)  Z    = GT
+    compare  Z     Z    = EQ
+    compare  Z    (S _) = LT
 ```
 
 
