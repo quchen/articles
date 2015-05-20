@@ -979,6 +979,9 @@ leads to a couple of odd special cases.
 The practical advice here is that you should surround your `--` in whitespace
 to be sure it's a comment.
 
+(Note how Githubs parser displays this wrong in the markdown rendering
+because of precisely these corner cases.)
+
 ### Block comments
 
 Luckily, block comments are easy. They all look like `{- -}`, and they can be
