@@ -581,7 +581,9 @@ means that unless you have a very good reason to use them, they are *wrong*.
 (Not good reasons include that the types match conveniently, it's convenient,
 anything involving "probably".)
 
+
 ### `fail`
+
 `fail` from the `Monad` typeclass is a mistake for multiple reasons. It
 prefers `String` over better text representations, `Monad` has nothing to do
 with text anyway, and worst of all, many monads *cannot* have an
@@ -599,12 +601,16 @@ that is specific to one instance that supports it. For example, using `fail` is
 safe in `Data.Binary`'s `Get`, and the API does not expose a dedicated
 failing function.
 
+
 ### `read`
+
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
 has a `Maybe a` result. Better yet, use `Data.Text.readMaybe`, because you
 should not use `String`, [as mentioned in another section here][toc-dont-use-string].
 
+
 ### `genericLength`
+
 `genericLength` is literally the naive `1 + length rest` implementation,
 and nobody is quite sure why it is in the standard library. `genericLength`
 uses O(n) stack space so it can overflow, which is just awful behaviour. If
@@ -618,16 +624,30 @@ that single list would have to be a little over 16 GiB in memory (each entry
 is an `Int` value, and an `Int` pointer to the next value). At this point,
 lists are probably not the right representation for your data.
 
+
 ### `unsafePerformIO`
+
 `unsafePerformIO` is very useful in advanced Haskell, and very wrong
-otherwise. Chances are `>>=` is what you want.
+otherwise. Chances are you're looking for a very basic introduction to `IO`
+based on `do` notation or chaining `>>=` ("bind").
+
+In order to use `unsafePerformIO` safely, it's not enough to know how `IO`
+roughly works. In addition to being pretty damn sure that you actually need a
+function of type `IO a -> a`, you should also understand how your compiler
+handles inlining, in which cases it evaluates expressions and how many times,
+and how errors should be detectable in case you make one using this dangerous
+function. Relly, don't use it lightheartedly.
+
 
 ### `head`, `tail`, `isJust`, `isNothing`, `fromJust`, ...
+
 These should all be substituted by pattern matching. For one, they separate
 structural code from code that does computations, and even more importantly,
 the compiler knows when you forget to handle a case (when compiled with `-W`).
 
+
 ### `nub`
+
 `nub` has terrible performance (quadratic), since its type is overly general,
 requiring only an `Eq` constraint. If your data satisfies `Ord`, then you can
 implement much better algorithms that run in O(n*log(n)) time.
@@ -658,6 +678,7 @@ nub3 xs = foldr go (const []) xs Set.empty where
             | x `Set.member` cache = xs cache
             | otherwise            = x : xs (Set.insert x cache)
 ```
+
 
 ### `String`
 
