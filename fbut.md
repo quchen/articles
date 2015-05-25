@@ -37,6 +37,7 @@ Contents
 15. [Folding direction of `foldl` and `foldr`]   [toc-foldl-foldr]
 16. [`($)` has special powers]                   [toc-special-dollar]
 17. [Comment syntax]                             [toc-comment-syntax]
+18. [`data`, `newtype`, `type`]                  [toc-data-newtype-type]
 
 
 
@@ -942,6 +943,67 @@ valid operators, so there is no room for ambiguity.
 
 
 
+`data`, `newtype`, `type`
+-------------------------
+
+Defining new data types frequently confuses beginners.
+
+- `data`: Define a new type that can have multiple fields and is
+  distinguishable from other types by the typechecker.
+
+    ```haskell
+    data Bool = False | True
+    data Maybe a = Nothing | Just a
+    data List a = Nil | Cons a (List a)
+    ```
+
+  **If I could choose a better name, it would be `type` instead of `data`.**
+
+- `type` defines a type synonym, and does not create a new type. It is used to
+  make lengthy composite types more readable, or to provide convenient names
+  for special use cases.
+
+    ```haskell
+    type String = [Char]
+    type NumberOfSheep = Integer
+    ```
+
+  **My suggested better keyword for `type` would be `synonym`.**
+
+- `newtype` sits between `type` and `data` and combines some of their desirable
+  features.
+
+  To the typechecker, `newtype`s look like `data` types.
+
+    ```haskell
+    -- A and B are distinct types that cannot be used interchangably.
+    newtype A = A Int
+    newtype B = B Int
+    -- ==> A ≠ B
+
+    -- Dito.
+    data A = A Int
+    data B = B Int
+    -- ==> A ≠ B
+
+    -- Type synonyms *can* be used interchangably.
+    type A = Int
+    type B = Int
+    -- ==> A = B = Int
+    ```
+
+  Once typechecking is done however, the compiler can simply throw the
+  `newtype` wrappers away, and work as if you had used simple `type` synonyms.
+  This makes `newtype` a zero-cost abstraction in many scenarios.
+
+  Typical uses for `newtype`s include defining type-safe aliases for existing
+  types, or wrapping existing types so that they can be given different type
+  class instances than the base type (e.g. `Sum`).
+
+  **If I could rename the keyword, I'd call it `wrapper`.**
+
+
+
 
 
 [attoparsec]: http://hackage.haskell.org/package/attoparsec
@@ -980,6 +1042,7 @@ valid operators, so there is no room for ambiguity.
 [toc-bsbad]:                    #bytestringchar8-is-bad
 [toc-comment-syntax]:           #comment-syntax
 [toc-constraint-types]:         #imposing-constraints-on-data-types
+[toc-data-newtype-type]:        #data-newtype-type
 [toc-dont-use-fail]:            #fail
 [toc-dont-use-genericlength]:   #genericlength
 [toc-dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
