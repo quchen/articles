@@ -13,31 +13,31 @@ might be worth mentioning*.
 Contents
 --------
 
-1.  [`ByteString.Char8` is bad]                  [toc-bsbad]
-2.  [``(a `op`)`` is not ``\x -> a `op` x``]     [toc-sections]
-3.  [I don't understand Monads]                  [toc-monads]
-4.  [Tabs vs. spaces]                            [toc-tabspaces]
-5.  [`(- 4)` is not `\x -> x - 4`]               [toc-special-minus]
-6.  [I'm looking for a good Regex library]       [toc-regex]
-7.  [`Show` is not for prettyprinting]           [toc-show]
-8.  [Imposing constraints on data types]         [toc-constraint-types]
-9.  [`seq` does not specify an evaluation order] [toc-seq]
-10. [Where is `IO` defined?]                     [toc-io]
-11. [Don't use ...]                              [toc-dont-use]
-    - [`fail`]                                   [toc-dont-use-fail]
-    - [`read`]                                   [toc-dont-use-read]
-    - [`genericLength`]                          [toc-dont-use-genericlength]
-    - [`unsafePerformIO`]                        [toc-dont-use-unsafeperformio]
-    - [`head`, `isJust`, ...]                    [toc-dont-use-headtail]
-    - [`nub`]                                    [toc-dont-use-nub]
-    - [`String`]                                 [toc-dont-use-string]
-12. [How to start learning Haskell]              [toc-haskell-start]
-13. [`f x = ...` is not `f = \x -> ...`]         [toc-lambda-vs-normal]
-14. [Reversed type class instances]              [toc-reversed-instances]
-15. [Folding direction of `foldl` and `foldr`]   [toc-foldl-foldr]
-16. [`($)` has special powers]                   [toc-special-dollar]
-17. [Comment syntax]                             [toc-comment-syntax]
-18. [`data`, `newtype`, `type`]                  [toc-data-newtype-type]
+1.  [`ByteString.Char8` is bad]                  [TOC/bsbad]
+2.  [``(a `op`)`` is not ``\x -> a `op` x``]     [TOC/sections]
+3.  [I don't understand Monads]                  [TOC/monads]
+4.  [Tabs vs. spaces]                            [TOC/tabspaces]
+5.  [`(- 4)` is not `\x -> x - 4`]               [TOC/special-minus]
+6.  [I'm looking for a good Regex library]       [TOC/regex]
+7.  [`Show` is not for prettyprinting]           [TOC/show]
+8.  [Imposing constraints on data types]         [TOC/constraint-types]
+9.  [`seq` does not specify an evaluation order] [TOC/seq]
+10. [Where is `IO` defined?]                     [TOC/io]
+11. [Don't use ...]                              [TOC/dont-use]
+    - [`fail`]                                   [TOC/dont-use-fail]
+    - [`read`]                                   [TOC/dont-use-read]
+    - [`genericLength`]                          [TOC/dont-use-genericlength]
+    - [`unsafePerformIO`]                        [TOC/dont-use-unsafeperformio]
+    - [`head`, `isJust`, ...]                    [TOC/dont-use-headtail]
+    - [`nub`]                                    [TOC/dont-use-nub]
+    - [`String`]                                 [TOC/dont-use-string]
+12. [How to start learning Haskell]              [TOC/haskell-start]
+13. [`f x = ...` is not `f = \x -> ...`]         [TOC/lambda-vs-normal]
+14. [Reversed type class instances]              [TOC/reversed-instances]
+15. [Folding direction of `foldl` and `foldr`]   [TOC/foldl-foldr]
+16. [`($)` has special powers]                   [TOC/special-dollar]
+17. [Comment syntax]                             [TOC/comment-syntax]
+18. [`data`, `newtype`, `type`]                  [TOC/data-newtype-type]
 
 
 
@@ -92,7 +92,7 @@ have airbags in your car because when you drive you're always very careful?
 
 Use `ByteString`, not `ByteString.Char8`. If what you want is a conversion
 `String -> ByteString`, then use a serialization library such as
-[Binary][binary] that takes care of the conversion from `[Char]` to `[Word8]`
+[Binary][Hackage/binary] that takes care of the conversion from `[Char]` to `[Word8]`
 to `ByteString` and back. The same goes for `Text`, which can be serialized
 using `Text.Encoding`.
 
@@ -138,7 +138,7 @@ WHNF. For this reason, `op` is never forced, and the `seq` terminates without
 complaints.
 
 This GHC behaviour violates the Haskell standard, [which literally demands that
-"the following identities hold"][report-sections]:
+"the following identities hold"][Report/sections]:
 
 ```haskell
 (op e)  =  \ x -> x op e
@@ -296,8 +296,8 @@ r'\d{4}$'     # last 4 digits
 
 What's the back reference to getting the area code again? The answer is don't
 use Regex. If you want to do dirty hacking, Regex is the right tool for the job.
-If you want to parse use parsers, for example [Parsec][parsec] or
-[Attoparsec][attoparsec].
+If you want to parse use parsers, for example [Parsec][Hackage/parsec] or
+[Attoparsec][Hackage/attoparsec].
 
 
 
@@ -320,14 +320,14 @@ for converting things to `String`, often in a way where the resulting `String`
 is valid Haskell and could be re-inserted into code. Because of this,
 **`Show` is first and foremost a debugging class** to have a quick glance at
 some data without losing any information or introducing ambiguities. For
-prettyprinting, there are other libraries, such as [`pretty`][pretty] or
-[`pretty-show`][pretty-show] and `Text.Printf`.
+prettyprinting, there are other libraries, such as [`pretty`][Hackage/pretty] or
+[`pretty-show`][Hackage/pretty-show] and `Text.Printf`.
 
 
 Similar arguments apply to `Read`, which is the counterpart to `Show`: it's
 meant to convert things generated by `Show` back to Haskell. It is not a
 general `String -> Haskell` converter, which is what parsers are for (such as
-[Parsec][parsec] or [Attoparsec][attoparsec]).
+[Parsec][Hackage/parsec] or [Attoparsec][Hackage/attoparsec]).
 
 
 
@@ -415,7 +415,7 @@ advice before: constrain functions, not the data declarations.
 `seq` does not specify an evaluation order
 ------------------------------------------
 
-The [`seq` function is defined by the following mathematical equations in the Haskell Report][haskell-report-seq]:
+The [`seq` function is defined by the following mathematical equations in the Haskell Report][Report/seq]:
 
 ```
 seq ⊥ x = ⊥
@@ -541,7 +541,7 @@ means that unless you have a very good reason to use them, they are *wrong*.
 anything involving "probably".)
 
 
-### [`fail`][hackage-fail]
+### [`fail`][Hackage/fail]
 
 `fail` from the `Monad` typeclass is a mistake for multiple reasons. It
 prefers `String` over better text representations, `Monad` has nothing to do
@@ -561,14 +561,14 @@ safe in `Data.Binary`'s `Get`, and the API does not expose a dedicated
 failing function.
 
 
-### [`read`][hackage-read]
+### [`read`][Hackage/read]
 
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
 has a `Maybe a` result. Better yet, use `Data.Text.readMaybe`, because you
-should not use `String`, [as mentioned in another section here][toc-dont-use-string].
+should not use `String`, [as mentioned in another section here][TOC/dont-use-string].
 
 
-### [`genericLength`][hackage-genericLength]
+### [`genericLength`][Hackage/genericLength]
 
 `genericLength` is literally the naive `1 + length rest` implementation,
 and nobody is quite sure why it is in the standard library. `genericLength`
@@ -584,7 +584,7 @@ is an `Int` value, and an `Int` pointer to the next value). At this point,
 lists are probably not the right representation for your data.
 
 
-### [`unsafePerformIO`][hackage-unsafePerformIO]
+### [`unsafePerformIO`][Hackage/unsafePerformIO]
 
 `unsafePerformIO` is very useful in advanced Haskell, and very wrong
 otherwise. Chances are you're looking for a very basic introduction to `IO`
@@ -598,7 +598,7 @@ and how errors should be detectable in case you make one using this dangerous
 function. Really, don't use it lightheartedly.
 
 
-### [`head`][hackage-head], [`tail`][hackage-tail], [`isJust`][hackage-isJust], [`isNothing`][hackage-isNothing], [`fromJust`][hackage-fromJust], ...
+### [`head`][Hackage/head], [`tail`][Hackage/tail], [`isJust`][Hackage/isJust], [`isNothing`][Hackage/isNothing], [`fromJust`][Hackage/fromJust], ...
 
 These should all be substituted by pattern matching. For one, they separate
 structural code from code that does computations, and even more importantly,
@@ -619,7 +619,7 @@ map _ [] = []
 ```
 
 
-### [`nub`][hackage-nub]
+### [`nub`][Hackage/nub]
 
 `nub` has terrible performance (quadratic), since its type is overly general,
 requiring only an `Eq` constraint. If your data satisfies `Ord`, then you can
@@ -653,7 +653,7 @@ nub3 xs = foldr go (const []) xs Set.empty where
 ```
 
 
-### [`String`][hackage-String]
+### [`String`][Hackage/String]
 
 `String` is literally a singly linked list of individual characters. To state
 the obvious, this is a *terrible* way to represent text in general. `String`
@@ -679,7 +679,7 @@ suffers from the following problems:
   concatenation being the most obvious example (which runs in linear time of
   its first argument's length).
 
-[`Text`][hackage-text] is a mature library that has none of the problems `String`
+[`Text`][Hackage/text] is a mature library that has none of the problems `String`
 has. It is preferrable in almost all scenarios where nontrivial string handling
 is required.
 
@@ -691,7 +691,7 @@ And since `ByteString` is also often added to the string confusion:
 - [`Text`][text-lib] is for when you want to do serious things with strings.
   Many people argue that it should be the default people use, instead of
   `String`.
-- [`ByteString`][hackage-bytestring] does not have much to do with strings; it's a
+- [`ByteString`][Hackage/bytestring] does not have much to do with strings; it's a
   sequence of bytes. It is what you would serialize your data to, what you read
   from a network socket or a raw file.
 
@@ -704,8 +704,8 @@ And since `ByteString` is also often added to the string confusion:
 How to start learning Haskell
 -----------------------------
 
-The usual Haskell beginner books are [Hutton][hutton], [LYAH][lyah] (free to
-read online) and [RWH][rwh] (ditto). I recommend starting with Hutton or LYAH,
+The usual Haskell beginner books are [Hutton][Book/Hutton], [LYAH][Book/LYAH] (free to
+read online) and [RWH][Book/RWH] (ditto). I recommend starting with Hutton or LYAH,
 which cover the absolute basics better than RWH. The latter on the other hand
 is something in between a practical reference guide for some libraries and an
 introductory book. Some of the chapters use outdated libraries (the book is from
@@ -715,8 +715,8 @@ you've had a good look at the other books.
 Hutton and RWH provide exercises to each chapter. Regardless of which book
 you're actually reading, you should look these exercises up and solve them
 whenever you feel you've learned enough to do so. Another good place to start
-writing little functions is by implementing functions from [Prelude][prelude]
-and [Data.List][data.list].
+writing little functions is by implementing functions from
+[Prelude][Hackage/prelude] and [Data.List][Hackage/Data.List].
 
 
 
@@ -1006,61 +1006,61 @@ Defining new data types frequently confuses beginners.
 
 
 
-[attoparsec]: http://hackage.haskell.org/package/attoparsec
-[binary]: http://hackage.haskell.org/package/binary
-[data.list]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Data-List.html
+[Book/Hutton]: http://www.cs.nott.ac.uk/~gmh/book.html
+[Book/LYAH]:   http://learnyouahaskell.com/
+[Book/RWH]:    http://book.realworldhaskell.org/
 [ghc-gadt-manual]: http://www.haskell.org/ghc/docs/latest/html/users_guide/data-type-extensions.html#gadt
-[hackage-bytestring]: http://hackage.haskell.org/package/bytestring/
-[hackage-fail]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Control-Monad.html#v:fail
-[hackage-fromJust]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:fromJust
-[hackage-genericLength]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:genericLength
-[hackage-head]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:head
-[hackage-isJust]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isJust
-[hackage-isNothing]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isNothing
-[hackage-nub]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:nub
-[hackage-read]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Text-Read.html#v:read
-[hackage-String]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-String.html#t:String
-[hackage-tail]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:tail
-[hackage-text]: http://hackage.haskell.org/package/text/
-[hackage-unsafePerformIO]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/System-IO-Unsafe.html#v:unsafePerformIO
-[haskell-report-seq]: http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
-[haskell-report]: http://www.haskell.org/onlinereport/haskell2010/
-[hutton]: http://www.cs.nott.ac.uk/~gmh/book.html
+[Hackage/attoparsec]:      http://hackage.haskell.org/package/attoparsec
+[Hackage/binary]:          http://hackage.haskell.org/package/binary
+[Hackage/bytestring]:      http://hackage.haskell.org/package/bytestring/
+[Hackage/Data.List]:       http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html
+[Hackage/fail]:            http://hackage.haskell.org/packages/archive/base/latest/doc/html/Control-Monad.html#v:fail
+[Hackage/fromJust]:        http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:fromJust
+[Hackage/genericLength]:   http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:genericLength
+[Hackage/head]:            http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:head
+[Hackage/isJust]:          http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isJust
+[Hackage/isNothing]:       http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Maybe.html#v:isNothing
+[Hackage/nub]:             http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:nub
+[Hackage/parsec]:          http://hackage.haskell.org/package/parsec
+[Hackage/prelude]:         http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html
+[Hackage/pretty-show]:     http://hackage.haskell.org/package/pretty-show
+[Hackage/pretty]:          http://hackage.haskell.org/package/pretty
+[Hackage/read]:            http://hackage.haskell.org/packages/archive/base/latest/doc/html/Text-Read.html#v:read
+[Hackage/String]:          http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-String.html#t:String
+[Hackage/tail]:            http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-List.html#v:tail
+[Hackage/text]:            http://hackage.haskell.org/package/text/
+[Hackage/unsafePerformIO]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/System-IO-Unsafe.html#v:unsafePerformIO
 [instance-monad-io]: https://github.com/ghc/packages-base/search?q=%22instance++Monad+IO++where%22&type=Code
-[lyah]: http://learnyouahaskell.com/
 [merijnquote]: http://ircbrowse.net/browse/haskell?id=16225289&timestamp=1375966557#t1375966557
 [newtype-io]: https://github.com/ghc/packages-ghc-prim/search?q=newtype%20io
-[parsec]: http://hackage.haskell.org/package/parsec
-[prelude]: http://hackage.haskell.org/package/base-4.7.0.0/docs/Prelude.html
-[pretty-show]: http://hackage.haskell.org/package/pretty-show
-[pretty]:      http://hackage.haskell.org/package/pretty
 [primtype-realworld]: https://github.com/ghc/ghc/search?q=%22primtype+RealWorld%22&type=Code
 [primtype-state]: https://github.com/ghc/ghc/search?q=%22primtype+State%23%22&type=Code
 [regex-source]: http://pypix.com/tools-and-tips/advanced-regular-expression-tips-techniques/
-[report-sections]: https://www.haskell.org/onlinereport/haskell2010/haskellch3.html#x8-300003.5
-[rwh]: http://book.realworldhaskell.org/
-[toc-bsbad]:                    #bytestringchar8-is-bad
-[toc-comment-syntax]:           #comment-syntax
-[toc-constraint-types]:         #imposing-constraints-on-data-types
-[toc-data-newtype-type]:        #data-newtype-type
-[toc-dont-use-fail]:            #fail
-[toc-dont-use-genericlength]:   #genericlength
-[toc-dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
-[toc-dont-use-nub]:             #nub
-[toc-dont-use-read]:            #read
-[toc-dont-use-string]:          #string
-[toc-dont-use-unsafeperformio]: #unsafeperformio
-[toc-dont-use]:                 #dont-use-
-[toc-foldl-foldr]:              #folding-direction-of-foldl-and-foldr
-[toc-haskell-start]:            #how-to-start-learning-haskell
-[toc-io]:                       #where-is-io-defined
-[toc-lambda-vs-normal]:         #f-x---is-not-f--x---
-[toc-monads]:                   #i-dont-understand-monads
-[toc-regex]:                    #im-looking-for-a-good-regex-library
-[toc-reversed-instances]:       #reversed-type-class-instances
-[toc-sections]:                 #a-op-is-not-x---a-op-x
-[toc-seq]:                      #seq-does-not-specify-an-evaluation-order
-[toc-show]:                     #show-is-not-for-prettyprinting
-[toc-special-dollar]:           #-has-special-powers
-[toc-special-minus]:            #--4-is-not-x---x---4
-[toc-tabspaces]:                #tabs-vs-spaces
+[Report/sections]: https://www.haskell.org/onlinereport/haskell2010/haskellch3.html#x8-300003.5
+[Report/seq]:      http://www.haskell.org/onlinereport/haskell2010/haskellch6.html#x13-1260006.2
+[Report]:          http://www.haskell.org/onlinereport/haskell2010/
+[TOC/bsbad]:                    #bytestringchar8-is-bad
+[TOC/comment-syntax]:           #comment-syntax
+[TOC/constraint-types]:         #imposing-constraints-on-data-types
+[TOC/data-newtype-type]:        #data-newtype-type
+[TOC/dont-use-fail]:            #fail
+[TOC/dont-use-genericlength]:   #genericlength
+[TOC/dont-use-headtail]:        #head-tail-isjust-isnothing-fromjust-
+[TOC/dont-use-nub]:             #nub
+[TOC/dont-use-read]:            #read
+[TOC/dont-use-string]:          #string
+[TOC/dont-use-unsafeperformio]: #unsafeperformio
+[TOC/dont-use]:                 #dont-use-
+[TOC/foldl-foldr]:              #folding-direction-of-foldl-and-foldr
+[TOC/haskell-start]:            #how-to-start-learning-haskell
+[TOC/io]:                       #where-is-io-defined
+[TOC/lambda-vs-normal]:         #f-x---is-not-f--x---
+[TOC/monads]:                   #i-dont-understand-monads
+[TOC/regex]:                    #im-looking-for-a-good-regex-library
+[TOC/reversed-instances]:       #reversed-type-class-instances
+[TOC/sections]:                 #a-op-is-not-x---a-op-x
+[TOC/seq]:                      #seq-does-not-specify-an-evaluation-order
+[TOC/show]:                     #show-is-not-for-prettyprinting
+[TOC/special-dollar]:           #-has-special-powers
+[TOC/special-minus]:            #--4-is-not-x---x---4
+[TOC/tabspaces]:                #tabs-vs-spaces
