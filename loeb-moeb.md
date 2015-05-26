@@ -214,7 +214,14 @@ moeb id x = id ($ moeb id x) x
 ==> moeb id = fix
 ```
 
-This shows how `moeb` is a generalization of `fix`.
+This shows how `moeb` is a generalization of `fix`. Being a recursive function
+itself, the converse is of course also true,
+
+```haskell
+moeb f x = fix (\go -> f ($ go) x)
+```
+
+so `moeb` and `fix` are different flavours of the same kind of recursion.
 
 There are other functions that can be used as parameter to `moeb` such as
 `traverse` and `foldMap`, but I don't know of any useful applications for them.
