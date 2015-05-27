@@ -848,7 +848,7 @@ foldl f z (x:xs) = foldl f (f z x) xs -- x is the first list element,
                                       -- no others are considered.
 
 foldr _ z [] = z
-foldr f z (x:xs) = z `f` foldr f z xs -- dito
+foldr f z (x:xs) = x `f` foldr f z xs -- dito
 ```
 
 
@@ -924,7 +924,7 @@ leads to a couple of odd special cases.
 --. This is an operator called "--." and not a comment.
 |-- This is an operator as well.
 --| In particular, this is not a Haddock comment but an operator called "--|"
-    followed by some oddly human language looking code.
+--  followed by some oddly human language looking code.
 --^ Likewise.
 ```
 
