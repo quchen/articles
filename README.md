@@ -115,4 +115,4 @@ Other topics
 [fix]:              fix.md
 [instances]:        instances.md
 [functor-law]:      second_functor_law.md
-[stuff-i-want]:     stuff_i_would_like_in_haskell.md.md
+[stuff-i-want]:     stuff_i_would_like_in_haskell.md
