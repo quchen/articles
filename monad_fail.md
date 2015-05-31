@@ -1,5 +1,12 @@
-`MonadFail` proposal: Remove `fail` from `Monad`
-================================================
+`MonadFail` proposal (MFP)
+==========================
+
+A couple of years ago, I proposed to make `Applicative` a superclass of
+`Monad`, which successfully killed the single most ugly thing in Haskell
+as of GHC 7.10.
+
+Now, it's time to tackle the other major issue with `Monad`: `fail` being a
+part of it.
 
 
 
@@ -15,9 +22,12 @@ do pat <- computation     >>>     let f pat = more
                           >>>     in  computation >>= f
 ```
 
-The problem with this is that `fail` cannot be sensibly implemented for many
-monads, for example `State`, `IO`, `Reader`. In those cases it defaults to
-`error`, i.e. the monad has a built-in crash.
+The problem with this is that `fail` cannot (!) be sensibly implemented for
+many monads, for example `State`, `IO`, `Reader`. In those cases it defaults to
+`error`. As a consequence, in current Haskell, you can not use
+`Monad`-polymorphic code safely, because although it claims to work for all
+`Monad`s, it might just crash on you. This kind of implicit non-totality baked
+into the class is *terrible*.
 
 
 
@@ -157,7 +167,7 @@ Fixing broken code
 ------------------
 
 - Write a `MonadFail` instance
-- Change your pattern to be refutable
+- Change your pattern to be irrefutable
 - Bind to your value, and then match against it in a separate `case`
 
     ```haskell
