@@ -97,49 +97,91 @@ Discussion
   error message involving positional information, and for STM failure uses the
   default `fail = error` although it is `MonadPlus`.
 
-- The case of one data constructor should emit a warning if the data type is
-  defined via `data` (as opposed to `newtype`): adding another data constructor
-  can make patterns in unrelated modules change meaning, resulting in broken
-  code. However, this isn't different from usual library update breakages when
-  definitions change, so it's not a special concern here either.
-
-- Some monads use the pattern matching to force evaluation of the binding, for
-  example lazy/strict `StateT`. I'm not sure what exactly the consequences of
-  the above are here; I suspect a strictness annotation or `(>>=)` instead of
-  `do` notation might be sufficient.
-
-- Backwards compatibility with many old modules will be broken; I don't see a
+- Backwards compatibility with old modules will be broken; I don't see a
   way around this.
 
-
-
-
-Other things to consider
-------------------------
-
-- ~~Rename `fail`?~~ **Yes.** Introducing `mfail` allows us to do a smooth
+- Rename `fail`? **Yes.** Introducing `mfail` allows us to do a smooth
   transition easily (see below section), and removing the "m" again afterwards
   is simply not worth the hassle.
 
-- ~~Remove the `String` argument?~~ **No.** The `String`  might help error
+- Remove the `String` argument? **No.** The `String`  might help error
   reporting and debugging. `String` may be ugly, but it's the de facto standard
   for simple text in GHC. Also, no high performance string operations are to be
   expected with `mfail`, so this breaking change would in no way be justified.
 
 - How sensitive would existing code be to subtle changes in the strictness
-  behaviour of `do` notation pattern matching?
+  behaviour of `do` notation pattern matching? **It doesn't.** The
+  implementation does not affect strictness at all, only the desugaring step.
 
 - The `Monad` constraint for `MonadFail` is completely unnecessary. What other
   things should be considered?
 
   - Applicative `do` notation is coming sooner or later, `fail` might be useful
-    in this more general scenario.
+    in this more general scenario. Due to the AMP, it is trivial to change
+    the `MonadFail` superclass to `Applicative` later.
   - The class might be misused for a strange pointed type if left without
-    any constraint.
+    any constraint. The docs will have to make it clear that this is not the
+    intended use.
 
 - What laws should `mfail` follow? The first thing that comes to mind is
   following the laws similar to `empty`/`mzero`, i.e. being an identity(ish)
-  for `<|>`/`mplus` and a left zero for `<*>`/`>>=`.
+  for `<|>`/`mplus` and a left zero for `<*>`/`>>=`. **None.** We can mention
+  that it should maybe be `MonadPlus` oriented, but the main point is making
+  failable patterns safe.
+
+- Provide `mfail = fail` as a standard implementation? **No.** We want a
+  warning to happen and people should actively write the `MonadFail` instance
+  instead of relying on defaults, so that after a while we can simply remove
+  `fail`.
+
+- Move `fail` out of the `Monad` class into a top-level synonym for `mfail`?
+  **No.** There's no reason to do this: when you don't have a `MonadFail`
+  instance `fail` will not typecheck, and when you have one you should simply
+  write `mfail`.
+
+- Whether a pattern is unfailable is up to GHC to decide, [and in fact the
+  compiler already does that decision in the typechecker][ghc-manual-irrefutable].
+  The short rundown is as follows:
+    - Wildcards `_`, simple variables `x` and irrefutable patterns `~pat` are
+      always unfailable.
+    - Pattern synonyms are always failable. GHC is conservative about this, as
+      it is very hard to analyze these statically.
+    - Constructors of data types that have only one are as failable as their
+      subfields. For example, `Newtype a <- ...` is unfailable since `a` is,
+      whereas `Newtype (Left e)` is failable since `Left e` is.
+    - `data` types with multiple fields are always failable.
+
+[ghc-manual-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
+
+
+
+Fixing broken code
+------------------
+
+- Write a `MonadFail` instance
+- Change your pattern to be refutable
+- Bind to your value, and then match against it in a separate `case`
+
+    ```haskell
+    do Left e <- foobar
+       stuff
+    ```
+
+  becomes
+
+    ```haskell
+    do x <- foobar
+       e <- case foobar of
+           Left e' -> e'
+           Right r -> -- Do something useful
+       stuff
+    ```
+
+  The point is you'll have to do your dirty laundry yourself now if you have
+  a value that *you* know will always match, and if you don't handle the other
+  patterns you'll get incompleteness warnings, and the compiler won't silently
+  eat those for you.
+
 
 
 Applying the change
@@ -149,23 +191,19 @@ The roadmap is similar to the AMP, the main difference being that since `mfail`
 does not exist yet, we have to introduce new functionality and then switch to
 it.
 
-1. Preliminaries. Might ship with a minor version bump in the 7.10 release
-   already.
+1. Preliminaries, planned to ship with GHC 7.12
 
-   - Add `MonadFail` with `mfail`
-   - Warn when a Monad defines `fail` but has no `MonadFail` instance
+    - Add `MonadFail` with `mfail` so people can start writing instances
+      for it.
+    - Warn when a do-block that contains a failable pattern is desugared, but
+      there is no `MonadFail` available: "Please add the instance or change
+      your pattern matching."
 
-2. Nag for change
+2. On GHC 7.12 release
 
-   - Warn when a pattern is used that would require a `MonadFail` constraint,
-     but the `Monad` has none. Make it opt-in at first (e.g. as part of `-W`),
-     then switch it to on by default.
+    - With GHC 7.12: People get warnings and should fix their code
+    - In GHC 7.13: Change desugaring to use `mfail` instead, remove `fail`
 
-3. The switch
+3. The switch in GHC 7.14
 
-   - Move `fail` out of the `Monad` class into a top-level synonym for `mfail`
-   - Deprecate `fail`
-
-4. Cleanup
-
-   - Remove the now deprecated `fail` version
+    - Roll out the previous 7.13 changes to user land
