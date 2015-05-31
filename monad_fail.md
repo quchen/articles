@@ -157,7 +157,7 @@ Discussion
     - Constructors of data types that have only one are as failable as their
       subfields. For example, `Newtype a <- ...` is unfailable since `a` is,
       whereas `Newtype (Left e)` is failable since `Left e` is.
-    - `data` types with multiple fields are always failable.
+    - `data` types with multiple constructors are always failable.
 
 [ghc-manual-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
 
