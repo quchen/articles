@@ -1,7 +1,7 @@
 `MonadFail` proposal (MFP)
 ==========================
 
-A couple of years ago, I proposed to make `Applicative` a superclass of
+A couple of years ago, we proposed to make `Applicative` a superclass of
 `Monad`, which successfully killed the single most ugly thing in Haskell
 as of GHC 7.10.
 
