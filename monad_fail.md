@@ -54,8 +54,8 @@ The most trivial examples of unfailable patterns are of course those that match
 anywhere unconditionally,
 
 ```haskell
-    do x <- action     >>>     let f x = more
-       more            >>>     in  action >>= f
+do x <- action     >>>     let f x = more
+   more            >>>     in  action >>= f
 ```
 
 In particular, the programmer can assert any pattern be unfailable by making it
