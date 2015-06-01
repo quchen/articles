@@ -14,11 +14,11 @@ The problem
 -----------
 
 
-Currently, the `<-` symbol is desugared as follows:
+Currently, the `<-` symbol is unconditionally desugared as follows:
 
 ```haskell
 do pat <- computation     >>>     let f pat = more
-   more                   >>>         f _   = fail "..."
+   more                   >>>         f _ = fail "..."
                           >>>     in  computation >>= f
 ```
 
@@ -28,6 +28,11 @@ many monads, for example `State`, `IO`, `Reader`. In those cases it defaults to
 `Monad`-polymorphic code safely, because although it claims to work for all
 `Monad`s, it might just crash on you. This kind of implicit non-totality baked
 into the class is *terrible*.
+
+The goal of this proposal is adding the `fail` only when necessary and
+reflecting that in the type signature of the `do` block, so that it can be used
+safely, and more importantly, is guaranteed not to be used if the type
+signature does not say so.
 
 
 
@@ -41,59 +46,68 @@ class Monad m => MonadFail m where
     mfail :: String -> m a
 ```
 
-Desugaring then has to be changed to produce this constraint when necessary:
+Desugaring can now be changed to produce this constraint when necessary. For
+this, we have to decide when a pattern match can not fail; if this is the case,
+we can omit inserting the `fail` call.
 
-- Explicitly irrefutable pattern: do not add `MonadFail` constraint
+The most trivial examples of unfailable patterns are of course those that match
+anywhere unconditionally,
 
-    ```haskell
-    do ~pat <- action     >>>     let f ~pat = more
-       more               >>>     in  action >>= f
-    ```
+```haskell
+    do x <- action     >>>     let f x = more
+       more            >>>     in  action >>= f
+```
 
+In particular, the programmer can assert any pattern be unfailable by making it
+irrefutable using a prefix tilde:
 
+```haskell
+do ~pat <- action     >>>     let f ~pat = more
+   more               >>>     in  action >>= f
+```
 
-- Only one data constructor: do not add `MonadFail` constraint. This rule
-  should apply recursively for nested patterns, e.g. `Only (Only' x)`.
+A class of patterns that are conditionally failable are `newtype`s, and single
+constructor `data` types, which are unfailable by themselves, but may fail
+if matching on their fields is done with failable paterns.
 
-    ```haskell
-    do (Only x) <- action     >>>     let f (Only x) = more
-       more                   >>>     in  action >>= f
-    ```
+```haskell
+data Newtype a = Newtype a
 
-  In particular, this means that tuples don't produce constraints.
+-- "x" cannot fail
+do Newtype x <- action            >>>     let f (Newtype x) = more
+   more                           >>>     in  action >>= f
 
-    ```haskell
-    do (a,b) <- action     >>>     let f (a,b) = more
-       more                >>>     in  action >>= f
-    ```
+-- "Just x" can fail
+do Newtype (Just x) <- action     >>>     let f (Newtype (Just x)) = more
+   more                           >>>         f _ = mfail "..."
+                                  >>>     in  action >>= f
+```
 
+`ViewPatterns` are as failable as the pattern the view is matched against.
+Patterns like `(Just -> Just x)` should generate a `MonadFail` constraint even
+when it's "obvious" from the view's implementation that the pattern will always
+match. From an implementor's perspective, this means that only types (and their
+constructors) have to be looked at, not arbitrary values (like functions),
+which is impossible to do statically in general.
 
+```haskell
+do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
+   more                         >>>         f _ = mfail "..."
+                                >>>     in  action >>= f
 
-- `ViewPatterns`: add `MonadFail` constraint depending on the pattern and *not*
-  the view. In other words, patterns like `(Just -> Just x)` should generate a
-  `MonadFail` constraint even when it's "obvious" from the view's
-  implementation that the pattern will always match. From an implementor's
-  perspective, this means that only types (and their constructors) have to be
-  looked at, not arbitrary values (like functions).
+do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
+   more                         >>>     in  action >>= f
+```
 
-    ```haskell
-    do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
-       more                         >>>         f _              = mfail "..."
-                                    >>>     in  action >>= f
+A similar issue arises for `PatternSynonyms`, which we cannot inspect during
+compilation sufficiently. A pattern synonym will therefore always be considered
+failable.
 
-    do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
-       more                         >>>     in  action >>= f
-    ```
-
-
-
-- Otherwise: add `MonadFail` constraint
-
-    ```haskell
-    do pat <- computation     >>>     let f pat = more
-       more                   >>>         f _   = mfail "..."
-                              >>>     in  computation >>= f
-    ```
+```haskell
+do PatternSynonym x <- action     >>>     let f PatternSynonym x = more
+   more                           >>>     in f _ = mfail "..."
+                                  >>>     in  action >>= f
+```
 
 
 
@@ -126,16 +140,19 @@ Discussion
 
   - Applicative `do` notation is coming sooner or later, `fail` might be useful
     in this more general scenario. Due to the AMP, it is trivial to change
-    the `MonadFail` superclass to `Applicative` later.
+    the `MonadFail` superclass to `Applicative` later. The name `mfail` will
+    be a bit out of place then though.
   - The class might be misused for a strange pointed type if left without
     any constraint. The docs will have to make it clear that this is not the
     intended use.
 
-- What laws should `mfail` follow? The first thing that comes to mind is
-  following the laws similar to `empty`/`mzero`, i.e. being an identity(ish)
-  for `<|>`/`mplus` and a left zero for `<*>`/`>>=`. **None.** We can mention
-  that it should maybe be `MonadPlus` oriented, but the main point is making
-  failable patterns safe.
+- What laws should `mfail` follow? **Left zero**,
+    ```haskell
+    ∀ s x. fail s >>= x  ≡  fail s
+    ```
+  A call to `mfail` should abort the computation. In this sense, `mfail` would
+  become a close relative of `mzero`. It would work well with the common
+  definition `mfail _ = mzero`, and give a simple guideline to its usage.
 
 - Provide `mfail = fail` as a standard implementation? **No.** We want a
   warning to happen and people should actively write the `MonadFail` instance
@@ -149,15 +166,6 @@ Discussion
 
 - Whether a pattern is unfailable is up to GHC to decide, [and in fact the
   compiler already does that decision in the typechecker][ghc-manual-irrefutable].
-  The short rundown is as follows:
-    - Wildcards `_`, simple variables `x` and irrefutable patterns `~pat` are
-      always unfailable.
-    - Pattern synonyms are always failable. GHC is conservative about this, as
-      it is very hard to analyze these statically.
-    - Constructors of data types that have only one are as failable as their
-      subfields. For example, `Newtype a <- ...` is unfailable since `a` is,
-      whereas `Newtype (Left e)` is failable since `Left e` is.
-    - `data` types with multiple constructors are always failable.
 
 [ghc-manual-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
 
@@ -166,9 +174,15 @@ Discussion
 Fixing broken code
 ------------------
 
-- Write a `MonadFail` instance
-- Change your pattern to be irrefutable
-- Bind to your value, and then match against it in a separate `case`
+Help! My code is broken because of a missing `MonadFail` instance!
+
+*Here are your options:*
+
+1. Write a `MonadFail` instance
+
+2. Change your pattern to be irrefutable
+
+3. Bind to your value, and then match against it in a separate `case` manually:
 
     ```haskell
     do Left e <- foobar
@@ -190,6 +204,10 @@ Fixing broken code
   patterns you'll get incompleteness warnings, and the compiler won't silently
   eat those for you.
 
+Help! My code is broken because you removed `fail`, but my `Monad` defines it!
+
+*Delete that definition.*
+
 
 
 Applying the change
@@ -206,6 +224,8 @@ it.
     - Warn when a do-block that contains a failable pattern is desugared, but
       there is no `MonadFail` available: "Please add the instance or change
       your pattern matching."
+    - Warn when a type implements the `fail` function, as it will be removed
+      in the future.
 
 2. On GHC 7.12 release
 
