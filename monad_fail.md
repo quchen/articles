@@ -126,9 +126,9 @@ Discussion
   transition easily (see below section), and removing the "m" again afterwards
   is simply not worth the hassle.
 
-- Remove the `String` argument? **No.** The `String`  might help error
-  reporting and debugging. `String` may be ugly, but it's the de facto standard
-  for simple text in GHC. Also, no high performance string operations are to be
+- Remove the `String` argument? **No.** The `String` might help error reporting
+  and debugging. `String` may be ugly, but it's the de facto standard for
+  simple text in GHC. Also, no high performance string operations are to be
   expected with `mfail`, so this breaking change would in no way be justified.
 
 - How sensitive would existing code be to subtle changes in the strictness
@@ -148,11 +148,12 @@ Discussion
 
 - What laws should `mfail` follow? **Left zero**,
     ```haskell
-    ∀ s x. fail s >>= x  ≡  fail s
+    ∀ s f.  fail s >>= f  ≡  fail s
     ```
   A call to `mfail` should abort the computation. In this sense, `mfail` would
   become a close relative of `mzero`. It would work well with the common
-  definition `mfail _ = mzero`, and give a simple guideline to its usage.
+  definition `mfail _ = mzero`, and give a simple guideline to the intended
+  usage and effect of the `MonadFail` class.
 
 - Provide `mfail = fail` as a standard implementation? **No.** We want a
   warning to happen and people should actively write the `MonadFail` instance
@@ -230,7 +231,9 @@ it.
 2. On GHC 7.12 release
 
     - With GHC 7.12: People get warnings and should fix their code
-    - In GHC 7.13: Change desugaring to use `mfail` instead, remove `fail`
+    - Some time after that, in GHC 7.13: Change desugaring to use
+      `mfail` instead, remove `fail`. Don't do it right away or a lot of
+      Hackage packages won't build with HEAD.
 
 3. The switch in GHC 7.14
 
