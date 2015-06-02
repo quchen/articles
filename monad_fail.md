@@ -51,7 +51,7 @@ class Monad m => MonadFail m where
 
 Desugaring can now be changed to produce this constraint when necessary. For
 this, we have to decide when a pattern match can not fail; if this is the case,
-we can omit inserting the `fail` call.
+we can omit inserting the `mfail` call.
 
 The most trivial examples of unfailable patterns are of course those that match
 anywhere unconditionally,
@@ -120,10 +120,11 @@ Discussion
 - Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class
   should be created instead of just using that. A parser might fail with an
   error message involving positional information, and for STM failure uses the
-  default `fail = error` although it is `MonadPlus`.
+  default `fail = error` although it is `MonadPlus`. (STM will not get a
+  `MonadFail` instance for that reason.)
 
 - Backwards compatibility with old modules will be broken; I don't see a
-  way around this.
+  way around this. Warnings and sufficient time to fix them will have to do.
 
 - Rename `fail`? **Yes.** Introducing `mfail` allows us to do a smooth
   transition easily (see below section), and removing the "m" again afterwards
@@ -148,6 +149,13 @@ Discussion
   - The class might be misused for a strange pointed type if left without
     any constraint. The docs will have to make it clear that this is not the
     intended use.
+
+  I think we should keep the `Monad` superclass for two main reasons:
+
+  - We don't want to see `(Monad m, MonadFail m) =>` all over the place.
+  - The primary intended use of `mfail` is for desugaring do-notation anyway.
+  - Retroactively removing superclasses is easy, but adding them is hard
+    (see AMP).
 
 - What laws should `mfail` follow? **Left zero**,
     ```haskell
