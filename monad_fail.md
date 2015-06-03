@@ -222,33 +222,37 @@ Help! My code is broken because you removed `fail`, but my `Monad` defines it!
 
 
 
-Applying the change
--------------------
+Transitional strategy
+---------------------
 
 The roadmap is similar to the AMP, the main difference being that since `mfail`
 does not exist yet, we have to introduce new functionality and then switch to
 it.
 
-1. Preliminaries, planned to ship with GHC 7.12
+1. GHC 7.12
 
     - Add `MonadFail` with `mfail` so people can start writing instances
       for it.
+    - Add a language extension `-XMonadFail` that changes desugaring to use
+      `mfail` instead of `fail`.
     - Warn when a do-block that contains a failable pattern is desugared, but
       there is no `MonadFail` available: "Please add the instance or change
-      your pattern matching."
-    - Warn when a type implements the `fail` function, as it will be removed
-      in the future.
+      your pattern matching." Add a flag to control whether this warning
+      appears.
+    - Warn when an instance implements the `fail` function, as it will be
+      removed from the class in the future.
 
-2. On GHC 7.12 release
+3. GHC 7.14
 
-    - With GHC 7.12: People get warnings and should fix their code
-    - Some time after that, in GHC 7.13: Change desugaring to use
-      `mfail` instead, remove `fail`. Don't do it right away or a lot of
-      Hackage packages won't build with HEAD.
+    - Switch `-XMonadFail` on by default.
+    - Remove the desugaring warnings.
 
-3. The switch in GHC 7.14
+3. GHC 7.16
 
-    - Roll out the previous 7.13 changes to user land
+    - Remove `-XMonadFail`, leaving its effects on at all times.
+    - Remove `fail` from `Monad`.
+    - Provide a deprecated (!) top-level `fail = mfail` to stay compatible with
+      code that explicitly uses `fail`.
 
 
 
