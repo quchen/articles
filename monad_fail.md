@@ -118,12 +118,27 @@ Discussion
 ----------
 
 - Although for many `MonadPlus` `fail _ = mzero`, a separate `MonadFail` class
-  should be created instead of just using that. A parser might fail with an
-  error message involving positional information, and for STM failure uses the
-  default `fail = error` although it is `MonadPlus`. (STM will not get a
-  `MonadFail` instance for that reason.)
+  should be created instead of just using that.
 
-- Backwards compatibility with old modules will be broken; I don't see a
+    - A parser might fail with an error message involving positional
+      information. Some libraries, like `Binary`, provide `fail` as their
+      only interface to fail a decoding step.
+
+    - Although `STM` is `MonadPlus`, it uses the default `fail = error`. It
+      will therefore not get a `MonadFail` instance.
+
+- What laws should `mfail` follow? **Left zero**,
+
+  ```haskell
+  ∀ s f.  fail s >>= f  ≡  fail s
+  ```
+
+  A call to `mfail` should abort the computation. In this sense, `mfail` would
+  become a close relative of `mzero`. It would work well with the common
+  definition `mfail _ = mzero`, and give a simple guideline to the intended
+  usage and effect of the `MonadFail` class.
+
+- Backwards compatibility with some old modules will be broken; I don't see a
   way around this. Warnings and sufficient time to fix them will have to do.
 
 - Rename `fail`? **Yes.** Introducing `mfail` allows us to do a smooth
@@ -138,14 +153,16 @@ Discussion
 - How sensitive would existing code be to subtle changes in the strictness
   behaviour of `do` notation pattern matching? **It doesn't.** The
   implementation does not affect strictness at all, only the desugaring step.
+  Care must be taken when fixing warnings by making patterns irrefutable using
+  `~`, as that does affect strictness. (Cf. difference between lazy/strict
+  State)
 
 - The `Monad` constraint for `MonadFail` is completely unnecessary. What other
   things should be considered?
 
   - Applicative `do` notation is coming sooner or later, `fail` might be useful
     in this more general scenario. Due to the AMP, it is trivial to change
-    the `MonadFail` superclass to `Applicative` later. The name `mfail` will
-    be a bit out of place then though.
+    the `MonadFail` superclass to `Applicative` later.
   - The class might be misused for a strange pointed type if left without
     any constraint. The docs will have to make it clear that this is not the
     intended use.
@@ -157,77 +174,70 @@ Discussion
   - Retroactively removing superclasses is easy, but adding them is hard
     (see AMP).
 
-- What laws should `mfail` follow? **Left zero**,
-    ```haskell
-    ∀ s f.  fail s >>= f  ≡  fail s
-    ```
-  A call to `mfail` should abort the computation. In this sense, `mfail` would
-  become a close relative of `mzero`. It would work well with the common
-  definition `mfail _ = mzero`, and give a simple guideline to the intended
-  usage and effect of the `MonadFail` class.
-
 - Provide `mfail = fail` as a standard implementation? **No.** We want a
   warning to happen and people should actively write the `MonadFail` instance
   instead of relying on defaults, so that after a while we can simply remove
   `fail`.
 
 - Move `fail` out of the `Monad` class into a top-level synonym for `mfail`?
-  **No.** There's no reason to do this: when you don't have a `MonadFail`
-  instance `fail` will not typecheck, and when you have one you should simply
-  write `mfail`.
+  **Maybe.** `fail` is less bound to being in a monadic context (since it also
+  makes sense in an `Applicative` or even `Functor` one). On the other hand,
+  being there for desugaring do-notation, it is likely to appear mostly in
+  monadic contexts anyway.
 
-- Whether a pattern is unfailable is up to GHC to decide, [and in fact the
-  compiler already does that decision in the typechecker][ghc-manual-irrefutable].
-
-[ghc-manual-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
-
+- Whether a pattern is unfailable is up to GHC to decide, and in fact the
+  compiler already does that decision in the typechecker: an unfailable pattern
+  is currently ignored by the typechecker. [(Source)][ghc-typecheck-irrefutable]
 
 
-Fixing broken code
-------------------
 
-Help! My code is broken because of a missing `MonadFail` instance!
 
-*Here are your options:*
+Adapting old code
+-----------------
 
-1. Write a `MonadFail` instance
+- Help! My code is broken because of a missing `MonadFail` instance!
 
-2. Change your pattern to be irrefutable
+  *Here are your options:*
 
-3. Bind to your value, and then match against it in a separate `case` manually:
+    1. Write a `MonadFail` instance
 
-    ```haskell
-    do Left e <- foobar
-       stuff
-    ```
+    2. Change your pattern to be irrefutable
 
-  becomes
+    3. Emulate the old behaviour by desugaring the pattern match by hand:
 
-    ```haskell
-    do x <- foobar
-       e <- case foobar of
-           Left e' -> e'
-           Right r -> -- Do something useful
-       stuff
-    ```
+       ```haskell
+       do Left e <- foobar
+          stuff
+       ```
 
-  The point is you'll have to do your dirty laundry yourself now if you have
-  a value that *you* know will always match, and if you don't handle the other
-  patterns you'll get incompleteness warnings, and the compiler won't silently
-  eat those for you.
+       becomes
 
-Help! My code is broken because you removed `fail`, but my `Monad` defines it!
+       ```haskell
+       do x <- foobar
+          e <- case foobar of
+              Left e' -> e'
+              Right r -> error "Pattern match failed" -- Boooo
+          stuff
+       ```
 
-*Delete that definition.*
+       The point is you'll have to do your dirty laundry yourself now if you
+       have a value that *you* know will always match, and if you don't handle
+       the other patterns you'll get incompleteness warnings, and the compiler
+       won't silently eat those for you.
+
+- Help! My code is broken because you removed `fail` from `Monad`, but my class
+  defines it!
+
+  *Delete that part of the instance definition.*
 
 
 
 Transitional strategy
 ---------------------
 
-The roadmap is similar to the AMP, the main difference being that since `mfail`
-does not exist yet, we have to introduce new functionality and then switch to
-it.
+The roadmap is similar to the [AMP][amp], the main difference being that since
+`mfail` does not exist yet, we have to introduce new functionality and then
+switch to it.
 
 1. GHC 7.12
 
@@ -273,4 +283,8 @@ Current status
 Other things to do: probe impact of the change on Hackage. Nothing has been
 done in this region so far, so that **the change should be considered experimental**.
 
+
+
+[amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
+[ghc-typecheck-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
 [zurihac]: https://wiki.haskell.org/ZuriHac2015
