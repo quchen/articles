@@ -8,8 +8,8 @@ as of GHC 7.10.
 Now, it's time to tackle the other major issue with `Monad`: `fail` being a
 part of it.
 
-You can contact me as usual via IRC/Freenode as "quchen", or by email to
-dluposchainsky at googles email service.
+You can contact me as usual via IRC/Freenode as *quchen*, or by email to
+*dluposchainsky at the email service of Google*.
 
 
 
