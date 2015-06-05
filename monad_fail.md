@@ -272,13 +272,14 @@ Current status
 - [ZuriHac 2015 (29.5. - 31.5.)][zurihac]: Franz Thoma (@fmthoma) and me
   (David Luposchainsky aka @quchen) started implementing the MFP in GHC.
 
-    - The actual change is in, and designed to be a trivial switch in the code.
-      It is of course turned off for now.
-    - A flag that allows switching the warnings on and off is there as well.
-    - Warnings are being generated for failable patterns.
-    - Warnings are still emitted for types that *have* a *MonadFail* instance.
-    - The error message is very hacky, and we're working on making it more
-      helpful.
+    - Desugaring to the new `mfail` can be controlled via a new langauge
+      extension, `MonadFailDesugaring`.
+    - If the language extension is turned off, a warning will be emitted for
+      code that would break if it was enabled.
+    - Warnings are emitted for types that *have* a *MonadFail* instance. This
+      still needs to be fixed.
+    - The error message are readable, but should be more so. We're still
+      on this.
 
 Other things to do: probe impact of the change on Hackage. Nothing has been
 done in this region so far, so that **the change should be considered experimental**.
