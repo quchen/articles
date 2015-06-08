@@ -295,6 +295,7 @@ Current status
       still needs to be fixed.
     - The error message are readable, but should be more so. We're still
       on this.
+- 2015-06-09: Estimated breakage by compiling Stackage. Smaller than expected.
 
 
 
