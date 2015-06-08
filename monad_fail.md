@@ -296,9 +296,6 @@ Current status
     - The error message are readable, but should be more so. We're still
       on this.
 
-Other things to do: probe impact of the change on Hackage. Nothing has been
-done in this region so far, so that **the change should be considered experimental**.
-
 
 
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
