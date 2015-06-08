@@ -232,6 +232,21 @@ Adapting old code
 
 
 
+Esimating the breakage
+----------------------
+
+Using our initial implementation, I compiled stackage-nightly, and grepped the
+logs for found "invalid use of fail desugaring". Assuming my implementation
+is correct, the number of "missing `MonadFail`" warnings generated is 487.
+Note that I filtered out `[]`, `Maybe` and `ReadPrec`, since those can be given
+a `MonadFail` instance from within GHC, and no breakage is expected from them.
+
+The build logs can be found [here][stackage-logs]. Search for "failable
+pattern" to find your way to the still pretty raw warnings.
+
+
+
+
 Transitional strategy
 ---------------------
 
@@ -288,4 +303,5 @@ done in this region so far, so that **the change should be considered experiment
 
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
 [ghc-typecheck-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
+[stackage-logs]: https://www.dropbox.com/s/knz0i979skam4zs/stackage-build.tar.xz?dl=0
 [zurihac]: https://wiki.haskell.org/ZuriHac2015
