@@ -25,7 +25,7 @@ Overview
 - **MonadFail class** - the solution
 - **Discussion** - explaining our design choices
 - **Adapting old code** - how to prepare current code to transition smoothly
-- **Esimating the breakage** - how much stuff we will break (spoiler: not much)
+- **Esimating the breakage** - how much stuff we will break
 - **Transitional strategy** - how to break as little as possible while transitioning
 - **Current status**
 
