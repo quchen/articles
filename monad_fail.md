@@ -9,8 +9,12 @@ Now, it's time to tackle the other major issue with `Monad`: `fail` being a
 part of it.
 
 You can contact me as usual via IRC/Freenode as *quchen*, or by email to
-*dluposchainsky at the email service of Google*. This file will also be posted
-on the ghc-devs@ and libraries@ mailing lists, as well as on Reddit.
+*dluposchainsky at the email service of Google*. This file was posted
+on the ghc-devs@ and [libraries@ mailing lists][libs-at], as well as on
+[Reddit][reddit].
+
+[reddit]: http://www.reddit.com/r/haskell/comments/397k1a/monadfail_proposal_mfp_moving_fail_out_of_monad/
+[libs-at]: http://permalink.gmane.org/gmane.comp.lang.haskell.libraries/24910
 
 
 
