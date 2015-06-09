@@ -14,6 +14,20 @@ on the ghc-devs@ and libraries@ mailing lists, as well as on Reddit.
 
 
 
+Overview
+--------
+
+- **The problem** - reason for the proposal
+- **MonadFail class** - the solution
+- **Discussion** - explaining our design choices
+- **Adapting old code** - how to prepare current code to transition smoothly
+- **Esimating the breakage** - how much stuff we will break (spoiler: not much)
+- **Transitional strategy** - how to break as little as possible while transitioning
+- **Current status**
+
+
+
+
 The problem
 -----------
 
