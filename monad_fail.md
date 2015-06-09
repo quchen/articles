@@ -257,13 +257,31 @@ Esimating the breakage
 ----------------------
 
 Using our initial implementation, I compiled stackage-nightly, and grepped the
-logs for found "invalid use of fail desugaring". Assuming my implementation
-is correct, the number of "missing `MonadFail`" warnings generated is 487.
-Note that I filtered out `[]`, `Maybe` and `ReadPrec`, since those can be given
-a `MonadFail` instance from within GHC, and no breakage is expected from them.
+logs for the warnings. Assuming my implementation is correct, the number of
+"missing `MonadFail`" warnings generated is 487. Note that I filtered out `[]`,
+`Maybe` and `ReadPrec`, since those can be given a `MonadFail` instance from
+within GHC, and no breakage is expected from them.
 
 The build logs can be found [here][stackage-logs]. Search for "failable
 pattern" to find your way to the still pretty raw warnings.
+
+Here are some commands you might find interesting for exploring the logs:
+
+```bash
+# List all packages generating warnings (57 of them)
+grep "is used in the context" *    | \
+    grep -v '(‘\[|Maybe|ReadPrec)' | \
+    perl -pe 's#^(.*)\.log.*$#\1#' | \
+    uniq -u
+
+# Histogram of the breaking contexts (mostly IO and parsers)
+grep "is used in the context" *                    | \
+    grep -v '(‘\[|Maybe|ReadPrec)'                 | \
+    perl -pe 's#^.*in the context ‘([^ ]+).*$#\1#' | \
+    sort                                           | \
+    uniq -c                                        | \
+    sort -rg
+```
 
 
 
