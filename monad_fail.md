@@ -9,13 +9,13 @@ Now, it's time to tackle the other major issue with `Monad`: `fail` being a
 part of it.
 
 You can contact me as usual via IRC/Freenode as *quchen*, or by email to
-*dluposchainsky at the email service of Google*.
+*dluposchainsky at the email service of Google*. This file will also be posted
+on the ghc-devs@ and libraries@ mailing lists, as well as on Reddit.
 
 
 
 The problem
 -----------
-
 
 Currently, the `<-` symbol is unconditionally desugared as follows:
 
@@ -46,12 +46,12 @@ To fix this, introduce a new typeclass:
 
 ```haskell
 class Monad m => MonadFail m where
-    mfail :: String -> m a
+    fail :: String -> m a
 ```
 
 Desugaring can now be changed to produce this constraint when necessary. For
 this, we have to decide when a pattern match can not fail; if this is the case,
-we can omit inserting the `mfail` call.
+we can omit inserting the `fail` call.
 
 The most trivial examples of unfailable patterns are of course those that match
 anywhere unconditionally,
@@ -82,7 +82,7 @@ do Newtype x <- action            >>>     let f (Newtype x) = more
 
 -- "Just x" can fail
 do Newtype (Just x) <- action     >>>     let f (Newtype (Just x)) = more
-   more                           >>>         f _ = mfail "..."
+   more                           >>>         f _ = fail "..."
                                   >>>     in  action >>= f
 ```
 
@@ -95,7 +95,7 @@ which is impossible to do statically in general.
 
 ```haskell
 do (view ->  pat) <- action     >>>     let f (view ->  pat) = more
-   more                         >>>         f _ = mfail "..."
+   more                         >>>         f _ = fail "..."
                                 >>>     in  action >>= f
 
 do (view -> ~pat) <- action     >>>     let f (view -> ~pat) = more
@@ -108,7 +108,7 @@ failable.
 
 ```haskell
 do PatternSynonym x <- action     >>>     let f PatternSynonym x = more
-   more                           >>>     in f _ = mfail "..."
+   more                           >>>     in f _ = fail "..."
                                   >>>     in  action >>= f
 ```
 
@@ -127,28 +127,29 @@ Discussion
     - Although `STM` is `MonadPlus`, it uses the default `fail = error`. It
       will therefore not get a `MonadFail` instance.
 
-- What laws should `mfail` follow? **Left zero**,
+- What laws should `fail` follow? **Left zero**,
 
   ```haskell
   ∀ s f.  fail s >>= f  ≡  fail s
   ```
 
-  A call to `mfail` should abort the computation. In this sense, `mfail` would
+  A call to `fail` should abort the computation. In this sense, `fail` would
   become a close relative of `mzero`. It would work well with the common
-  definition `mfail _ = mzero`, and give a simple guideline to the intended
+  definition `fail _ = mzero`, and give a simple guideline to the intended
   usage and effect of the `MonadFail` class.
 
 - Backwards compatibility with some old modules will be broken; I don't see a
   way around this. Warnings and sufficient time to fix them will have to do.
 
-- Rename `fail`? **Yes.** Introducing `mfail` allows us to do a smooth
-  transition easily (see below section), and removing the "m" again afterwards
-  is simply not worth the hassle.
+- Rename `fail`? **No.** Old code might use `fail` explicitly and we might
+  avoid breaking it, the Report talks about `fail`, and we have a solid
+  migration strategy that does not require a renaming.
 
 - Remove the `String` argument? **No.** The `String` might help error reporting
   and debugging. `String` may be ugly, but it's the de facto standard for
   simple text in GHC. Also, no high performance string operations are to be
-  expected with `mfail`, so this breaking change would in no way be justified.
+  expected with `fail`, so this breaking change would in no way be justified.
+  Also note that explicit `fail` calls would break if we removed the argument.
 
 - How sensitive would existing code be to subtle changes in the strictness
   behaviour of `do` notation pattern matching? **It doesn't.** The
@@ -167,23 +168,12 @@ Discussion
     any constraint. The docs will have to make it clear that this is not the
     intended use.
 
-  I think we should keep the `Monad` superclass for two main reasons:
+  I think we should keep the `Monad` superclass for three main reasons:
 
   - We don't want to see `(Monad m, MonadFail m) =>` all over the place.
-  - The primary intended use of `mfail` is for desugaring do-notation anyway.
+  - The primary intended use of `fail` is for desugaring do-notation anyway.
   - Retroactively removing superclasses is easy, but adding them is hard
     (see AMP).
-
-- Provide `mfail = fail` as a standard implementation? **No.** We want a
-  warning to happen and people should actively write the `MonadFail` instance
-  instead of relying on defaults, so that after a while we can simply remove
-  `fail`.
-
-- Move `fail` out of the `Monad` class into a top-level synonym for `mfail`?
-  **Maybe.** `fail` is less bound to being in a monadic context (since it also
-  makes sense in an `Applicative` or even `Functor` one). On the other hand,
-  being there for desugaring do-notation, it is likely to appear mostly in
-  monadic contexts anyway.
 
 - Whether a pattern is unfailable is up to GHC to decide, and in fact the
   compiler already does that decision in the typechecker: an unfailable pattern
@@ -199,7 +189,27 @@ Adapting old code
 
   *Here are your options:*
 
-    1. Write a `MonadFail` instance
+    1. Write a `MonadFail` instance (and bring it into scope)
+
+       ```haskell
+       #if !MIN_VERSION_base(4,11,0)
+       -- Control.Monad.Fail import will become redundant in GHC 7.16+
+       import qualified Control.Monad.Fail as Fail
+       #endif
+       import Control.Monad
+
+       instance Monad Foo where
+         (>>=) = <...bind impl...>
+         -- NB: `return` defaults to `pure`
+
+       #if !MIN_VERSION_base(4,11,0)
+         -- Monad(fail) will be removed in GHC 7.16+
+         fail = Fail.fail
+       #endif
+
+       instance MonadFail Foo where
+         fail = <...fail implementation...>
+       ```
 
     2. Change your pattern to be irrefutable
 
@@ -251,21 +261,35 @@ Transitional strategy
 ---------------------
 
 The roadmap is similar to the [AMP][amp], the main difference being that since
-`mfail` does not exist yet, we have to introduce new functionality and then
+`MonadFail` does not exist yet, we have to introduce new functionality and then
 switch to it.
 
-1. GHC 7.12
+* **GHC 7.12 / base-4.9**
 
-    - Add `MonadFail` with `mfail` so people can start writing instances
-      for it.
-    - Add a language extension `-XMonadFail` that changes desugaring to use
-      `mfail` instead of `fail`.
-    - Warn when a do-block that contains a failable pattern is desugared, but
-      there is no `MonadFail` available: "Please add the instance or change
-      your pattern matching." Add a flag to control whether this warning
-      appears.
-    - Warn when an instance implements the `fail` function, as it will be
-      removed from the class in the future.
+    - Add module `Control.Monad.Fail` with new class `MonadFail(fail)` so
+      people can start writing instances for it.
+
+      `Control.Monad` only re-exports the class `MonadFail`, but not its
+      `fail` method.
+
+      NB: At this point, `Control.Monad.Fail.fail` clashes with
+      `Prelude.fail` and `Control.Monad.fail`.
+
+    - *(non-essential)* Add a language extension `-XMonadFail` that
+      changes desugaring to use `MonadFail(fail)` instead of `Monad(fail)`.
+
+      This has the effect that typechecking will infer a `MonadFail` constraint
+      for `do` blocks with failable patterns, just as it is planned to do when
+      the entire thing is done.
+
+    - Warn when a `do`-block that contains a failable pattern is
+      desugared, but there is no `MonadFail`-instance in scope: "Please add the
+      instance or change your pattern matching." Add a flag to control whether
+      this warning appears.
+
+    - Warn when an instance implements the `fail` function (or when `fail`
+      is imported as a method of `Monad`), as it will be removed from the
+      `Monad` class in the future. (See also [GHC #10071][trac-10071])
 
 3. GHC 7.14
 
@@ -276,8 +300,10 @@ switch to it.
 
     - Remove `-XMonadFail`, leaving its effects on at all times.
     - Remove `fail` from `Monad`.
-    - Provide a deprecated (!) top-level `fail = mfail` to stay compatible with
-      code that explicitly uses `fail`.
+    - Instead, re-export `Control.Monad.Fail.fail` as `Prelude.fail` and
+      `Control.Monad.fail`.
+    - `Control.Monad.Fail` is now a redundant module that can be considered
+      deprecated.
 
 
 
@@ -287,7 +313,7 @@ Current status
 - [ZuriHac 2015 (29.5. - 31.5.)][zurihac]: Franz Thoma (@fmthoma) and me
   (David Luposchainsky aka @quchen) started implementing the MFP in GHC.
 
-    - Desugaring to the new `mfail` can be controlled via a new langauge
+    - Desugaring to the new `fail` can be controlled via a new langauge
       extension, `MonadFailDesugaring`.
     - If the language extension is turned off, a warning will be emitted for
       code that would break if it was enabled.
@@ -302,4 +328,5 @@ Current status
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
 [ghc-typecheck-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
 [stackage-logs]: https://www.dropbox.com/s/knz0i979skam4zs/stackage-build.tar.xz?dl=0
+[trac-10071]: https://ghc.haskell.org/trac/ghc/ticket/10071
 [zurihac]: https://wiki.haskell.org/ZuriHac2015
