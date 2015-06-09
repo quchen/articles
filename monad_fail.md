@@ -152,16 +152,13 @@ Discussion
   definition `fail _ = mzero`, and give a simple guideline to the intended
   usage and effect of the `MonadFail` class.
 
-- Backwards compatibility with some old modules will be broken; I don't see a
-  way around this. Warnings and sufficient time to fix them will have to do.
-
 - Rename `fail`? **No.** Old code might use `fail` explicitly and we might
   avoid breaking it, the Report talks about `fail`, and we have a solid
   migration strategy that does not require a renaming.
 
 - Remove the `String` argument? **No.** The `String` might help error reporting
   and debugging. `String` may be ugly, but it's the de facto standard for
-  simple text in GHC. Also, no high performance string operations are to be
+  simple text in GHC. No high performance string operations are to be
   expected with `fail`, so this breaking change would in no way be justified.
   Also note that explicit `fail` calls would break if we removed the argument.
 
@@ -169,18 +166,18 @@ Discussion
   behaviour of `do` notation pattern matching? **It doesn't.** The
   implementation does not affect strictness at all, only the desugaring step.
   Care must be taken when fixing warnings by making patterns irrefutable using
-  `~`, as that does affect strictness. (Cf. difference between lazy/strict
+  `~`, as that *does* affect strictness. (Cf. difference between lazy/strict
   State)
 
-- The `Monad` constraint for `MonadFail` is completely unnecessary. What other
-  things should be considered?
+- The `Monad` constraint for `MonadFail` seems unnecessary. Should we drop or
+  relax it? What other things should be considered?
 
   - Applicative `do` notation is coming sooner or later, `fail` might be useful
     in this more general scenario. Due to the AMP, it is trivial to change
-    the `MonadFail` superclass to `Applicative` later.
+    the `MonadFail` superclass to `Applicative` later. (The name will be a bit
+    misleading, but it's a very small price to pay.)
   - The class might be misused for a strange pointed type if left without
-    any constraint. The docs will have to make it clear that this is not the
-    intended use.
+    any constraint. This is not the intended use at all.
 
   I think we should keep the `Monad` superclass for three main reasons:
 
@@ -188,10 +185,6 @@ Discussion
   - The primary intended use of `fail` is for desugaring do-notation anyway.
   - Retroactively removing superclasses is easy, but adding them is hard
     (see AMP).
-
-- Whether a pattern is unfailable is up to GHC to decide, and in fact the
-  compiler already does that decision in the typechecker: an unfailable pattern
-  is currently ignored by the typechecker. [(Source)][ghc-typecheck-irrefutable]
 
 
 
@@ -340,7 +333,6 @@ Current status
 
 
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
-[ghc-typecheck-irrefutable]: https://github.com/ghc/ghc/blob/228ddb95ee137e7cef02dcfe2521233892dd61e0/compiler/hsSyn/HsPat.hs#L443
 [stackage-logs]: https://www.dropbox.com/s/knz0i979skam4zs/stackage-build.tar.xz?dl=0
 [trac-10071]: https://ghc.haskell.org/trac/ghc/ticket/10071
 [zurihac]: https://wiki.haskell.org/ZuriHac2015
