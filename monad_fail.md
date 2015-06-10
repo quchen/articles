@@ -235,7 +235,7 @@ Adapting old code
 
        ```haskell
        do x <- foobar
-          e <- case foobar of
+          e <- case x of
               Left e' -> e'
               Right r -> error "Pattern match failed" -- Boooo
           stuff
