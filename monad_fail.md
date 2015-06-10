@@ -89,7 +89,7 @@ do ~pat <- action     >>>     let f ~pat = more
 
 A class of patterns that are conditionally failable are `newtype`s, and single
 constructor `data` types, which are unfailable by themselves, but may fail
-if matching on their fields is done with failable paterns.
+if matching on their fields is done with failable patterns.
 
 ```haskell
 data Newtype a = Newtype a
@@ -342,13 +342,13 @@ Current status
 - [ZuriHac 2015 (29.5. - 31.5.)][zurihac]: Franz Thoma (@fmthoma) and me
   (David Luposchainsky aka @quchen) started implementing the MFP in GHC.
 
-    - Desugaring to the new `fail` can be controlled via a new langauge
+    - Desugaring to the new `fail` can be controlled via a new language
       extension, `MonadFailDesugaring`.
     - If the language extension is turned off, a warning will be emitted for
       code that would break if it was enabled.
     - Warnings are emitted for types that *have* a *MonadFail* instance. This
       still needs to be fixed.
-    - The error message are readable, but should be more so. We're still
+    - The error messages are readable, but should be more so. We're still
       on this.
 - 2015-06-09: Estimated breakage by compiling Stackage. Smaller than expected.
 
