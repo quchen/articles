@@ -126,7 +126,7 @@ failable.
 
 ```haskell
 do PatternSynonym x <- action     >>>     let f PatternSynonym x = more
-   more                           >>>     in f _ = fail "..."
+   more                           >>>         f _ = fail "..."
                                   >>>     in  action >>= f
 ```
 
