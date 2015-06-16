@@ -351,10 +351,14 @@ Current status
     - The error messages are readable, but should be more so. We're still
       on this.
 - 2015-06-09: Estimated breakage by compiling Stackage. Smaller than expected.
+- 2015-06-09 (late): Published. People seem to like the idea, with a couple of
+  pain points remaining.
+- 2015-06-16: [Update 1 posted.][update1]
 
 
 
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
 [stackage-logs]: https://www.dropbox.com/s/knz0i979skam4zs/stackage-build.tar.xz?dl=0
 [trac-10071]: https://ghc.haskell.org/trac/ghc/ticket/10071
+[update1]: https://github.com/quchen/articles/blob/master/monad_fail_update1.md
 [zurihac]: https://wiki.haskell.org/ZuriHac2015

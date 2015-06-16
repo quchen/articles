@@ -67,8 +67,12 @@ Haskell related
   Applicative-Monad proposal, which was the starting point for Applicative
   becoming a superclass of Monad in GHC 7.10.
 - [Rules for typeclass laws][law-rules] wasn't proosed yet
-- [Removing `fail` from `Monad`][fail] is a proposal similar to the AMP,
-  with the goal of removing `fail` from the `Monad` typeclass.
+- The MonadFail proposal is a proposal similar to the AMP, with the goal of
+  removing `fail` from the `Monad` typeclass.
+
+    - [Original text][fail]
+    - [Update after one week of discussion.][fail_update1]
+
 - [Stuff I would like to see in/for Haskell][stuff-i-want]
 
 
@@ -99,6 +103,7 @@ Other topics
 [equality-live]:    http://htmlpreview.github.io/?https://github.com/quchen/articles/blob/master/haskell-equality-table.html
 [equality]:         haskell-equality-table.html
 [fail]:             monad_fail.md
+[fail_update1]:     monad_fail_update1.md
 [fbut]:             fbut.md
 [great]:            great_things_about_haskell.md
 [haskell-style]:    haskell_style.md
