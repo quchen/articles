@@ -42,6 +42,16 @@ TODO
 
 
 
+### Totality
+
+The haskell community puts a large emphasis on functions being *total*, i.e. producing useful output for all valid (well-typed) inputs. Non-total functions for example might throw an exception when some invariant of the input does not hold. A common example of this is taking a signed integer as an argument, but expecting it to be positive.
+
+Totality shifts complexity from the programmer's mind into the type system: potential failures are made explicit, and forgetting about them can be detected by the type checker. One issue that is very common in other languages is worrying about whether an input might be `null`, which you can spend a lot of time on. And once you've found out you might get `null`, there's often no functionality there to respond to that in a useful manner, and one ends up propagating the mistake further down the program flow. Another example of this sort of bad language design is stringly-typed languages where options are often in the form of strings, but of all the (infinity of) strings, there are only a handful that make sense in the context of a certain function.
+
+
+
+
+
 
 ### Stacking effects
 
