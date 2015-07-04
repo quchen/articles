@@ -117,6 +117,10 @@ Naming
   This can sometimes be divided up some more, for example the Lens/Pipes
   ecosystems may get their own blocks.
 
+- Do not use type synonyms, unless you have a very good design reason to do so
+  (example: lens types). If you have to, use them module-internally, but do not
+  export them.
+
 
 
 Type signatures
