@@ -143,9 +143,9 @@ substMType s = \case
 data PType = Forall (Set Name) MType
 
 instance Pretty PType where
-    ppr (Forall xs mType) = "∀" <> universals <> ". " <> ppr mType
+    ppr (Forall qs mType) = "∀" <> universals <> ". " <> ppr mType
       where
-        universals = T.intercalate " " (map ppr (S.toList xs))
+        universals = T.intercalate " " (map ppr (S.toList qs))
 
 
 
@@ -155,7 +155,7 @@ instance Pretty PType where
 -- __Example:__ @foo :: forall a. a -> b -> a@ would be a 'PType' in which
 -- @b@ is a free type variable, while @a@ is bound (via the @forall@).
 freePType :: PType -> Set Name
-freePType (Forall vars mType) = freeMType mType `S.difference` vars
+freePType (Forall qs mType) = freeMType mType `S.difference` qs
 
 
 
@@ -164,10 +164,10 @@ freePType (Forall vars mType) = freeMType mType `S.difference` vars
 --
 -- Invariant: the quantified variables are not changed by the operation.
 substPType :: Subst -> PType -> PType
-substPType (Subst subst) (Forall quantified mType) =
-    let quantified' = M.fromSet (const ()) quantified
-        subst' = Subst (subst `M.difference` quantified')
-    in Forall quantified (substMType subst' mType)
+substPType (Subst subst) (Forall qs mType) =
+    let qs' = M.fromSet (const ()) qs
+        subst' = Subst (subst `M.difference` qs')
+    in Forall qs (substMType subst' mType)
 
 
 
@@ -297,8 +297,16 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 -- | The inference type holds a supply of unique names, and can fail with
 -- a descriptive error if something goes wrong.
-newtype Infer a = Infer { runInfer :: ExceptT Text (State Integer) a }
+newtype Infer a = Infer (ExceptT Text (State Integer) a)
     deriving (Functor, Applicative, Monad)
+
+
+
+-- | Evaluate a value in an 'Infer'ence context.
+runInfer :: Infer a -- ^ Inference data
+         -> Integer -- ^ Starting index used for 'fresh' type variable generation
+         -> Either Text a
+runInfer (Infer infer) n0 = runIdentity (evalStateT (runExceptT infer) n0)
 
 
 
@@ -413,6 +421,25 @@ data Exp = EVar Name         -- ^ @x@
          | EAbs Name Exp     -- ^ @\x -> e@
          | ELet Name Exp Exp -- ^ @let x = e in e'@
 
+instance Pretty Exp where
+    ppr (EVar name) = ppr name
+    ppr (EApp f x) = parenPpr f <> " " <> parenPpr x
+      where
+        parenPpr x@(EApp {}) = parenthesize (ppr x)
+        parenPpr x@(ELet {}) = parenthesize (ppr x)
+        parenPpr x = ppr x
+        parenthesize x = "(" <> x <> ")"
+    ppr (EAbs name expr) = mconcat ["λ"
+                                   , ppr name
+                                   , ". "
+                                   , ppr expr ]
+    ppr (ELet name value body) = mconcat ["let "
+                                         , ppr name
+                                         , " = "
+                                         , ppr value
+                                         , " in "
+                                         , ppr body ]
+
 
 
 -- | Generate a fresh 'Name' in a type 'Infer'ence context. An example use case
@@ -420,11 +447,39 @@ data Exp = EVar Name         -- ^ @x@
 -- new name, i.e. unbound in the current context.
 fresh :: Infer MType
 fresh = do
-    let nextNumber :: Infer Integer
-        nextNumber = Infer (lift get)
     name <- nextNumber
     let pretty = "t" <> T.pack (show name)
     pure (TVar (Name pretty))
+
+  where
+    nextNumber :: Infer Integer
+    nextNumber = Infer (lift get)
+
+
+
+-- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
+--
+-- __Example:__ instantiating @forall a. a -> b -> a@ results in the 'MType'
+-- @a -> b -> a@, where @a@ is a fresh name (to avoid shadowing issues).
+--
+-- You can picture the 'PType' to be the prototype converted to an instantiated
+-- 'MType', which can now be used in the unification process.
+--
+-- Another way of looking at it is by simply forgetting which variables were
+-- quantified over, carefully avoiding name clashes when doing so.
+instantiate :: PType -> Infer MType
+instantiate (Forall qs t) = do
+    subst <- substituteAllWithFresh qs
+    pure (substMType subst t)
+
+  where
+    -- For each given name, add a substitution from that name to a fresh type
+    -- variable to the result.
+    substituteAllWithFresh :: Set Name -> Infer Subst
+    substituteAllWithFresh xs = do
+        let freshSubstActions = M.fromSet (const fresh) xs
+        freshSubsts <- sequenceA freshSubstActions
+        pure (Subst freshSubsts)
 
 
 
@@ -440,8 +495,8 @@ fresh = do
 --     where {α} = free(τ) – free(Γ)
 -- @
 generalize :: Env -> MType -> PType
-generalize env mType = Forall as mType
-    where as = freeMType mType `S.difference` freeEnv env
+generalize env mType = Forall qs mType
+    where qs = freeMType mType `S.difference` freeEnv env
 
 
 
@@ -462,27 +517,10 @@ lookupEnv (Env env) name@(Name n) = case M.lookup name env of
 -- scope or in a @let@ block.
 --
 -- @
--- Γ, x:σ  ≡  extendEnv Γ x σ
+-- Γ, x:σ  ≡  extendEnv Γ (x,σ)
 -- @
-extendEnv :: Env -> Name -> PType -> Env
-extendEnv (Env env) name pType = Env (M.insert name pType env)
-
-
-
--- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
---
--- __Example:__ instantiating @forall a. a -> b -> a@ results in the 'MType'
--- @a -> b -> a@, where @a@ is a fresh name (to avoid shadowing issues).
---
--- You can picture the 'PType' to be the prototype converted to an instantiated
--- 'MType', which can now be used in the unification process.
---
--- Another way of looking at it is by simply forgetting which variables were
--- quantified over, carefully avoiding name clashes when doing so.
-instantiate :: PType -> Infer MType
-instantiate (Forall as t) = do
-    subst <- sequenceA (M.fromSet (const fresh) as))
-    pure (substMType subst t)
+extendEnv :: Env -> (Name, PType) -> Env
+extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
 
 
 
@@ -564,7 +602,7 @@ inferAbs :: Env -> Name -> Exp -> Infer (Subst, MType)
 inferAbs env x e = do
     tau <- fresh                           -- τ = fresh
     let sigma = generalize env tau         -- σ = gen(Γ, τ)
-        env' = extendEnv env x sigma       -- Γ, x:σ …
+        env' = extendEnv env (x, sigma)    -- Γ, x:σ …
     (s, tau') <- infer env' e              --        … ⊢ e:τ'
                                            -- ---------------
     pure (s, TFun (substMType s tau) tau') -- λx.e : τ→τ'
@@ -585,13 +623,13 @@ inferAbs env x e = do
 -- @
 inferLet :: Env -> Name -> Exp -> Exp -> Infer (Subst, MType)
 inferLet env x e e' = do
-    (s1, tau) <- infer env e           -- Γ ⊢ e:τ
+    (s1, tau) <- infer env e              -- Γ ⊢ e:τ
     let env' = substEnv s1 env
-    let sigma = generalize env' tau    -- σ = gen(Γ,τ)
-    let env'' = extendEnv env' x sigma -- Γ, x:σ
-    (s2, tau') <- infer env'' e'       -- Γ ⊢ …
-                                       -- --------------------------
-    pure (s2 `compose` s1, tau')       --     … let x = e in e' : τ'
+    let sigma = generalize env' tau       -- σ = gen(Γ,τ)
+    let env'' = extendEnv env' (x, sigma) -- Γ, x:σ
+    (s2, tau') <- infer env'' e'          -- Γ ⊢ …
+                                          -- --------------------------
+    pure (s2 `compose` s1, tau')          --     … let x = e in e' : τ'
 
 
 
