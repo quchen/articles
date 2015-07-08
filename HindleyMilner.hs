@@ -54,6 +54,14 @@ class Pretty a where
 
 
 
+
+
+-- #############################################################################
+-- ** Names
+-- #############################################################################
+
+
+
 -- | A 'name' is an identifier in the language we're going to typecheck.
 -- Variables on both the term and type level have 'Name's, for example.
 newtype Name = Name Text
@@ -79,8 +87,8 @@ instance Pretty Name where
 -- building blocks of all types. Examples of monotypes are @Int@, @a@, @a -> b@.
 --
 -- In formal notation, 'MType's are often called τ (tau) types.
-data MType = TVar Name        -- a
-           | TFun MType MType -- a -> b
+data MType = TVar Name        -- ^ @a@
+           | TFun MType MType -- ^ @a -> b@
            -- TODO: Add terms that don't necessarily typecheck :-)
 
 -- | @
@@ -281,6 +289,14 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
     substSubst s (Subst target) = Subst (fmap (substMType s) target)
 
 
+-- I have a strong feeling that 'compose' is associative, which would make
+-- 'Subst' a 'Monoid', but I wasn't able to prove this yet.
+--
+-- instance Monoid Subst where
+--     mappend = compose
+--     mempty = empty
+
+
 
 
 
@@ -316,7 +332,7 @@ newtype Infer a = Infer (ExceptT Text (State [Text]) a)
 
 -- | Evaluate a value in an 'Infer'ence context.
 runInfer :: Infer a -- ^ Inference data
-         -> [Text] -- ^ Supply of variable names. Should be infinite.
+         -> [Text] -- ^ Supply of variable names.
          -> Either Text a
 runInfer (Infer infer) supply =
     runIdentity (evalStateT (runExceptT infer) infiniteSupply)
@@ -367,14 +383,16 @@ unify x (TVar v) = v `bindVariableTo` x
 
 
 -- | Build a 'Subst'itution that binds a 'Name' of a 'TVar' to an 'MType'.
+-- The resulting substitution should be idempotent, i.e. applying it more than
+-- once to something should not be any different from applying it only once.
 --
 -- - In the simplest case, this just means building a substitution that just
 --   does that.
 -- - Substituting a 'Name' with a 'TVar' with the same name unifies a type
 --   variable with itself, and the resulting substitution does nothing new.
 -- - If the 'Name' we're trying to bind to an 'MType' already occurs in that
---   'MType', we're running into an infinite regress. To avoid having to work
---   with infinite types, we fail in this case.
+--   'MType', the resulting substitution would not be idempotent: the 'MType'
+--   would be replaced again, yielding a different result.
 bindVariableTo :: Name -> MType -> Infer Subst
 bindVariableTo name (TVar v) | boundToSelf = pure empty
   where boundToSelf = name == v
