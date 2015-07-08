@@ -83,6 +83,10 @@ data MType = TVar Name        -- a
            | TFun MType MType -- a -> b
            -- TODO: Add terms that don't necessarily typecheck :-)
 
+-- | @
+-- TFun (TVar "a") (TVar "b")
+-- >>> a → b
+-- @
 instance Pretty MType where
     ppr = go False
       where
@@ -92,6 +96,10 @@ instance Pretty MType where
             | otherwise    = lhs <> " → " <> rhs
             where lhs = go True a
                   rhs = go False b
+
+-- | 'String' → 'TVar'
+instance IsString MType where
+    fromString = TVar . fromString
 
 
 
@@ -142,6 +150,10 @@ substMType s = \case
 -- In formal notation, 'PType's are often called σ (sigma) types.
 data PType = Forall (Set Name) MType
 
+-- | @
+-- Forall ["a"] (TFun "a" "a")
+-- >>> ∀a. a → a
+-- @
 instance Pretty PType where
     ppr (Forall qs mType) = "∀" <> universals <> ". " <> ppr mType
       where
@@ -297,16 +309,22 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 -- | The inference type holds a supply of unique names, and can fail with
 -- a descriptive error if something goes wrong.
-newtype Infer a = Infer (ExceptT Text (State Integer) a)
+newtype Infer a = Infer (ExceptT Text (State [Text]) a)
     deriving (Functor, Applicative, Monad)
 
 
 
 -- | Evaluate a value in an 'Infer'ence context.
 runInfer :: Infer a -- ^ Inference data
-         -> Integer -- ^ Starting index used for 'fresh' type variable generation
+         -> [Text] -- ^ Supply of variable names. Should be infinite.
          -> Either Text a
-runInfer (Infer infer) n0 = runIdentity (evalStateT (runExceptT infer) n0)
+runInfer (Infer infer) supply =
+    runIdentity (evalStateT (runExceptT infer) infiniteSupply)
+  where
+    -- [a, b, c] ==> [a,b,c, a1,b1,c1, a2,b2,c2, ...]
+    infiniteSupply = supply <> addSuffixes supply 1
+    addSuffixes xs n = zipWith addSuffix xs (repeat n) <> addSuffixes xs (n+1)
+    addSuffix x n = x <> T.pack (show n)
 
 
 
@@ -344,7 +362,7 @@ unify (TFun a b) (TFun x y) = do
     pure (compose subst1 subst2)
 unify (TVar v) x = v `bindVariableTo` x
 unify x (TVar v) = v `bindVariableTo` x
-unify a b = cannotUnify a b
+-- unify a b = cannotUnify a b
 
 
 
@@ -421,24 +439,38 @@ data Exp = EVar Name         -- ^ @x@
          | EAbs Name Exp     -- ^ @\x -> e@
          | ELet Name Exp Exp -- ^ @let x = e in e'@
 
+-- | Omit redundant parentheses, group chained lambdas.
+--
+-- @
+-- EAbs "f"
+--   (EAbs "g"
+--     (EAbs "x"
+--       (EApp (EApp "f" "x")
+--             (EApp "g" "x"))))
+-- >>> λf g x. f x (g x)
+-- @
 instance Pretty Exp where
     ppr (EVar name) = ppr name
-    ppr (EApp f x) = parenPpr f <> " " <> parenPpr x
+
+    ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
       where
-        parenPpr x@(EApp {}) = parenthesize (ppr x)
-        parenPpr x@(ELet {}) = parenthesize (ppr x)
-        parenPpr x = ppr x
-        parenthesize x = "(" <> x <> ")"
-    ppr (EAbs name expr) = mconcat ["λ"
-                                   , ppr name
-                                   , ". "
-                                   , ppr expr ]
-    ppr (ELet name value body) = mconcat ["let "
-                                         , ppr name
-                                         , " = "
-                                         , ppr value
-                                         , " in "
-                                         , ppr body ]
+        pprApp1 eLet@(ELet {}) = "(" <> ppr eLet <> ")"
+        pprApp1 x = ppr x
+        pprApp2 eApp@(EApp {}) = "(" <> ppr eApp <> ")"
+        pprApp2 x = pprApp1 x
+
+    ppr x@(EAbs {}) = pprAbs True x
+      where
+        pprAbs True  (EAbs name expr) = "λ" <> ppr name <> pprAbs False expr
+        pprAbs False (EAbs name expr) = " " <> ppr name <> pprAbs False expr
+        pprAbs _ expr = ". " <> ppr expr
+
+    ppr (ELet name value body) =
+        "let " <> ppr name <> " = " <> ppr value <> " in " <> ppr body
+
+-- | 'String' → 'EVar'
+instance IsString Exp where
+    fromString = EVar . fromString
 
 
 
@@ -446,15 +478,17 @@ instance Pretty Exp where
 -- of this is η expansion, which transforms @f@ into @λx. f x@, where "x" is a
 -- new name, i.e. unbound in the current context.
 fresh :: Infer MType
-fresh = do
-    name <- nextNumber
-    let pretty = "t" <> T.pack (show name)
-    pure (TVar (Name pretty))
-
+fresh = drawFromSupply >>= \case
+    Right name -> pure (TVar name)
+    Left err -> throw err
   where
-    nextNumber :: Infer Integer
-    nextNumber = Infer (lift get)
-
+    drawFromSupply :: Infer (Either Text Name)
+    drawFromSupply = Infer (do
+        supply <- lift get
+        case supply of
+            s:upply -> do lift (put upply)
+                          pure (Right (Name s))
+            [] -> pure (Left "Supply out of fresh names") )
 
 
 -- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
