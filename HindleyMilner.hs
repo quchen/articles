@@ -1,7 +1,8 @@
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE OverloadedLists            #-}
+{-# LANGUAGE OverloadedStrings          #-}
+
 
 -- | This module is an extensively documented walkthrough for typechecking a
 -- basic functional language using the Hindley-Damas-Milner algorithm.
@@ -11,7 +12,9 @@
 -- - The source is written in literate programming style, so you can almost
 --   read it from top to bottom, minus some few references to later.
 -- - Runnable in GHCi.
--- - The Haddock output yields a nice overview.
+-- - The Haddock output yields a nice overview over the definitions given.
+--   It's not as good of a read as the source since many of the important
+--   inter-code comments are not visible.
 
 module HindleyMilner where
 
@@ -199,7 +202,7 @@ substPType (Subst subst) (Forall qs mType) =
 
 
 
--- | The environment consists of all the values in scope, and their
+-- | The environment consists of all the values available in scope, and their
 -- associated polytypes.
 --
 -- Conceptually, the environment also contains all the things you can form by
