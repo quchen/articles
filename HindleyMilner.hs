@@ -110,8 +110,8 @@ instance Pretty MType where
         go _ (TTuple a b)  = "(" <> ppr a <> ", " <> ppr b <> ")"
         go _ (TConst name) = ppr name
         go parenthesize (TFun a b)
-            | parenthesize = "(" <> lhs <> ") → " <> rhs
-            | otherwise    = lhs <> " → " <> rhs
+            | parenthesize = "(" <> lhs <> " → " <> rhs <> ")"
+            | otherwise    =        lhs <> " → " <> rhs
             where lhs = go True a
                   rhs = go False b
 
@@ -286,6 +286,12 @@ newtype Subst = Subst (Map Name MType)
 
 
 
+-- | a ⇒ b, c ⇒ d → e
+instance Pretty Subst where
+    ppr (Subst s) = T.intercalate ", " $ [ ppr k <> " ⇒ " <> ppr v | (k,v) <- M.toList s ]
+
+
+
 -- | The empty substituion holds nothing, and is the identity of 'compose'.
 empty :: Subst
 empty = Subst M.empty
@@ -355,10 +361,10 @@ newtype Infer a = Infer (ExceptT Text (State [Text]) a)
 
 
 -- | Evaluate a value in an 'Infer'ence context.
-runInfer :: Infer a -- ^ Inference data
-         -> [Text] -- ^ Supply of variable names.
+runInfer :: [Text] -- ^ Supply of variable names.
+         -> Infer a -- ^ Inference data
          -> Either Text a
-runInfer (Infer inf) supply =
+runInfer supply (Infer inf) =
     runIdentity (evalStateT (runExceptT inf) infiniteSupply)
   where
     -- [a, b, c] ==> [a,b,c, a1,b1,c1, a2,b2,c2, ...]
@@ -713,3 +719,30 @@ inferLet env x e e' = do
     (s2, tau') <- infer env'' e'          -- Γ ⊢ …
                                           -- --------------------------
     pure (s2 `compose` s1, tau')          --     … let x = e in e' : τ'
+
+
+
+
+
+-- #############################################################################
+-- #############################################################################
+-- * Testing
+-- #############################################################################
+-- #############################################################################
+
+-- | Synonym for 'TFun' to make writing type signatures easier.
+--
+-- @
+-- Forall ["a"] ("a" ~> "a")
+-- @
+(~>) :: MType -> MType -> MType
+(~>) = TFun
+infixr 9 ~>
+
+prelude :: Env
+prelude = Env (M.fromList
+    [ ("id",    Forall ["a"]     ("a" ~> "a"))
+    , ("foldr", Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("find",  Forall ["a","b"] (("a" ~> TConst "Bool") ~> TList "a" ~> TEither (TConst "Unit") "a"))
+    , ("fix",   Forall ["a"]     (("a" ~> "a") ~> "a"))
+    ])
