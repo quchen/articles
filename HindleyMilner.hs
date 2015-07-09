@@ -242,10 +242,10 @@ substPType (Subst subst) (Forall qs mType) =
 newtype Env = Env (Map Name PType)
 
 instance Pretty Env where
-    ppr (Env env) = "Γ = " <> T.intercalate ", " pprBindings
+    ppr (Env env) = "Γ = \n" <> T.intercalate "\n" pprBindings
       where
         bindings = M.assocs env
-        pprBinding (name, pType) = ppr name <> " ≡ " <> ppr pType
+        pprBinding (name, pType) = "  " <> ppr name <> " ≡ " <> ppr pType
         pprBindings = map pprBinding bindings
 
 
@@ -741,8 +741,12 @@ infixr 9 ~>
 
 prelude :: Env
 prelude = Env (M.fromList
-    [ ("id",    Forall ["a"]     ("a" ~> "a"))
-    , ("foldr", Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
-    , ("find",  Forall ["a","b"] (("a" ~> TConst "Bool") ~> TList "a" ~> TEither (TConst "Unit") "a"))
-    , ("fix",   Forall ["a"]     (("a" ~> "a") ~> "a"))
+    [ ("id",       Forall ["a"]     ("a" ~> "a"))
+    , ("foldr",    Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("find",     Forall ["a","b"] (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
+    , ("fix",      Forall ["a"]     (("a" ~> "a") ~> "a"))
+    , ("Cont/>>=", Forall ["a"]     ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
     ])
+  where
+    tBool = TConst "Bool"
+    tMaybe = TEither (TConst "Unit")
