@@ -743,6 +743,7 @@ prelude :: Env
 prelude = Env (M.fromList
     [ ("id",       Forall ["a"]     ("a" ~> "a"))
     , ("foldr",    Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("map",      Forall ["a","b"] (("a" ~> "b") ~> TList "a" ~> TList "b"))
     , ("find",     Forall ["a","b"] (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
     , ("fix",      Forall ["a"]     (("a" ~> "a") ~> "a"))
     , ("Cont/>>=", Forall ["a"]     ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
