@@ -90,9 +90,12 @@ instance Pretty Name where
 -- building blocks of all types. Examples of monotypes are @Int@, @a@, @a -> b@.
 --
 -- In formal notation, 'MType's are often called τ (tau) types.
-data MType = TVar Name        -- ^ @a@
-           | TFun MType MType -- ^ @a -> b@
-           -- TODO: Add terms that don't necessarily typecheck :-)
+data MType = TVar Name           -- ^ @a@
+           | TFun MType MType    -- ^ @a -> b@
+           | TList MType         -- ^ @[a]@
+           | TEither MType MType -- ^ @Either a b@
+           | TTuple MType MType  -- ^ @(a,b)@
+           | TConst Name         -- ^ @Int@, @()@, ...
 
 -- | @
 -- TFun (TVar "a") (TVar "b")
@@ -101,7 +104,11 @@ data MType = TVar Name        -- ^ @a@
 instance Pretty MType where
     ppr = go False
       where
-        go _ (TVar (Name name)) = name
+        go _ (TVar name)   = ppr name
+        go _ (TList a)     = "[" <> ppr a <> "]"
+        go _ (TEither l r) = "Either " <> ppr l <> " " <> ppr r
+        go _ (TTuple a b)  = "(" <> ppr a <> ", " <> ppr b <> ")"
+        go _ (TConst name) = ppr name
         go parenthesize (TFun a b)
             | parenthesize = "(" <> lhs <> ") → " <> rhs
             | otherwise    = lhs <> " → " <> rhs
@@ -120,18 +127,32 @@ instance IsString MType where
 -- __Example:__ The free variables of @a -> b@ are @a@ and @b@.
 freeMType :: MType -> Set Name
 freeMType = \case
-    TVar a   -> [a]
-    TFun f x -> freeMType f <> freeMType x
+    TVar a      -> [a]
+    TFun f x    -> freeMType f <> freeMType x
+    TList a     -> freeMType a
+    TEither l r -> freeMType l <> freeMType r
+    TTuple a b  -> freeMType a <> freeMType b
+    TConst _    -> []
+
 
 
 
 -- | Apply a substitution to all known variables contained in an 'MType'.
 -- Variables not mentioned are left unchanged.
+--
+-- This operation will not change the 'MType' constructors that may be contained
+-- inside the 'MType' recursively, it only acts on type variables.
 substMType :: Subst -> MType -> MType
 substMType s = \case
     TVar a -> let Subst s' = s
               in M.findWithDefault (TVar a) a s'
-    TFun f x -> TFun (substMType s f) (substMType s x)
+    TFun f x      -> TFun (rec f) (rec x)
+    TList a       -> TList (rec a)
+    TEither l r   -> TEither (rec l) (rec r)
+    TTuple a b    -> TTuple (rec a) (rec b)
+    c@(TConst {}) -> c
+  where
+    rec = substMType s
 
 
 
@@ -337,11 +358,11 @@ newtype Infer a = Infer (ExceptT Text (State [Text]) a)
 runInfer :: Infer a -- ^ Inference data
          -> [Text] -- ^ Supply of variable names.
          -> Either Text a
-runInfer (Infer infer) supply =
-    runIdentity (evalStateT (runExceptT infer) infiniteSupply)
+runInfer (Infer inf) supply =
+    runIdentity (evalStateT (runExceptT inf) infiniteSupply)
   where
     -- [a, b, c] ==> [a,b,c, a1,b1,c1, a2,b2,c2, ...]
-    infiniteSupply = supply <> addSuffixes supply 1
+    infiniteSupply = supply <> addSuffixes supply (1 :: Integer)
     addSuffixes xs n = zipWith addSuffix xs (repeat n) <> addSuffixes xs (n+1)
     addSuffix x n = x <> T.pack (show n)
 
@@ -368,20 +389,28 @@ throw err = Infer (ExceptT (StateT (\s -> Identity (Left err, s))))
 --
 -- __Example:__ trying to unify @a -> b@ with @c -> (Int -> Bool)@ will result
 -- in a substitution of @a@ for @c@, and @b@ for @Int -> Bool@.
-unify :: MType -> MType -> Infer Subst
+unify :: (MType, MType) -> Infer Subst
+unify = \case
+    (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
+    (TVar v,      x)                 -> v `bindVariableTo` x
+    (x,           TVar v)            -> v `bindVariableTo` x
+    (TConst a,    TConst b) | a == b -> pure empty
+    (TList a,     TList b)           -> unify (a,b)
+    (TEither a b, TEither x y)       -> unifyBinary (a,b) (x,y)
+    (TTuple a b,  TTuple x y)        -> unifyBinary (a,b) (x,y)
+    (a, b)                           -> cannotUnify a b
 
--- Two function types unify if both their operands unify. Unification is first
--- done for the first operand, and assuming the required substitution, the
--- second operands are unified.
-unify (TFun a b) (TFun x y) = do
-    subst1 <- unify a x
-    let b' = substMType subst1 b
-        y' = substMType subst1 y
-    subst2 <- unify b' y'
-    pure (compose subst1 subst2)
-unify (TVar v) x = v `bindVariableTo` x
-unify x (TVar v) = v `bindVariableTo` x
--- unify a b = cannotUnify a b
+  where
+
+    -- Unification of binary type constructors, such as functions and Either.
+    -- Unification is first done for the first operand, and assuming the
+    -- required substitution, the second operands are unified.
+    unifyBinary (a,b) (x,y) = do
+        s1 <- unify (a, x)
+        let b' = substMType s1 b
+            y' = substMType s1 y
+        s2 <- unify (b', y')
+        pure (s1 `compose` s2)
 
 
 
@@ -476,9 +505,9 @@ instance Pretty Exp where
     ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
       where
         pprApp1 eLet@(ELet {}) = "(" <> ppr eLet <> ")"
-        pprApp1 x = ppr x
+        pprApp1 e = ppr e
         pprApp2 eApp@(EApp {}) = "(" <> ppr eApp <> ")"
-        pprApp2 x = pprApp1 x
+        pprApp2 e = pprApp1 e
 
     ppr x@(EAbs {}) = pprAbs True x
       where
@@ -504,9 +533,8 @@ fresh = drawFromSupply >>= \case
     Left err -> throw err
   where
     drawFromSupply :: Infer (Either Text Name)
-    drawFromSupply = Infer (do
-        supply <- lift get
-        case supply of
+    drawFromSupply = Infer (
+        lift get >>= \case
             s:upply -> do lift (put upply)
                           pure (Right (Name s))
             [] -> pure (Left "Supply out of fresh names") )
@@ -629,12 +657,12 @@ inferVar env name = do
 -- mapping unifies with the function @f:fτ@ given.
 inferApp :: Env -> Exp -> Exp -> Infer (Subst, MType)
 inferApp env f x = do
-    (s1, fTau) <- infer env f                          -- f : fτ
-    (s2, xTau) <- infer (substEnv s1 env) x            -- x : xτ
-    fxTau <- fresh                                     -- fxτ = fresh
-    s3 <- unify (substMType s2 fTau) (TFun xTau fxTau) -- unify (fτ, xτ → fxτ)
-    let s = s3 `compose` s2 `compose` s1               -- --------------------
-    pure (s, substMType s3 fxTau)                      -- f x : fxτ
+    (s1, fTau) <- infer env f                         -- f : fτ
+    (s2, xTau) <- infer (substEnv s1 env) x           -- x : xτ
+    fxTau <- fresh                                    -- fxτ = fresh
+    s3 <- unify (substMType s2 fTau, TFun xTau fxTau) -- unify (fτ, xτ → fxτ)
+    let s = s3 `compose` s2 `compose` s1              -- --------------------
+    pure (s, substMType s3 fxTau)                     -- f x : fxτ
 
 
 
