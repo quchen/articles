@@ -30,6 +30,7 @@ import qualified Data.Set                   as S
 import           Data.String
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
+import qualified Data.Text.IO               as T
 
 
 
@@ -490,10 +491,20 @@ occursCheckFailed (Name n) a =
 --                  (EVar "x")))
 --      (EVar z)
 -- @
-data Exp = EVar Name         -- ^ @x@
+data Exp = ELit Lit          -- ^ True, 1
+         | EVar Name         -- ^ @x@
          | EApp Exp Exp      -- ^ @f x@
          | EAbs Name Exp     -- ^ @\x -> e@
          | ELet Name Exp Exp -- ^ @let x = e in e'@
+
+
+
+-- | Literals we'd like to support. Since we can't define new data types in our
+-- simple type system, we'll have to hard-code the possible ones here.
+data Lit = LBool Bool
+         | LInteger Integer
+
+
 
 -- | Omit redundant parentheses, group chained lambdas.
 --
@@ -506,6 +517,7 @@ data Exp = EVar Name         -- ^ @x@
 -- >>> λf g x. f x (g x)
 -- @
 instance Pretty Exp where
+    ppr (ELit lit) = ppr lit
     ppr (EVar name) = ppr name
 
     ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
@@ -523,6 +535,11 @@ instance Pretty Exp where
 
     ppr (ELet name value body) =
         "let " <> ppr name <> " = " <> ppr value <> " in " <> ppr body
+
+instance Pretty Lit where
+    ppr (LBool    b) = T.pack (show b)
+    ppr (LInteger i) = T.pack (show i)
+
 
 -- | 'String' → 'EVar'
 instance IsString Exp where
@@ -543,7 +560,7 @@ fresh = drawFromSupply >>= \case
         lift get >>= \case
             s:upply -> do lift (put upply)
                           pure (Right (Name s))
-            [] -> pure (Left "Supply out of fresh names") )
+            _ -> pure (Left "Supply out of fresh names") )
 
 
 -- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
@@ -620,10 +637,21 @@ extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
 -- This is widely known as /Algorithm W/.
 infer :: Env -> Exp -> Infer (Subst, MType)
 infer env = \case
+    ELit lit    -> inferLit lit
     EVar name   -> inferVar env name
     EApp f x    -> inferApp env f x
     EAbs x e    -> inferAbs env x e
     ELet x e e' -> inferLet env x e e'
+
+
+
+-- | Literals such as 'True' and '1' have their types hard-coded.
+inferLit :: Lit -> Infer (Subst, MType)
+inferLit lit = pure (empty, TConst litTy)
+  where
+    litTy = case lit of
+        LBool    {} -> "Bool"
+        LInteger {} -> "Integer"
 
 
 
@@ -730,6 +758,8 @@ inferLet env x e e' = do
 -- #############################################################################
 -- #############################################################################
 
+
+
 -- | Synonym for 'TFun' to make writing type signatures easier.
 --
 -- @
@@ -741,13 +771,44 @@ infixr 9 ~>
 
 prelude :: Env
 prelude = Env (M.fromList
-    [ ("id",       Forall ["a"]     ("a" ~> "a"))
-    , ("foldr",    Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
-    , ("map",      Forall ["a","b"] (("a" ~> "b") ~> TList "a" ~> TList "b"))
+    [ ("(*)",      Forall []        (tInteger ~> tInteger ~> tInteger))
+    , ("(+)",      Forall []        (tInteger ~> tInteger ~> tInteger))
+    , ("(-)",      Forall []        (tInteger ~> tInteger ~> tInteger))
+    , ("Cont/>>=", Forall ["a"]     ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
     , ("find",     Forall ["a","b"] (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
     , ("fix",      Forall ["a"]     (("a" ~> "a") ~> "a"))
-    , ("Cont/>>=", Forall ["a"]     ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
+    , ("foldr",    Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("id",       Forall ["a"]     ("a" ~> "a"))
+    , ("length",   Forall ["a"]     (TList "a" ~> tInteger))
+    , ("map",      Forall ["a","b"] (("a" ~> "b") ~> TList "a" ~> TList "b"))
+    , ("const",    Forall ["a","b"] ("a" ~> "b" ~> "a"))
     ])
   where
     tBool = TConst "Bool"
-    tMaybe = TEither (TConst "Unit")
+    tInteger = TConst "Integer"
+    tMaybe = TEither (TConst "()")
+
+-- | Supply to draw fresh type variables from, if needed.
+defaultSupply :: [Text]
+defaultSupply = map (T.pack . pure) ['a'..'z']
+
+showType :: Env
+         -> [Text]
+         -> Exp
+         -> Text
+showType env supply expr =
+    case (runInfer supply . fmap snd . infer env) expr of
+        Left err -> "Error: " <> err
+        Right ty -> ppr expr <> " :: " <> ppr ty
+
+main :: IO ()
+main = do
+    let printInferred = T.putStrLn . showType prelude defaultSupply
+    printInferred (EApp "map" "map")
+    printInferred (EApp "map" (EApp "map" "map"))
+    printInferred (EApp "foldr" "(*)")
+    printInferred (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LInteger 2)))
+    printInferred (EApp "map" "length")
+
+
+-- Data.Text.IO.putStrLn . (either (T.pack . show) ppr) . runInfer alphabet . fmap snd $ infer prelude (EApp "map" "map")
