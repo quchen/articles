@@ -522,10 +522,13 @@ instance Pretty Exp where
 
     ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
       where
-        pprApp1 eLet@(ELet {}) = "(" <> ppr eLet <> ")"
-        pprApp1 e = ppr e
-        pprApp2 eApp@(EApp {}) = "(" <> ppr eApp <> ")"
-        pprApp2 e = pprApp1 e
+        pprApp1 = \case
+            eLet@(ELet {}) -> "(" <> ppr eLet <> ")"
+            eLet@(EAbs {}) -> "(" <> ppr eLet <> ")"
+            e -> ppr e
+        pprApp2 = \case
+            eApp@(EApp {}) -> "(" <> ppr eApp <> ")"
+            e -> pprApp1 e
 
     ppr x@(EAbs {}) = pprAbs True x
       where
@@ -537,8 +540,12 @@ instance Pretty Exp where
         "let " <> ppr name <> " = " <> ppr value <> " in " <> ppr body
 
 instance Pretty Lit where
-    ppr (LBool    b) = T.pack (show b)
-    ppr (LInteger i) = T.pack (show i)
+    ppr = \case
+        LBool    b -> showT b
+        LInteger i -> showT i
+      where
+        showT :: Show a => a -> Text
+        showT = T.pack . show
 
 
 -- | 'String' → 'EVar'
@@ -785,17 +792,23 @@ infixr 9 ~>
 
 prelude :: Env
 prelude = Env (M.fromList
-    [ ("(*)",      Forall []        (tInteger ~> tInteger ~> tInteger))
-    , ("(+)",      Forall []        (tInteger ~> tInteger ~> tInteger))
-    , ("(-)",      Forall []        (tInteger ~> tInteger ~> tInteger))
-    , ("Cont/>>=", Forall ["a"]     ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
-    , ("find",     Forall ["a","b"] (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
-    , ("fix",      Forall ["a"]     (("a" ~> "a") ~> "a"))
-    , ("foldr",    Forall ["a","b"] (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
-    , ("id",       Forall ["a"]     ("a" ~> "a"))
-    , ("length",   Forall ["a"]     (TList "a" ~> tInteger))
-    , ("map",      Forall ["a","b"] (("a" ~> "b") ~> TList "a" ~> TList "b"))
-    , ("const",    Forall ["a","b"] ("a" ~> "b" ~> "a"))
+    [ ("(*)",      Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(+)",      Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(-)",      Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(.)",      Forall ["a", "b", "c"] (("b" ~> "c") ~> ("a" ~> "b") ~> "a" ~> "c"))
+    , ("(<)",      Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(<=)",     Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(>)",      Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(>=)",     Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("Cont/>>=", Forall ["a"]           ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
+    , ("find",     Forall ["a","b"]       (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
+    , ("fix",      Forall ["a"]           (("a" ~> "a") ~> "a"))
+    , ("foldr",    Forall ["a","b"]       (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("id",       Forall ["a"]           ("a" ~> "a"))
+    , ("length",   Forall ["a"]           (TList "a" ~> tInteger))
+    , ("map",      Forall ["a","b"]       (("a" ~> "b") ~> TList "a" ~> TList "b"))
+    , ("reverse",   Forall ["a"]          (TList "a" ~> TList "a"))
+    , ("const",    Forall ["a","b"]       ("a" ~> "b" ~> "a"))
     ])
   where
     tBool = TConst "Bool"
@@ -826,12 +839,14 @@ main :: IO ()
 main = do
     let run = T.putStrLn . showType prelude defaultSupply
     T.putStrLn "Well-typed:"
-    run (EApp "map" "map")
+    run (EAbs "x" "x")
+    run (EApp "find" (EAbs "x" (EApp (EApp "(>)" "x") (ELit (LInteger 0)))))
+    run (EAbs "f" (EApp (EApp "(.)" "reverse") (EApp "map" "f")))
     run (EApp "map" (EApp "map" "map"))
     run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LInteger 2)))
     run (EApp (EApp "foldr" "(+)") (ELit (LInteger 0)))
     run (EApp "map" "length")
-    run (EAbs "x" "x")
+    run (EApp "map" "map")
     T.putStrLn "Ill-typed:"
     run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LBool True)))
     run (EApp "foldr" (ELit (LInteger 1)))
