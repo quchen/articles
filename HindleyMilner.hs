@@ -455,7 +455,7 @@ cannotUnify a b = throw ("Cannot unify " <> ppr a <> " and " <> ppr b)
 -- @(((a,b),b),b)@ and so on.
 occursCheckFailed :: Name -> MType -> Infer a
 occursCheckFailed (Name n) a =
-    throw ("Occurs check failed for " <> n <> " in " <> ppr a)
+    throw ("Occurs check failed: " <> n <> " already appears in " <> ppr a)
 
 
 
@@ -561,6 +561,19 @@ fresh = drawFromSupply >>= \case
             s:upply -> do lift (put upply)
                           pure (Right (Name s))
             _ -> pure (Left "Supply out of fresh names") )
+
+
+
+-- | Lift a 'fresh'ly generated 'MType' into a 'PType' by quantifying over no
+-- variables. This is only safe to use if no variable duplication can be
+-- ensured, as is the case when the argument is 'fresh'.
+--
+-- @
+-- a → b  ⇒  ∀∅ a → b
+-- @
+liftFresh :: MType -> PType
+liftFresh = Forall []
+
 
 
 -- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
@@ -705,9 +718,9 @@ inferApp env f x = do
 -- of the body.
 --
 -- @
--- τ = fresh   σ = gen(Γ,τ)   Γ, x:σ ⊢ e:τ'
--- ----------------------------------------  [Abs]
---              Γ ⊢ λx.e : τ→τ'
+-- τ = fresh   σ = liftFresh(τ)   Γ, x:σ ⊢ e:τ'
+-- --------------------------------------------  [Abs]
+--                Γ ⊢ λx.e : τ→τ'
 -- @
 --
 -- Here, @Γ, x:τ@ is @Γ@ extended by one additional mapping, namely @x:τ@.
@@ -718,11 +731,12 @@ inferApp env f x = do
 inferAbs :: Env -> Name -> Exp -> Infer (Subst, MType)
 inferAbs env x e = do
     tau <- fresh                           -- τ = fresh
-    let sigma = generalize env tau         -- σ = gen(Γ, τ)
+    let sigma = liftFresh tau              -- σ = liftFresh τ
         env' = extendEnv env (x, sigma)    -- Γ, x:σ …
     (s, tau') <- infer env' e              --        … ⊢ e:τ'
                                            -- ---------------
     pure (s, TFun (substMType s tau) tau') -- λx.e : τ→τ'
+
 
 
 
@@ -792,23 +806,33 @@ prelude = Env (M.fromList
 defaultSupply :: [Text]
 defaultSupply = map (T.pack . pure) ['a'..'z']
 
-showType :: Env
-         -> [Text]
-         -> Exp
-         -> Text
+
+
+-- | Convenience function to run type inference algorithm
+showType :: Env    -- ^ Starting environment, e.g. 'prelude'.
+         -> [Text] -- ^ Fresh variable name supply. Should be non-empty.
+         -> Exp    -- ^ Expression to typecheck
+         -> Text   -- ^ Text representation of the result. Contains an error
+                   --   message on failure.
 showType env supply expr =
     case (runInfer supply . fmap snd . infer env) expr of
-        Left err -> "Error: " <> err
+        Left err -> "Error inferring type of " <> ppr expr <>": " <> err
         Right ty -> ppr expr <> " :: " <> ppr ty
 
+
+
+-- | Run type inference on a cuple of values
 main :: IO ()
 main = do
-    let printInferred = T.putStrLn . showType prelude defaultSupply
-    printInferred (EApp "map" "map")
-    printInferred (EApp "map" (EApp "map" "map"))
-    printInferred (EApp "foldr" "(*)")
-    printInferred (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LInteger 2)))
-    printInferred (EApp "map" "length")
-
-
--- Data.Text.IO.putStrLn . (either (T.pack . show) ppr) . runInfer alphabet . fmap snd $ infer prelude (EApp "map" "map")
+    let run = T.putStrLn . showType prelude defaultSupply
+    T.putStrLn "Well-typed:"
+    run (EApp "map" "map")
+    run (EApp "map" (EApp "map" "map"))
+    run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LInteger 2)))
+    run (EApp (EApp "foldr" "(+)") (ELit (LInteger 0)))
+    run (EApp "map" "length")
+    run (EAbs "x" "x")
+    T.putStrLn "Ill-typed:"
+    run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LBool True)))
+    run (EApp "foldr" (ELit (LInteger 1)))
+    run (EAbs "x" (EApp "x" "x"))
