@@ -4,7 +4,11 @@
 {-# LANGUAGE OverloadedStrings          #-}
 
 
--- | This module is an extensively documented walkthrough for typechecking a
+
+-- | __WORK IN PROGRESS.__ Errors expected, please don't post it anywhere.
+--
+--
+-- This module is an extensively documented walkthrough for typechecking a
 -- basic functional language using the Hindley-Damas-Milner algorithm.
 --
 -- It can be used in three different forms:
@@ -356,15 +360,41 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 -- | The inference type holds a supply of unique names, and can fail with
 -- a descriptive error if something goes wrong.
-newtype Infer a = Infer (ExceptT Text (State [Text]) a)
+newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
     deriving (Functor, Applicative, Monad)
+
+
+data InferError =
+    -- | Two types that don't match were attempted to be unified.
+      CannotUnify MType MType
+
+    -- | A 'TVar' is bound to an 'MType' that already contains it.
+    --
+    -- The canonical example of this is @λx. x x@, where the first @x@
+    -- in the body has to have type @a → b@, and the second one @a@. Since
+    -- they're both the same @x@, this requires unification of @a@ with @a → b@,
+    -- which only works if @a = a → b = (a → b) → b = ...@, yielding an infinite
+    -- type.
+    | OccursCheckFailed Name MType
+
+    -- | The value of an unknown identifier was read.
+    | UnknownIdentifier Name
+
+    -- | The supply of 'fresh' variable names has run out.
+    | OutOfFreshNames
+
+instance Pretty InferError where
+    ppr (CannotUnify t1 t2) = "Cannot unify " <> ppr t1 <> " with " <> ppr t2
+    ppr (OccursCheckFailed name ty) = "Occurs check failed: " <> ppr name <> " already appears in " <> ppr ty
+    ppr (UnknownIdentifier name) = "Unknown identifier: " <> ppr name
+    ppr OutOfFreshNames = "Fresh type variable name supply empty"
 
 
 
 -- | Evaluate a value in an 'Infer'ence context.
 runInfer :: [Text] -- ^ Supply of variable names.
          -> Infer a -- ^ Inference data
-         -> Either Text a
+         -> Either InferError a
 runInfer supply (Infer inf) =
     runIdentity (evalStateT (runExceptT inf) infiniteSupply)
   where
@@ -375,8 +405,8 @@ runInfer supply (Infer inf) =
 
 
 
--- | Generic function to fail with an error message.
-throw :: Text -> Infer a
+-- | Throw an 'InferError' in an 'Infer'ence context.
+throw :: InferError -> Infer a
 throw err = Infer (ExceptT (StateT (\s -> Identity (Left err, s))))
 
 
@@ -405,7 +435,7 @@ unify = \case
     (TList a,     TList b)           -> unify (a,b)
     (TEither a b, TEither x y)       -> unifyBinary (a,b) (x,y)
     (TTuple a b,  TTuple x y)        -> unifyBinary (a,b) (x,y)
-    (a, b)                           -> cannotUnify a b
+    (a, b)                           -> throw (CannotUnify a b)
 
   where
 
@@ -435,27 +465,10 @@ unify = \case
 bindVariableTo :: Name -> MType -> Infer Subst
 bindVariableTo name (TVar v) | boundToSelf = pure empty
   where boundToSelf = name == v
-bindVariableTo name mType | bindingIsRecursive = occursCheckFailed name mType
+bindVariableTo name mType | bindingIsRecursive = throw (OccursCheckFailed name mType)
   where bindingIsRecursive = name `S.member` freeMType mType
 bindVariableTo name mType = pure (Subst (M.singleton name mType))
 
-
-
--- | Error if two types that don't match are unified.
-cannotUnify :: MType -> MType -> Infer a
-cannotUnify a b = throw ("Cannot unify " <> ppr a <> " and " <> ppr b)
-
-
-
--- | Error if the name of a 'TVar' is bound to an 'MType' that already contains
--- it.
---
--- For example, when trying to unify @a@ with @(a,b)@, we would have to decuce
--- that @a ~ (a,b)@, so @(a,b)@ would have to be @((a,b),b)@ would have to be
--- @(((a,b),b),b)@ and so on.
-occursCheckFailed :: Name -> MType -> Infer a
-occursCheckFailed (Name n) a =
-    throw ("Occurs check failed: " <> n <> " already appears in " <> ppr a)
 
 
 
@@ -579,12 +592,12 @@ fresh = drawFromSupply >>= \case
     Right name -> pure (TVar name)
     Left err -> throw err
   where
-    drawFromSupply :: Infer (Either Text Name)
+    drawFromSupply :: Infer (Either InferError Name)
     drawFromSupply = Infer (
         lift get >>= \case
             s:upply -> do lift (put upply)
                           pure (Right (Name s))
-            _ -> pure (Left "Supply out of fresh names") )
+            _ -> pure (Left OutOfFreshNames) )
 
 
 
@@ -653,7 +666,7 @@ inferLit lit = pure (empty, TConst litTy)
 lookupEnv :: Env -> Name -> Infer PType
 lookupEnv (Env env) name = case M.lookup name env of
     Just x -> pure x
-    Nothing -> throw ("Unknown identifier " <> ppr name)
+    Nothing -> throw (UnknownIdentifier name)
 
 
 
@@ -754,7 +767,6 @@ inferAbs env x e = do
 
 
 
-
 -- | A let binding allows extending the environment with new bindings in a
 -- principled manner. To do this, we first have to typecheck the expression
 -- to be introduced. The result of this is then generalized to a PType, since
@@ -792,7 +804,8 @@ inferLet env x e e' = do
 -- @
 generalize :: Env -> MType -> PType
 generalize env mType = Forall qs mType
-    where qs = freeMType mType `S.difference` freeEnv env
+  where
+    qs = freeMType mType `S.difference` freeEnv env
 
 
 
@@ -814,8 +827,16 @@ generalize env mType = Forall qs mType
 
 -- | Synonym for 'TFun' to make writing type signatures easier.
 --
+-- Instead of
+--
 -- @
--- Forall ["a"] ("a" ~> "a")
+-- Forall ["a","b"] (TFun "a" (TFun "b" "a"))
+-- @
+--
+-- we can write
+--
+-- @
+-- Forall ["a","b"] ("a" ~> "b" ~> "a")
 -- @
 (~>) :: MType -> MType -> MType
 (~>) = TFun
@@ -826,47 +847,111 @@ infixr 9 ~>
 -- Instead of
 --
 -- @
--- EAbs "x" (EAbs "y" (EApp "(+)" "x" "y"))
+-- EAbs "f" (EAbs "x" (EApp "f" "x"))
 -- @
 --
 -- we can write
 --
 -- @
--- lambda ["x", "y"] (EApp "(+)" "x" "y")
+-- lambda ["f", "x"] (EApp "f" "x")
+-- @
+--
+-- for
+--
+-- @
+-- λf x. f x
 -- @
 lambda :: [Name] -> Exp -> Exp
 lambda names expr = foldr EAbs expr names
 
 
 
+-- | Apply a function to multiple arguments.
+--
+-- Instead of
+--
+-- @
+-- EApp (EApp (EApp "f" "x") "y") "z")
+-- @
+--
+-- we can write
+--
+-- @
+-- apply "f" ["x", "y", "z"]
+-- @
+--
+-- for
+--
+-- @
+-- f x y z
+-- @
+apply :: Exp -> [Exp] -> Exp
+apply = foldl EApp
+
+
+
+-- | Construct an integer literal.
+int :: Integer -> Exp
+int = ELit . LInteger
+
+
+
+-- | Construct a boolean literal.
+bool :: Bool -> Exp
+bool = ELit . LBool
+
+
+
+
+
+-- #############################################################################
+-- ** The environment
+-- #############################################################################
+
+
+
 prelude :: Env
 prelude = Env (M.fromList
-    [ ("(*)",      Forall []              (tInteger ~> tInteger ~> tInteger))
-    , ("(+)",      Forall []              (tInteger ~> tInteger ~> tInteger))
-    , ("(-)",      Forall []              (tInteger ~> tInteger ~> tInteger))
-    , ("(.)",      Forall ["a", "b", "c"] (("b" ~> "c") ~> ("a" ~> "b") ~> "a" ~> "c"))
-    , ("(<)",      Forall []              (tInteger ~> tInteger ~> tBool))
-    , ("(<=)",     Forall []              (tInteger ~> tInteger ~> tBool))
-    , ("(>)",      Forall []              (tInteger ~> tInteger ~> tBool))
-    , ("(>=)",     Forall []              (tInteger ~> tInteger ~> tBool))
-    , ("Cont/>>=", Forall ["a"]           ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
-    , ("find",     Forall ["a","b"]       (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
-    , ("fix",      Forall ["a"]           (("a" ~> "a") ~> "a"))
-    , ("foldr",    Forall ["a","b"]       (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
-    , ("id",       Forall ["a"]           ("a" ~> "a"))
-    , ("length",   Forall ["a"]           (TList "a" ~> tInteger))
-    , ("map",      Forall ["a","b"]       (("a" ~> "b") ~> TList "a" ~> TList "b"))
-    , ("reverse",   Forall ["a"]          (TList "a" ~> TList "a"))
-    , ("const",    Forall ["a","b"]       ("a" ~> "b" ~> "a"))
+    [ ("(*)",        Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(+)",        Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(,)",        Forall ["a","b"]       ("a" ~> "b" ~> TTuple "a" "b"))
+    , ("(-)",        Forall []              (tInteger ~> tInteger ~> tInteger))
+    , ("(.)",        Forall ["a", "b", "c"] (("b" ~> "c") ~> ("a" ~> "b") ~> "a" ~> "c"))
+    , ("(<)",        Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(<=)",       Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(>)",        Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("(>=)",       Forall []              (tInteger ~> tInteger ~> tBool))
+    , ("const",      Forall ["a","b"]       ("a" ~> "b" ~> "a"))
+    , ("Cont/>>=",   Forall ["a"]           ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
+    , ("find",       Forall ["a","b"]       (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
+    , ("fix",        Forall ["a"]           (("a" ~> "a") ~> "a"))
+    , ("foldr",      Forall ["a","b"]       (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
+    , ("id",         Forall ["a"]           ("a" ~> "a"))
+    , ("ifThenElse", Forall ["a"]           (tBool ~> "a" ~> "a" ~> "a"))
+    , ("Left",       Forall ["a","b"]       ("a" ~> TEither "a" "b"))
+    , ("length",     Forall ["a"]           (TList "a" ~> tInteger))
+    , ("map",        Forall ["a","b"]       (("a" ~> "b") ~> TList "a" ~> TList "b"))
+    , ("reverse",    Forall ["a"]           (TList "a" ~> TList "a"))
+    , ("Right",      Forall ["a","b"]       ("b" ~> TEither "a" "b"))
     ])
   where
     tBool = TConst "Bool"
     tInteger = TConst "Integer"
     tMaybe = TEither (TConst "()")
 
--- | Supply to draw fresh type variables from, if needed.
+
+
+-- | Supply to draw fresh type variable names from.
 defaultSupply :: [Text]
 defaultSupply = map (T.pack . pure) ['a'..'z']
+
+
+
+
+
+-- #############################################################################
+-- ** Run it!
+-- #############################################################################
 
 
 
@@ -878,7 +963,7 @@ showType :: Env    -- ^ Starting environment, e.g. 'prelude'.
                    --   message on failure.
 showType env supply expr =
     case (runInfer supply . fmap snd . infer env) expr of
-        Left err -> "Error inferring type of " <> ppr expr <>": " <> err
+        Left err -> "Error inferring type of " <> ppr expr <>": " <> ppr err
         Right ty -> ppr expr <> " :: " <> ppr ty
 
 
@@ -886,20 +971,20 @@ showType env supply expr =
 -- | Run type inference on a cuple of values
 main :: IO ()
 main = do
-    let run = T.putStrLn . showType prelude defaultSupply
-        int = ELit . LInteger
+    let run = T.putStrLn . ("  " <>) . showType prelude defaultSupply
     T.putStrLn "Well-typed:"
     run (lambda ["x"] "x")
-    run (lambda ["f","g","x"] (EApp (EApp "f" "x") (EApp "g" "x")))
-    run (lambda ["f","g","x"] (EApp "f" (EApp "g" "x")))
-    run (EApp "find" (lambda ["x"] (EApp (EApp "(>)" "x") (int 0))))
-    run (lambda ["f"] (EApp (EApp "(.)" "reverse") (EApp "map" "f")))
-    run (EApp "map" (EApp "map" "map"))
-    run (EApp (EApp "(*)" (int 1)) (int 2))
-    run (EApp (EApp "foldr" "(+)") (int 0))
-    run (EApp "map" "length")
-    run (EApp "map" "map")
+    run (lambda ["f","g","x"] (apply "f" ["x", apply "g" ["x"]]))
+    run (lambda ["f","g","x"] (apply "f" [apply "g" ["x"]]))
+    run (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
+    run (lambda ["f"] (apply "(.)" ["reverse", apply "map" ["f"]]))
+    run (apply "map" [apply "map" ["map"]])
+    run (apply "(*)" [int 1, int 2])
+    run (apply "foldr" ["(+)", int 0])
+    run (apply "map" ["length"])
+    run (apply "map" ["map"])
+    run (lambda ["x"] (apply "ifThenElse" [apply "(<)" ["x", int 0], int 0, "x"]))
     T.putStrLn "Ill-typed:"
-    run (EApp (EApp "(*)" (int 1)) (ELit (LBool True)))
-    run (EApp "foldr" (int 1))
-    run (lambda ["x"] (EApp "x" "x"))
+    run (apply "(*)" [int 1, bool True])
+    run (apply "foldr" [int 1])
+    run (lambda ["x"] (apply "x" ["x"]))
