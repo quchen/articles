@@ -478,6 +478,15 @@ occursCheckFailed (Name n) a =
 
 
 
+
+
+
+-- -----------------------------------------------------------------------------
+-- *** The language: typed lambda calculus
+-- -----------------------------------------------------------------------------
+
+
+
 -- | The syntax tree of the language we'd like to typecheck. You can view it
 -- as a close relative to simply typed lambda calculus, having only the most
 -- necessary syntax elements.
@@ -518,6 +527,7 @@ data Lit = LBool Bool
 -- @
 instance Pretty Exp where
     ppr (ELit lit) = ppr lit
+
     ppr (EVar name) = ppr name
 
     ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
@@ -547,10 +557,17 @@ instance Pretty Lit where
         showT :: Show a => a -> Text
         showT = T.pack . show
 
-
 -- | 'String' → 'EVar'
 instance IsString Exp where
     fromString = EVar . fromString
+
+
+
+
+
+-- -----------------------------------------------------------------------------
+-- *** Some useful definitions
+-- -----------------------------------------------------------------------------
 
 
 
@@ -583,60 +600,6 @@ liftFresh = Forall []
 
 
 
--- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
---
--- __Example:__ instantiating @forall a. a -> b -> a@ results in the 'MType'
--- @a -> b -> a@, where @a@ is a fresh name (to avoid shadowing issues).
---
--- You can picture the 'PType' to be the prototype converted to an instantiated
--- 'MType', which can now be used in the unification process.
---
--- Another way of looking at it is by simply forgetting which variables were
--- quantified over, carefully avoiding name clashes when doing so.
-instantiate :: PType -> Infer MType
-instantiate (Forall qs t) = do
-    subst <- substituteAllWithFresh qs
-    pure (substMType subst t)
-
-  where
-    -- For each given name, add a substitution from that name to a fresh type
-    -- variable to the result.
-    substituteAllWithFresh :: Set Name -> Infer Subst
-    substituteAllWithFresh xs = do
-        let freshSubstActions = M.fromSet (const fresh) xs
-        freshSubsts <- sequenceA freshSubstActions
-        pure (Subst freshSubsts)
-
-
-
--- | Generalize an 'MType' to a 'PType' by universally quantifying over all
--- the type variables contained in it, except those already mentioned in the
--- environment.
---
--- __Example:__ Generalizing @forall a. a -> b -> a@ yields
--- @forall a b. a -> b -> a@.
---
--- @
--- gen(Γ,τ) = ∀{α}. σ
---     where {α} = free(τ) – free(Γ)
--- @
-generalize :: Env -> MType -> PType
-generalize env mType = Forall qs mType
-    where qs = freeMType mType `S.difference` freeEnv env
-
-
-
--- | Look up the 'PType' of a 'Name' in the 'Env'ironment.
---
--- To give a Haskell analogon, looking up @id@ when @Prelude@ is loaded, the
--- resulting 'PType' would be @id@'s type, namely @forall a. a -> a@.
-lookupEnv :: Env -> Name -> Infer PType
-lookupEnv (Env env) name@(Name n) = case M.lookup name env of
-    Just x -> pure x
-    Nothing -> throw ("Unknown identifier " <> n)
-
-
-
 -- | Add a new binding to the environment.
 --
 -- The Haskell equivalent would be defining a new value, for example in module
@@ -647,6 +610,14 @@ lookupEnv (Env env) name@(Name n) = case M.lookup name env of
 -- @
 extendEnv :: Env -> (Name, PType) -> Env
 extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
+
+
+
+
+
+-- -----------------------------------------------------------------------------
+-- *** Inferring the types of all language constructs
+-- -----------------------------------------------------------------------------
 
 
 
@@ -675,12 +646,49 @@ inferLit lit = pure (empty, TConst litTy)
 
 
 
+-- | Look up the 'PType' of a 'Name' in the 'Env'ironment.
+--
+-- To give a Haskell analogon, looking up @id@ when @Prelude@ is loaded,
+-- the resulting 'PType' would be @id@'s type, namely @forall a. a -> a@.
+lookupEnv :: Env -> Name -> Infer PType
+lookupEnv (Env env) name = case M.lookup name env of
+    Just x -> pure x
+    Nothing -> throw ("Unknown identifier " <> ppr name)
+
+
+
+-- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
+--
+-- __Example:__ instantiating @forall a. a -> b -> a@ results in the 'MType'
+-- @a -> b -> a@, where @a@ is a fresh name (to avoid shadowing issues).
+--
+-- You can picture the 'PType' to be the prototype converted to an instantiated
+-- 'MType', which can now be used in the unification process.
+--
+-- Another way of looking at it is by simply forgetting which variables were
+-- quantified over, carefully avoiding name clashes when doing so.
+instantiate :: PType -> Infer MType
+instantiate (Forall qs t) = do
+    subst <- substituteAllWithFresh qs
+    pure (substMType subst t)
+
+  where
+    -- For each given name, add a substitution from that name to a fresh type
+    -- variable to the result.
+    substituteAllWithFresh :: Set Name -> Infer Subst
+    substituteAllWithFresh xs = do
+        let freshSubstActions = M.fromSet (const fresh) xs
+        freshSubsts <- sequenceA freshSubstActions
+        pure (Subst freshSubsts)
+
+
+
 -- | Inferring the type of a variable is done via
 --
 -- @
--- x:σ ∈ Γ   τ = inst(σ)
--- ---------------------  [Var]
---      Γ ⊢ x:τ
+-- x:σ ∈ Γ   τ = instantiate(σ)
+-- ----------------------------  [Var]
+--            Γ ⊢ x:τ
 -- @
 --
 -- which simply means that if @x@ is available in polymorphic form, then we have
@@ -771,12 +779,35 @@ inferLet env x e e' = do
 
 
 
+-- | Generalize an 'MType' to a 'PType' by universally quantifying over
+-- all the type variables contained in it, except those already mentioned
+-- in the environment.
+--
+-- __Example:__ Generalizing @forall a. a -> b -> a@ yields
+-- @forall a b. a -> b -> a@.
+--
+-- @
+-- gen(Γ,τ) = ∀{α}. σ
+--     where {α} = free(τ) – free(Γ)
+-- @
+generalize :: Env -> MType -> PType
+generalize env mType = Forall qs mType
+    where qs = freeMType mType `S.difference` freeEnv env
+
+
+
 
 
 -- #############################################################################
 -- #############################################################################
 -- * Testing
 -- #############################################################################
+-- #############################################################################
+
+
+
+-- #############################################################################
+-- ** Convenience functions
 -- #############################################################################
 
 
@@ -789,6 +820,24 @@ inferLet env x e e' = do
 (~>) :: MType -> MType -> MType
 (~>) = TFun
 infixr 9 ~>
+
+-- | Build multiple lambda bindings.
+--
+-- Instead of
+--
+-- @
+-- EAbs "x" (EAbs "y" (EApp "(+)" "x" "y"))
+-- @
+--
+-- we can write
+--
+-- @
+-- lambda ["x", "y"] (EApp "(+)" "x" "y")
+-- @
+lambda :: [Name] -> Exp -> Exp
+lambda names expr = foldr EAbs expr names
+
+
 
 prelude :: Env
 prelude = Env (M.fromList
@@ -838,16 +887,19 @@ showType env supply expr =
 main :: IO ()
 main = do
     let run = T.putStrLn . showType prelude defaultSupply
+        int = ELit . LInteger
     T.putStrLn "Well-typed:"
-    run (EAbs "x" "x")
-    run (EApp "find" (EAbs "x" (EApp (EApp "(>)" "x") (ELit (LInteger 0)))))
-    run (EAbs "f" (EApp (EApp "(.)" "reverse") (EApp "map" "f")))
+    run (lambda ["x"] "x")
+    run (lambda ["f","g","x"] (EApp (EApp "f" "x") (EApp "g" "x")))
+    run (lambda ["f","g","x"] (EApp "f" (EApp "g" "x")))
+    run (EApp "find" (lambda ["x"] (EApp (EApp "(>)" "x") (int 0))))
+    run (lambda ["f"] (EApp (EApp "(.)" "reverse") (EApp "map" "f")))
     run (EApp "map" (EApp "map" "map"))
-    run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LInteger 2)))
-    run (EApp (EApp "foldr" "(+)") (ELit (LInteger 0)))
+    run (EApp (EApp "(*)" (int 1)) (int 2))
+    run (EApp (EApp "foldr" "(+)") (int 0))
     run (EApp "map" "length")
     run (EApp "map" "map")
     T.putStrLn "Ill-typed:"
-    run (EApp (EApp "(*)" (ELit (LInteger 1))) (ELit (LBool True)))
-    run (EApp "foldr" (ELit (LInteger 1)))
-    run (EAbs "x" (EApp "x" "x"))
+    run (EApp (EApp "(*)" (int 1)) (ELit (LBool True)))
+    run (EApp "foldr" (int 1))
+    run (lambda ["x"] (EApp "x" "x"))
