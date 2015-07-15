@@ -16,6 +16,7 @@ cabal-version:       >=1.10
 
 executable hindley-milner
   main-is:             HindleyMilner.hs
+  options-ghc:         -Wall
   other-extensions:    GeneralizedNewtypeDeriving
                      , LambdaCase
                      , OverloadedLists
