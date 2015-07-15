@@ -5,10 +5,7 @@
 
 
 
--- | __WORK IN PROGRESS.__ Errors expected, please don't post it anywhere.
---
---
--- This module is an extensively documented walkthrough for typechecking a
+-- | This module is an extensively documented walkthrough for typechecking a
 -- basic functional language using the Hindley-Damas-Milner algorithm.
 --
 -- It can be used in three different forms:
@@ -20,7 +17,7 @@
 --   It's not as good of a read as the source since many of the important
 --   inter-code comments are not visible.
 
-module HindleyMilner where
+module Main where
 
 import           Control.Monad.Identity
 import           Control.Monad.Trans
@@ -35,8 +32,6 @@ import           Data.String
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Text.IO               as T
-
-
 
 
 
