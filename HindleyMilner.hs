@@ -8,6 +8,13 @@
 -- | This module is an extensively documented walkthrough for typechecking a
 -- basic functional language using the Hindley-Damas-Milner algorithm.
 --
+-- In the end, we'll be able to infer the type of expressions like
+--
+-- @
+-- find (λx. (>) x 0)
+-- >>> :: [Integer] → Either () Integer
+-- @
+--
 -- It can be used in three different forms:
 --
 -- - The source is written in literate programming style, so you can almost
@@ -188,6 +195,16 @@ substMType s = \case
 -- topic of the type inference/unification algorithms.
 --
 -- In formal notation, 'PType's are often called σ (sigma) types.
+--
+-- The purpose of having monotypes and polytypes is that we'd like to only
+-- have universal quantification at the top level, restricting our language to
+-- rank-1 polymorphism, where type inferece is total (all types can be inferred)
+-- and simple (only a handful of typing rules). Weakening this constraint
+-- would be easy: if we allowed universal quantification within function types
+-- we would get rank-N polymorphism. Taking it even further to allow it
+-- anywhere, effectively replacing all occurrences of 'MType' with 'PType',
+-- yields impredicative types. Both these extensions make the type system
+-- *significantly* more complex though.
 data PType = Forall (Set Name) MType
 
 instance Pretty PType where
@@ -196,9 +213,9 @@ instance Pretty PType where
     -- >>> ∀a. a → a
     -- @
 
-    ppr (Forall qs mType) = "∀" <> universals <> ". " <> ppr mType
+    ppr (Forall qs mType) = "∀" <> pprUniversals qs <> ". " <> ppr mType
       where
-        universals = T.intercalate " " (map ppr (S.toList qs))
+        pprUniversals = T.intercalate " " . map ppr . S.toList
 
 
 
@@ -736,7 +753,7 @@ lookupEnv (Env env) name = case M.lookup name env of
 -- 'MType', which can now be used in the unification process.
 --
 -- Another way of looking at it is by simply forgetting which variables were
--- quantified over, carefully avoiding name clashes when doing so.
+-- quantified, carefully avoiding name clashes when doing so.
 instantiate :: PType -> Infer MType
 instantiate (Forall qs t) = do
     subst <- substituteAllWithFresh qs
