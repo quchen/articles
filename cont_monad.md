@@ -316,7 +316,7 @@ doing this.)
 Since we already have the `Applicative` we can set `return = pure`. Now for
 `cx >>= f`, you guessed it: extract the value `x` out of the provided
 `Cont` `cx`, apply the function `f` to it (yielding a new `Cont`), extract the
-value out of that `Cont`, and wrapp it up in `k` again.
+value out of that `Cont`, and wrap it up in `k` again.
 
 ```haskell
 cx >>= f = Cont $ \k ->
@@ -448,7 +448,7 @@ callCC' = Cont $ \k ->
 
 When evaluating this, the inner continuation encounters the `exit`, the final
 result of everything `Cont` is set to `"foobar"` by ignoring `k`, and thus
-everything after the second `($)` is never evaluated. How dull. But can we can
+everything after the second `($)` is never evaluated. How dull. But we can
 fix this! If we abort the inner `Cont` calculation not with `"foobar"` but with
 `k "foobar"`, then calling `exit` short-circuits out once more, but since it's
 using `k` now, it will continue as if its value was `"foobar"`!
