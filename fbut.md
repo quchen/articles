@@ -564,8 +564,7 @@ failing function.
 ### [`read`][Hackage/read]
 
 `read` crashes at runtime on a parse error. Use `readMaybe` instead, which
-has a `Maybe a` result. Better yet, use `Data.Text.readMaybe`, because you
-should not use `String`, [as mentioned in another section here][TOC/dont-use-string].
+has a `Maybe a` result.
 
 
 ### [`genericLength`][Hackage/genericLength]
