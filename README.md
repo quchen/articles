@@ -21,7 +21,7 @@ Haskell related
   popular optimization technique
 - [The `Cont` monad explained][cont]
 - [Some lazy IO pitfalls][crazy-io]
-- [THe `fix` function][fix], one possible fundamental building block of
+- [The `fix` function][fix], one possible fundamental building block of
   recursion
 - [**F**requently **B**rought **U**p **T**opics in Freenode's #haskell
   channel][fbut]
