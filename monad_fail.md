@@ -354,10 +354,11 @@ Current status
 - 2015-06-09 (late): Published. People seem to like the idea, with a couple of
   pain points remaining.
 - 2015-06-16: [Update 1 posted.][update1]
-
+- 2015-09-18: [Patch nearly finished. Some nontrivial tests still fail.][phab1]
 
 
 [amp]: https://github.com/quchen/articles/blob/master/applicative_monad.md
+[phab1]: https://phabricator.haskell.org/D1248
 [stackage-logs]: https://www.dropbox.com/s/knz0i979skam4zs/stackage-build.tar.xz?dl=0
 [trac-10071]: https://ghc.haskell.org/trac/ghc/ticket/10071
 [update1]: https://github.com/quchen/articles/blob/master/monad_fail_update1.md
