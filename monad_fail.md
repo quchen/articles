@@ -293,7 +293,7 @@ The roadmap is similar to the [AMP][amp], the main difference being that since
 `MonadFail` does not exist yet, we have to introduce new functionality and then
 switch to it.
 
-* **GHC 7.12 / base-4.9**
+* **GHC 8.0 / base-4.9**
 
     - Add module `Control.Monad.Fail` with new class `MonadFail(fail)` so
       people can start writing instances for it.
@@ -320,12 +320,11 @@ switch to it.
       is imported as a method of `Monad`), as it will be removed from the
       `Monad` class in the future. (See also [GHC #10071][trac-10071])
 
-3. GHC 7.14
+3. **GHC 8.2**
 
     - Switch `-XMonadFail` on by default.
-    - Remove the desugaring warnings.
-
-3. GHC 7.16
+    - Warnings are still issued if the desugaring extension has been explicitly disabled.
+3. **GHC 8.4**
 
     - Remove `-XMonadFail`, leaving its effects on at all times.
     - Remove `fail` from `Monad`.
