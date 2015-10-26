@@ -56,8 +56,8 @@ your code is probably wrong'" - [*merijn on #haskell*][merijnquote]
 
 `ByteString` is a library for representing raw data, suitable for storing it or
 sending it over the network. Raw data is seldomly what you actually want; it is
-an intermediate form for the actual data you're trying to pack into single bytes
-. The one crucial assumption about encoding and decoding data is that doing
+an intermediate form for the actual data you're trying to pack into single bytes.
+The one crucial assumption about encoding and decoding data is that doing
 them one after another gets you the original data back, i.e.
 
 ```haskell
@@ -80,7 +80,7 @@ in the documentation.
 You might say "I'm only using ASCII data anyway, and the issue above only
 exists for multi-byte Unicode". This is a very dangerous argument, because you
 never know in what context your code might be used by an unsuspecting third
-party (and you should consider yourself in 3 months one of those).
+party (and you should consider yourself in three months one of those).
 
 To give you an analogy, suppose you have a number library for manipulating
 `Int`, but it turns out that `(*)` is not commutative for numbers larger than
@@ -97,7 +97,7 @@ to `ByteString` and back. The same goes for `Text`, which can be serialized
 using `Text.Encoding`.
 
 `ByteString.Char8` has very few limited uses, for example if you're
-communicating over a HTTP connections the headers are all ASCII. Using
+communicating over a HTTP connection the headers are all ASCII. Using
 `Char8` saves you from converting your literal `String`s in the code to
 `ByteString` explicitly all the time, but note that HTTP requests can still
 contain Unicode in their bodies, so HTTP isn't a ticket to using `Char8` in
@@ -606,7 +606,7 @@ the compiler knows when you forget to handle a case (when compiled with `-W`).
 For example, instead of
 
 ```haskell
-map f xs | null xs = []
+map f xs | null xs   = []
          | otherwise = f (head xs) : tail xs
 ```
 
@@ -614,7 +614,7 @@ you should write
 
 ```haskell
 map f (x:xs) = f x : map f xs
-map _ [] = []
+map _ []     = []
 ```
 
 
@@ -687,7 +687,7 @@ And since `ByteString` is also often added to the string confusion:
 - `String` is the simplest string type you could have in Haskell. It is
   convenient to use, since there are lots of functions working for lists in the
   standard library. You can use list comprehensions, you can pattern match.
-- [`Text`][text-lib] is for when you want to do serious things with strings.
+- [`Text`][Hackage/text] is for when you want to do serious things with strings.
   Many people argue that it should be the default people use, instead of
   `String`.
 - [`ByteString`][Hackage/bytestring] does not have much to do with strings; it's a
@@ -842,11 +842,11 @@ In each step, both functions look at the head of the list (if present)
 exclusively, and combine it with something else using the stepping function.
 
 ```haskell
-foldl _ z [] = z
+foldl _ z []     = z
 foldl f z (x:xs) = foldl f (f z x) xs -- x is the first list element,
                                       -- no others are considered.
 
-foldr _ z [] = z
+foldr _ z []     = z
 foldr f z (x:xs) = x `f` foldr f z xs -- dito
 ```
 
@@ -930,7 +930,7 @@ leads to a couple of odd special cases.
 The practical advice here is that you should surround your `--` in whitespace
 to be sure it's a comment.
 
-(Note how Githubs parser displays this wrong in the markdown rendering
+(Note how GitHub's parser displays this wrong in the markdown rendering
 because of precisely these corner cases.)
 
 ### Block comments
@@ -951,9 +951,9 @@ Defining new data types frequently confuses beginners.
   distinguishable from other types by the typechecker.
 
     ```haskell
-    data Bool = False | True
+    data Bool    = False | True
     data Maybe a = Nothing | Just a
-    data List a = Nil | Cons a (List a)
+    data List  a = Nil | Cons a (List a)
     ```
 
   **If I could choose a better name, it would be `type` instead of `data`.**
