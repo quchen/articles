@@ -47,6 +47,8 @@ Haskell related
 - [Reader instance derived][reader] shows  how to write the usual `Reader`
   monad instance starting from something readable and comprehensible.
 - [The second `Functor` law is redundant][functor-law]
+- [Tag, don't `type`][tag-dont-type] is about avoiding `type` synonyms, and
+  using `Data.Tagged` instead.
 - [How to write unmaintainable Haskell][unmaintain], inspired by
   [How to write unmaintainable code][unmaintain-org]
 - [Useful techniques][useful] I've found over the years and haven't seen
@@ -105,19 +107,20 @@ Other topics
 [fail]:             monad_fail.md
 [fail_update1]:     monad_fail_update1.md
 [fbut]:             fbut.md
+[fix]:              fix.md
+[functor-law]:      second_functor_law.md
 [great]:            great_things_about_haskell.md
 [haskell-style]:    haskell_style.md
 [hp]:               install_haskell_platform_manually.md
+[instances]:        instances.md
 [law-rules]:        law-rules.md
 [lens-infix]:       lens-infix-operators.md
 [local-ghc]:        zero_to_local_ghc.md
 [loeb]:             loeb-moeb.md
 [modular-keyboard]: modular_keyboard.md
 [reader]:           reader_instance_derived.md
+[seqm-proposal]:    seqm_proposal.md
+[stuff-i-want]:     stuff_i_would_like_in_haskell.md
+[tag-dont-type]:    tag-dont-type.md
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
-[seqm-proposal]:    seqm_proposal.md
-[fix]:              fix.md
-[instances]:        instances.md
-[functor-law]:      second_functor_law.md
-[stuff-i-want]:     stuff_i_would_like_in_haskell.md
