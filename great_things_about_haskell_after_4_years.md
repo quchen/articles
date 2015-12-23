@@ -39,6 +39,28 @@ If we wrote **types**, we do the change, and follow compiler errors. This is wha
 
 
 
+Sum types
+---------
+
+We occasionally read articles about how the number 0 was discovered. We are astonished how cultures who could not properly deal with the concept of nothingness could conquer half of the then-known universe.
+
+All popular programming languages have some form of tuples (some call them structs, some use objects with multiple fields to do it, some use lists), yet have a concept of alternatives beyond what booleans provide us with. We can branch on `true` and `false` with `if`, but that's usually it. Everything beyond that is unsupported, or abysmally supported.
+
+In a very deep sense, alternatives and tuples are the basis of how to build types from new types, just how addition and multiplication are the basis of how we construct new numbers based on old ones. Given a tuple, we can always extract a value, but in order to form a tuple, we have to know all the entries, and many compilers will yell at us for forgetting an argument to a function. Alternatives are just the other way round: We can always put a value into one of the alternatives, but in order to get one out again, we have to know all the possible alternatives, and deal with them accordingly. But few compilers will yell at us for missing a possible return branch.
+
+This leads to clumsy hacks like
+- comparison functions returning "a positive, negative or zero" integer, when what we really want is a representation of "either smaller, or greater, or equal"
+- representing the condition of "no index found" by `-1` instead of a special `NotFound` value
+- using preprocessors and complicated tools to ensure that a value is not null, not knowing that this is trivial. I can't stress this enough, `null` is a *solved* problem.
+
+Imagine if all you had were alternatives, and you wanted to build a tuple. An object with many fields, Return multiple values. How would you implement it, how awkward do you think the solution would be? What we're doing right now is exactly that.
+
+What's "nothingness" in programming? Does your language have a symbol for it?
+
+
+
+
+
 Avoidance of implicit state
 ---------------------------
 
