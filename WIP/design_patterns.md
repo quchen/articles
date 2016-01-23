@@ -248,6 +248,15 @@ TODO
 
 
 
+### Newtype injection
+
+TODO
+
+Refactor e.g. stringly typed things to get more type safety: wrap them in a newtype, follow the type errors to implement the change. Impossible without a strong type system.
+
+
+
+
 
 ### Local mutability: the cobuilder pattern
 
