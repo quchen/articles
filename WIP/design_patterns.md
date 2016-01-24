@@ -247,13 +247,39 @@ TODO
 
 
 
-
-### Newtype injection
+### Tagging
 
 TODO
 
-Refactor e.g. stringly typed things to get more type safety: wrap them in a newtype, follow the type errors to implement the change. Impossible without a strong type system.
 
+
+### Promoting type synonyms
+
+**Type**: Refactoring
+
+When you write a small prototype that just has to get things done™, then introducing type-safe wrappers for everything may seem like too much work, and it also adds noise to your code. So instead of
+
+```haskell
+newtype Currency = Currency { getCurrency :: Integer  }
+newtype Euro     = Euro     { getEuro     :: Currency }
+newtype Dollar   = Dollar   { getDollar   :: Currency }
+newtype Yuan     = Yuan     { getYuan     :: Currency }
+```
+
+you might write
+
+```haskell
+type Currency = Integer
+type Euro     = Currency
+type Dollar   = Currency
+type Yuan     = Currency
+```
+
+This saves you from wrapping/unwrapping newtypes all the time while still being able to name these things in type signatures, but you lose the type safety. The larger your program becomes, the more problems you'll run into. For example, there are many operations defined on an `Integer` that do not make sense for currency at all (taking elements off a list "one element per Euro" is at least very dubious).
+
+Another example of this is when you find a program that is very stringly typed, and you don't know which kinds of strings are allowed as parameters in certain places. Without a good type system, you're doomed to understanding every part of the code that touches strings, if you want to wrap these values into type-safe wrappers.
+
+Luckily, Haskell has a good type system. You can simply convert any `type` synonym of `X` into a `newtype` around `X`, and you'll get type errors for every usage site. What follows is the usual galore of fixing these type errors, but at the end you'll - with absolute certainty - have eliminated all occurrences of the type synonym, and have it replaced by a safe `newtype` wrapper.
 
 
 
