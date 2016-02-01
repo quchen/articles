@@ -498,8 +498,9 @@ valid reduction strategy:
 
 As you can see, the length of the expression grows as we walk down the list,
 despite the fact that one would expect the `seq` to take care of that sort of
-issue. In fact, `foldl'` not blowing up the stack is an optimization done by
-our dear friend, the sufficiently smart compiler, which GHC is an example of.
+issue. In fact, `foldl'` not blowing up the heap (where `let` allocates) is an
+optimization done by our dear friend, the sufficiently smart compiler, which
+GHC is an example of.
 
 
 
