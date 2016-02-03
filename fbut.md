@@ -417,7 +417,7 @@ advice before: constrain functions, not the data declarations.
 
 The [`seq` function is defined by the following mathematical equations in the Haskell Report][Report/seq]:
 
-```
+```haskell
 seq ⊥ x = ⊥
 seq y x = x   (if y ≠ ⊥)
 ```
