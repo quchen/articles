@@ -268,7 +268,7 @@ empty "left" side.
       the right type for it - it allows an empty list. A better representation
       for this would be a `Stream` type, which is identical to lists except
       that it has no "empty" element, i.e. all values are of infinite length.
-      Implement that tape a `repeat` function for it analogous to
+      Implement that type and a `repeat` function for it analogous to
       `Data.List.repeat`.
 
    2. (hard) Modify the `Tape` type so it takes the type of the container to
