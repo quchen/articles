@@ -33,6 +33,7 @@ Haskell related
   Created in a time where it seemed to be en vogue to create tables for the `==`
   operator in various languages. Spoiler, it's terribly boring, because it
   should be.
+- [How to fix, or avoid fixing, certain warnings][fixing-warnings]
 - [My Haskell code style][haskell-style] and the rationale behind it
 - [Installing the Haskell platform manually.][hp] This is mostly a guide for
   myself to walk me through setting up GHC properly in case I needed to, hoping
@@ -108,6 +109,7 @@ Other topics
 [fail_update1]:     monad_fail_update1.md
 [fbut]:             fbut.md
 [fix]:              fix.md
+[fixing-warnings]:  fixing-warnings.md
 [functor-law]:      second_functor_law.md
 [great]:            great_things_about_haskell.md
 [haskell-style]:    haskell_style.md
