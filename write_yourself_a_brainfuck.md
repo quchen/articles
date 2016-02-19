@@ -124,15 +124,17 @@ we can just use `map` to convert between String and `BrainfuckSource`:
 ```haskell
 parseBrainfuck :: String -> BrainfuckSource
 parseBrainfuck = map charToBF
-      where charToBF '>' = GoRight
-            charToBF '<' = GoLeft
-            charToBF '+' = Increment
-            charToBF '-' = Decrement
-            charToBF '.' = Print
-            charToBF ',' = Read
-            charToBF '[' = LoopL
-            charToBF ']' = LoopR
-            charToBF  c  = Comment c
+  where
+    charToBF x = case x of
+        '>' -> GoRight
+        '<' -> GoLeft
+        '+' -> Increment
+        '-' -> Decrement
+        '.' -> Print
+        ',' -> Read
+        '[' -> LoopL
+        ']' -> LoopR
+         c  -> Comment c
 ```
 
 That's pretty much it for this part. Note how anything that does not match a
@@ -297,8 +299,8 @@ representing our data! What to do? Well, write the list onto a `Tape`:
 ```haskell
 runBrainfuck :: BrainfuckSource -> IO ()
 runBrainfuck = run emptyTape . bfSource2Tape
-      where bfSource2Tape (b:bs) = Tape [] b bs
-            -- (`run` is defined below)
+    where bfSource2Tape (b:bs) = Tape [] b bs
+          -- (`run` is defined below)
 ```
 
 We've already added the `run` function, which evaluates one instruction, and
@@ -346,10 +348,10 @@ and subtraction:
 
 ```haskell
 run (Tape l p r) source@(Tape _ Increment  _) =
-      advance (Tape l (p+1) r) source
+    advance (Tape l (p+1) r) source
 
 run (Tape l p r) source@(Tape _ Decrement  _) =
-      advance (Tape l (p-1) r) source
+    advance (Tape l (p-1) r) source
 ```
 
 Those were the two dead simple ones, now for the two IO operations. `.` should
@@ -362,17 +364,18 @@ just ignore the associated lines and you'll be fine).
 
 ```haskell
 run dataTape@(Tape _ p _) source@(Tape _ Print  _) = do
-      putChar (chr p)
-      hFlush stdout
-      advance dataTape source
+    putChar (chr p)
+    hFlush stdout
+    advance dataTape source
 ```
 
 And similarly we'll implement `,`, using `chr` which is inverse to `ord` and
 gives us an Int associated with a `Char`:
+
 ```haskell
 run dataTape@(Tape l _ r) source@(Tape _ Read  _) = do
-      p <- getChar
-      advance (Tape l (ord p) r) source
+    p <- getChar
+    advance (Tape l (ord p) r) source
 ```
 
 Now for the last part: the looping constructs. Those are slightly trickier
@@ -382,15 +385,15 @@ least write down how to react to `[` or `]` already:
 
 ```haskell
 run dataTape@(Tape _ p _) source@(Tape _ LoopL  _)
-      -- If the pivot is zero, jump to the
-      -- corresponding LoopR instruction
-      | p == 0 = seekLoopR 0 dataTape source
-      -- Otherwise just ignore the `[` and continue
-      | otherwise = advance dataTape source
+    -- If the pivot is zero, jump to the
+    -- corresponding LoopR instruction
+    | p == 0 = seekLoopR 0 dataTape source
+    -- Otherwise just ignore the `[` and continue
+    | otherwise = advance dataTape source
 
 run dataTape@(Tape _ p _) source@(Tape _ LoopR  _)
-      | p /= 0 = seekLoopL 0 dataTape source
-      | otherwise = advance dataTape source
+    | p /= 0 = seekLoopL 0 dataTape source
+    | otherwise = advance dataTape source
 ```
 
 What's left now is how to encode the `seekLoopX` functions. Conceptually, they
@@ -412,11 +415,11 @@ seekLoopR :: Int                   -- Parenthesis balance
           -> IO ()
 seekLoopR 1 dataTape source@(Tape _ LoopR _) = advance dataTape source
 seekLoopR b dataTape source@(Tape _ LoopR _) =
-      seekLoopR (b-1) dataTape (moveRight source)
+    seekLoopR (b-1) dataTape (moveRight source)
 seekLoopR b dataTape source@(Tape _ LoopL _) =
-      seekLoopR (b+1) dataTape (moveRight source)
+    seekLoopR (b+1) dataTape (moveRight source)
 seekLoopR b dataTape source =
-      seekLoopR b dataTape (moveRight source)
+    seekLoopR b dataTape (moveRight source)
 
 seekLoopL :: Int                   -- Parenthesis balance
           -> Tape Int              -- Data tape
@@ -424,11 +427,11 @@ seekLoopL :: Int                   -- Parenthesis balance
           -> IO ()
 seekLoopL 1 dataTape source@(Tape _ LoopL _) = advance dataTape source
 seekLoopL b dataTape source@(Tape _ LoopL _) =
-      seekLoopL (b-1) dataTape (moveLeft source)
+    seekLoopL (b-1) dataTape (moveLeft source)
 seekLoopL b dataTape source@(Tape _ LoopR _) =
-      seekLoopL (b+1) dataTape (moveLeft source)
+    seekLoopL (b+1) dataTape (moveLeft source)
 seekLoopL b dataTape source =
-      seekLoopL b dataTape (moveLeft source)
+    seekLoopL b dataTape (moveLeft source)
 ```
 
 And finally we must not forget evaluating comments of course, but that one's
