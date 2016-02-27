@@ -57,7 +57,8 @@ Similarly, you can generate the free theorem for `fmap`, which reads
 In other words, this says that whenever functions compose, fmapping all of them
 still composes.
 
-Now choose `p = id` and `q = f . g` in (2),
+Now choose `p = id` and `q = f . g`. (1) clearly holds in this case, so we can
+derive
 
 ```haskell
   fmap f . fmap g
