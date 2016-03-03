@@ -306,8 +306,6 @@ Ugly warts
 
 Alright, here it comes, things that range from debatable to straight up awful, and are mostly attributed to historical accidents:
 
-- Mathematically, all monads are functors, but Haskell does not enforce this hierarchy. You can easily derive a functor from any monad, but if you write a library you always have to take them into account separately. Think of it as if C++'s `iostream` was not a child of `ostream`, and all libraries would have to take both cases into account separately to be the most general.
-
 - Exceptions are defined in `Control.Monad.Error`, and errors in `Control.Exception`.
 
 - There is no (standardized) unsigned arbitrary-sized integer type.
