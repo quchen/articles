@@ -1,22 +1,3 @@
-**Warning.** I've temporarily taken down this article in the past due to a
-rumor I've heard about its subject, so I wasn't sure anymore whether the main
-claim is correct.
-
-That claim is that in order to derive the free theorem of `fmap`, one has to
-have a functor in the first place, so both the first and second law are already
-given. Under those circumstances, deriving the second from the first law would
-be proving one of the premises that lead to it.
-
-I have not been able to confirm my doubts. However, [there is another article
-by the much more knowledgeable Edward Kmett][kmett-free-fmap] which makes the
-same claim as you can find below, hinting that I might be correct, albeit
-without knowing *exactly* why.
-
-Make of this what you want. Here's the former article:
-
-[kmett-free-fmap]: https://www.fpcomplete.com/user/edwardk/snippets/fmap
-
-
 The second `Functor` law is redundant
 =====================================
 
@@ -110,13 +91,20 @@ fmap (const () . ⊥) x
       -- This is ⊥ if and only if x is ⊥.
 ```
 
+
+## Further reading
+
 If you want to know more about free theorems or just play around with them:
 
+- There is also an [article by Edward Kmett on free theorems][kmett-free-fmap]
+  that you might like.
 - [Online free theorem generator][ftgen] (make sure to "hide type
   instantiations"; the free theorem is displayed in the very last box in a
   somewhat readable format)
 - [Theorems for free!][tff], the original publication on free theorems
 
-[ftgen]: http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
-[tff]: http://homepages.inf.ed.ac.uk/wadler/papers/free/free.ps
+
 [fastandloose]: http://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.html
+[ftgen]: http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
+[kmett-free-fmap]: https://www.fpcomplete.com/user/edwardk/snippets/fmap
+[tff]: http://homepages.inf.ed.ac.uk/wadler/papers/free/free.ps
