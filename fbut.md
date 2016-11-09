@@ -268,7 +268,7 @@ widely used in other languages a lot, but *very* unpopular in Haskell:
   debug them.
 - Even if correct, the lack of readability makes them unmaintainable.
 - Regex can split and transform text, but you'll always get out text again.
-  This makes Regex more like a lexer, not a parser. You'l still have to convert
+  This makes Regex more like a lexer, not a parser. You'll still have to convert
   your Regex chunks into actual data afterwards.
 
 Want an example? Here's a regex to check US phone numbers in Python
