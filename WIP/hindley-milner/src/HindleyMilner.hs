@@ -17,12 +17,13 @@
 --
 -- It can be used in three different forms:
 --
--- - The source is written in literate programming style, so you can almost
---   read it from top to bottom, minus some few references to later topics.
--- - Runnable in GHCi.
--- - The Haddock output yields a nice overview over the definitions given.
---   It's not as good of a read as the source since many of the important
---   inter-code comments are not visible.
+--  * The source is written in literate programming style, so you can almost
+--    read it from top to bottom, minus some few references to later topics.
+--  * The code is runnable in GHCi, all definitions are exposed.
+--  * A small main module that gives many examples of what you might try out in
+--    GHCi is also included.
+--  * The Haddock output yields a nice overview over the definitions given, with
+--    a nice rendering of a truckload of Haddock comments.
 
 module HindleyMilner where
 
@@ -38,7 +39,6 @@ import qualified Data.Set                   as S
 import           Data.String
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
-
 
 
 
@@ -63,8 +63,6 @@ class Pretty a where
 
 
 
-
-
 -- #############################################################################
 -- ** Names
 -- #############################################################################
@@ -81,8 +79,6 @@ instance IsString Name where
 
 instance Pretty Name where
     ppr (Name n) = n
-
-
 
 
 
@@ -148,7 +144,6 @@ freeMType = \case
 
 
 
-
 -- | Apply a substitution to all known variables contained in an 'MType'.
 -- Variables not mentioned are left unchanged.
 --
@@ -168,42 +163,38 @@ substMType s = \case
 
 
 
-
-
 -- #############################################################################
 -- ** Polytypes
 -- #############################################################################
 
-
 -- | A polytype is a monotype universally quantified over a number of type
 -- variables. In Haskell, all definitions have polytypes, but since the @forall@
 -- is implicit they look a bit like monotypes, maybe confusingly so. For
--- example, the type of "1 :: Int" is actually "forall <nothing>. Int", and
--- the type of "id" is "forall a. a -> a", although GHC displays it as
--- "a -> a".
+-- example, the type of "1 :: Int" is actually "forall <nothing>. Int", and the
+-- type of "id" is "forall a. a -> a", although GHC displays it as "a -> a".
 --
 -- A polytype claims to work "for all imaginable type parameters", very similar
 -- to how a lambda claims to work "for all imaginable value parameters". We can
 -- insert a value into a lambda's parameter to evaluate it to a new value, and
--- similarly we'll later insert types into a polytype's quantified variables
--- to gain new types.
+-- similarly we'll later insert types into a polytype's quantified variables to
+-- gain new types.
 --
 -- __Example:__ in a definition @id :: forall a. a -> a@, the @a@ after the
--- ∀ ("forall") is the collection of type variables, and @a -> a@ is the
--- 'MType' quantified over. When we have such an @id@, we also have its
--- specialized version @Int -> Int@ available. This process will be the
--- topic of the type inference/unification algorithms.
+-- ∀ ("forall") is the collection of type variables, and @a -> a@ is the 'MType'
+-- quantified over. When we have such an @id@, we also have its specialized
+-- version @Int -> Int@ available. This process will be the topic of the type
+-- inference/unification algorithms.
 --
 -- In formal notation, 'PType's are often called σ (sigma) types.
 --
--- The purpose of having monotypes and polytypes is that we'd like to only
--- have universal quantification at the top level, restricting our language to
--- rank-1 polymorphism, where type inferece is total (all types can be inferred)
--- and simple (only a handful of typing rules). Weakening this constraint
--- would be easy: if we allowed universal quantification within function types
--- we would get rank-N polymorphism. Taking it even further to allow it
--- anywhere, effectively replacing all occurrences of 'MType' with 'PType',
--- yields impredicative types. Both these extensions make the type system
+-- The purpose of having monotypes and polytypes is that we'd like to only have
+-- universal quantification at the top level, restricting our language to rank-1
+-- polymorphism, where type inferece is total (all types can be inferred) and
+-- simple (only a handful of typing rules). Weakening this constraint would be
+-- easy: if we allowed universal quantification within function types we would
+-- get rank-N polymorphism. Taking it even further to allow it anywhere,
+-- effectively replacing all occurrences of 'MType' with 'PType', yields
+-- impredicative types. Both these extensions make the type system
 -- *significantly* more complex though.
 data PType = Forall (Set Name) MType
 
@@ -222,8 +213,8 @@ instance Pretty PType where
 -- | The free variables of a 'PType' are the free variables of the contained
 -- 'MType', except those universally quantified.
 --
--- __Example:__ @foo :: forall a. a -> b -> a@ would be a 'PType' in which
--- @b@ is a free type variable, while @a@ is bound (via the @forall@).
+-- __Example:__ @foo :: forall a. a -> b -> a@ would be a 'PType' in which @b@
+-- is a free type variable, while @a@ is bound (via the @forall@).
 freePType :: PType -> Set Name
 freePType (Forall qs mType) = freeMType mType `S.difference` qs
 
@@ -241,8 +232,6 @@ substPType (Subst subst) (Forall qs mType) =
 
 
 
-
-
 -- #############################################################################
 -- ** The environment
 -- #############################################################################
@@ -255,8 +244,8 @@ substPType (Subst subst) (Forall qs mType) =
 -- Conceptually, the environment also contains all the things you can form by
 -- combining its elements, but this behaviour is modeled by the inference rules
 -- and not by the environment itself. This is a good thing, since the
--- environment makes infinitely many things available to us: when we have
--- @z@, then we also have @\y -> z@ and @\x y -> z@ and so on available to us.
+-- environment makes infinitely many things available to us: when we have @z@,
+-- then we also have @\y -> z@ and @\x y -> z@ and so on available to us.
 --
 -- In Haskell terms, the environment consists of all the things you currently
 -- have available. So if you import the Prelude, your environment consists of
@@ -293,8 +282,6 @@ substEnv s (Env env) = Env (M.map (substPType s) env)
 
 
 
-
-
 -- #############################################################################
 -- ** Substitutions
 -- #############################################################################
@@ -302,14 +289,13 @@ substEnv s (Env env) = Env (M.map (substPType s) env)
 
 
 -- | A substitution is a mapping from type variables to 'MType's. Applying a
--- substitution means applying those replacements.
+-- substitution means applying those replacements. For example, the substitution
+-- @a -> Int@ applied to @a -> a@ yields the result @Int -> Int@.
 --
--- If you want to unify @Int -> Int@ with @a -> a@, after inferring that
--- @a@ should be @Int@, that substituion has to be performed on the latter
--- value to get rid of all the @a@s.
---
--- A maybe more intuitive way that will come in handy for 'compose' is to view
--- a 'Subst'itution as a chain of
+-- A key concept behind Hindley-Milner is that once we dive deeper into an
+-- expression, we learn more about our type variables. We might learn that  @a@
+-- has to be specializedto @b -> b@, and then later on that @b@ is actually
+-- @Int@. Substitutions are an organized way of carrying this information along.
 newtype Subst = Subst (Map Name MType)
 
 
@@ -327,8 +313,7 @@ empty = Subst M.empty
 
 
 -- | Combine two substitutions. Applying the resulting substitution means
--- applying the right hand side substitution first, and then the left hand
--- side.
+-- applying the right hand side substitution first, and then the left hand side.
 --
 -- In the implementation of 'compose', we don't apply the substitution to
 -- anything of course, as we do not yet have anything to apply it to available.
@@ -356,8 +341,6 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 
 
-
-
 -- #############################################################################
 -- #############################################################################
 -- * Typechecking
@@ -373,19 +356,16 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 
 
-
-
 -- #############################################################################
 -- * Inference context
 -- #############################################################################
 
 
 
--- | The inference type holds a supply of unique names, and can fail with
--- a descriptive error if something goes wrong.
+-- | The inference type holds a supply of unique names, and can fail with a
+-- descriptive error if something goes wrong.
 newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
     deriving (Functor, Applicative, Monad)
-
 
 data InferError =
     -- | Two types that don't match were attempted to be unified.
@@ -434,21 +414,19 @@ throw err = Infer (ExceptT (StateT (\s -> Identity (Left err, s))))
 
 
 
-
-
 -- #############################################################################
 -- ** Unification
 -- #############################################################################
 
 -- $ Unification describes the process of making two different types compatible
--- by specializing them where needed. A desirable property to have here is
--- being able to find the most general unifier. Luckily, we'll be able to do
--- that in our type system.
+-- by specializing them where needed. A desirable property to have here is being
+-- able to find the most general unifier. Luckily, we'll be able to do that in
+-- our type system.
 
 
 
--- | The unification of two 'MType's is the most general substituion that can
--- be applied to both of them in order to yield the same result.
+-- | The unification of two 'MType's is the most general substituion that can be
+-- applied to both of them in order to yield the same result.
 --
 -- __Example:__ trying to unify @a -> b@ with @c -> (Int -> Bool)@ will result
 -- in a substitution of @a@ for @c@, and @b@ for @Int -> Bool@.
@@ -477,9 +455,9 @@ unify = \case
 
 
 
--- | Build a 'Subst'itution that binds a 'Name' of a 'TVar' to an 'MType'.
--- The resulting substitution should be idempotent, i.e. applying it more than
--- once to something should not be any different from applying it only once.
+-- | Build a 'Subst'itution that binds a 'Name' of a 'TVar' to an 'MType'. The
+-- resulting substitution should be idempotent, i.e. applying it more than once
+-- to something should not be any different from applying it only once.
 --
 -- - In the simplest case, this just means building a substitution that just
 --   does that.
@@ -500,9 +478,6 @@ bindVariableTo name mType | name `occursIn` mType = throw (OccursCheckFailed nam
     n `occursIn` ty = n `S.member` freeMType ty
 
 bindVariableTo name mType = pure (Subst (M.singleton name mType))
-
-
-
 
 
 
@@ -538,17 +513,14 @@ bindVariableTo name mType = pure (Subst (M.singleton name mType))
 
 
 
-
-
-
 -- -----------------------------------------------------------------------------
 -- *** The language: typed lambda calculus
 -- -----------------------------------------------------------------------------
 
 
 
--- | The syntax tree of the language we'd like to typecheck. You can view it
--- as a close relative to simply typed lambda calculus, having only the most
+-- | The syntax tree of the language we'd like to typecheck. You can view it as
+-- a close relative to simply typed lambda calculus, having only the most
 -- necessary syntax elements.
 --
 -- __Example:__ the term @let y = λx. f x in z@ would be represented by
@@ -624,8 +596,6 @@ instance IsString Exp where
 
 
 
-
-
 -- -----------------------------------------------------------------------------
 -- *** Some useful definitions
 -- -----------------------------------------------------------------------------
@@ -669,16 +639,14 @@ liftFresh = Forall []
 -- | Add a new binding to the environment.
 --
 -- The Haskell equivalent would be defining a new value, for example in module
--- scope or in a @let@ block. This corresponds to the "comma" operation used
--- in formal notation,
+-- scope or in a @let@ block. This corresponds to the "comma" operation used in
+-- formal notation,
 --
 -- @
 -- Γ, x:σ  ≡  extendEnv Γ (x,σ)
 -- @
 extendEnv :: Env -> (Name, PType) -> Env
 extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
-
-
 
 
 
@@ -689,8 +657,8 @@ extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
 
 
 -- | Infer the type of an 'Exp'ression in an 'Env'ironment, resulting in the
--- 'Exp's 'MType'along with a substitution that has to be done in order to
--- reach this goal.
+-- 'Exp's 'MType'along with a substitution that has to be done in order to reach
+-- this goal.
 --
 -- This is widely known as /Algorithm W/.
 infer :: Env -> Exp -> Infer (Subst, MType)
@@ -722,8 +690,8 @@ inferLit lit = pure (empty, TConst litTy)
 -- @
 --
 -- which simply means that if @x@ is available in polymorphic form, then we have
--- it available in all possible instantiations of that σ type. This allows us
--- to take a σ type, and specialize it to our specific needs.
+-- it available in all possible instantiations of that σ type. This allows us to
+-- take a σ type, and specialize it to our specific needs.
 inferVar :: Env -> Name -> Infer (Subst, MType)
 inferVar env name = do
     sigma <- lookupEnv env name -- x:σ ∈ Γ
@@ -735,8 +703,8 @@ inferVar env name = do
 
 -- | Look up the 'PType' of a 'Name' in the 'Env'ironment.
 --
--- To give a Haskell analogon, looking up @id@ when @Prelude@ is loaded,
--- the resulting 'PType' would be @id@'s type, namely @forall a. a -> a@.
+-- To give a Haskell analogon, looking up @id@ when @Prelude@ is loaded, the
+-- resulting 'PType' would be @id@'s type, namely @forall a. a -> a@.
 lookupEnv :: Env -> Name -> Infer PType
 lookupEnv (Env env) name = case M.lookup name env of
     Just x  -> pure x
@@ -781,9 +749,9 @@ instantiate (Forall qs t) = do
 -- @
 --
 -- This rule is however a bit backwards to our normal way of thinking about
--- typing function application: instead of applying a function to a value
--- and investigating the result, we hypothesize the function type @xτ → fxτ@
--- of mappting the argument @xτ@ to the result type @fxτ@, and make sure this
+-- typing function application: instead of applying a function to a value and
+-- investigating the result, we hypothesize the function type @xτ → fxτ@ of
+-- mappting the argument @xτ@ to the result type @fxτ@, and make sure this
 -- mapping unifies with the function @f:fτ@ given.
 inferApp :: Env -> Exp -> Exp -> Infer (Subst, MType)
 inferApp env f x = do
@@ -797,8 +765,8 @@ inferApp env f x = do
 
 
 -- | Lambda abstraction is based on the fact that when we introduce a new
--- variable, the resulting lambda maps from that variable's type to the type
--- of the body.
+-- variable, the resulting lambda maps from that variable's type to the type of
+-- the body.
 --
 -- @
 -- τ = fresh   σ = liftFresh(τ)   Γ, x:σ ⊢ e:τ'
@@ -809,8 +777,8 @@ inferApp env f x = do
 -- Here, @Γ, x:τ@ is @Γ@ extended by one additional mapping, namely @x:τ@.
 --
 -- Abstraction is typed by extending the environment by a new 'MType', and if
--- under this assumption we can construct a function mapping to a value of
--- that type, we can say that the lambda takes a value and maps to it.
+-- under this assumption we can construct a function mapping to a value of that
+-- type, we can say that the lambda takes a value and maps to it.
 inferAbs :: Env -> Name -> Exp -> Infer (Subst, MType)
 inferAbs env x e = do
     tau <- fresh                           -- τ = fresh
@@ -823,11 +791,10 @@ inferAbs env x e = do
 
 
 -- | A let binding allows extending the environment with new bindings in a
--- principled manner. To do this, we first have to typecheck the expression
--- to be introduced. The result of this is then generalized to a PType, since
--- let bindings introduce new polymorphic values, and then added to the
--- environment. Now we can finally typecheck the body of the "in" part of the
--- let binding.
+-- principled manner. To do this, we first have to typecheck the expression to
+-- be introduced. The result of this is then generalized to a PType, since let
+-- bindings introduce new polymorphic values, and then added to the environment.
+-- Now we can finally typecheck the body of the "in" part of the let binding.
 --
 -- @
 -- Γ ⊢ e:τ   σ = gen(Γ,τ)   Γ, x:σ ⊢ e':τ'
@@ -846,9 +813,9 @@ inferLet env x e e' = do
 
 
 
--- | Generalize an 'MType' to a 'PType' by universally quantifying over
--- all the type variables contained in it, except those already mentioned
--- in the environment.
+-- | Generalize an 'MType' to a 'PType' by universally quantifying over all the
+-- type variables contained in it, except those already mentioned in the
+-- environment.
 --
 -- __Example:__ Generalizing @forall a. a -> b -> a@ yields
 -- @forall a b. a -> b -> a@.
@@ -861,180 +828,3 @@ generalize :: Env -> MType -> PType
 generalize env mType = Forall qs mType
   where
     qs = freeMType mType `S.difference` freeEnv env
-
-
-
-
---
--- -- #############################################################################
--- -- #############################################################################
--- -- * Testing
--- -- #############################################################################
--- -- #############################################################################
---
---
---
--- -- #############################################################################
--- -- ** A small custom Prelude
--- -- #############################################################################
---
---
---
--- prelude :: Env
--- prelude = Env (M.fromList
---     [ ("(*)",        Forall []              (tInteger ~> tInteger ~> tInteger))
---     , ("(+)",        Forall []              (tInteger ~> tInteger ~> tInteger))
---     , ("(,)",        Forall ["a","b"]       ("a" ~> "b" ~> TTuple "a" "b"))
---     , ("(-)",        Forall []              (tInteger ~> tInteger ~> tInteger))
---     , ("(.)",        Forall ["a", "b", "c"] (("b" ~> "c") ~> ("a" ~> "b") ~> "a" ~> "c"))
---     , ("(<)",        Forall []              (tInteger ~> tInteger ~> tBool))
---     , ("(<=)",       Forall []              (tInteger ~> tInteger ~> tBool))
---     , ("(>)",        Forall []              (tInteger ~> tInteger ~> tBool))
---     , ("(>=)",       Forall []              (tInteger ~> tInteger ~> tBool))
---     , ("const",      Forall ["a","b"]       ("a" ~> "b" ~> "a"))
---     , ("Cont/>>=",   Forall ["a"]           ((("a" ~> "r") ~> "r") ~> ("a" ~> (("b" ~> "r") ~> "r")) ~> (("b" ~> "r") ~> "r")))
---     , ("find",       Forall ["a","b"]       (("a" ~> tBool) ~> TList "a" ~> tMaybe "a"))
---     , ("fix",        Forall ["a"]           (("a" ~> "a") ~> "a"))
---     , ("foldr",      Forall ["a","b"]       (("a" ~> "b" ~> "b") ~> "b" ~> TList "a" ~> "b"))
---     , ("id",         Forall ["a"]           ("a" ~> "a"))
---     , ("ifThenElse", Forall ["a"]           (tBool ~> "a" ~> "a" ~> "a"))
---     , ("Left",       Forall ["a","b"]       ("a" ~> TEither "a" "b"))
---     , ("length",     Forall ["a"]           (TList "a" ~> tInteger))
---     , ("map",        Forall ["a","b"]       (("a" ~> "b") ~> TList "a" ~> TList "b"))
---     , ("reverse",    Forall ["a"]           (TList "a" ~> TList "a"))
---     , ("Right",      Forall ["a","b"]       ("b" ~> TEither "a" "b"))
---     ])
---   where
---     tBool = TConst "Bool"
---     tInteger = TConst "Integer"
---     tMaybe = TEither (TConst "()")
---
---
---
--- -- | Synonym for 'TFun' to make writing type signatures easier.
--- --
--- -- Instead of
--- --
--- -- @
--- -- Forall ["a","b"] (TFun "a" (TFun "b" "a"))
--- -- @
--- --
--- -- we can write
--- --
--- -- @
--- -- Forall ["a","b"] ("a" ~> "b" ~> "a")
--- -- @
--- (~>) :: MType -> MType -> MType
--- (~>) = TFun
--- infixr 9 ~>
---
---
---
--- -- | Supply to draw fresh type variable names from
--- defaultSupply :: [Text]
--- defaultSupply = map (T.pack . pure) ['a'..'z']
---
---
---
---
---
---
--- -- #############################################################################
--- -- ** Run it!
--- -- #############################################################################
---
---
---
--- -- | Run type inference on a cuple of values
--- main :: IO ()
--- main = do
---     let run = T.putStrLn . ("  " <>) . showType prelude defaultSupply
---     T.putStrLn "Well-typed:"
---     run (lambda ["x"] "x")
---     run (lambda ["f","g","x"] (apply "f" ["x", apply "g" ["x"]]))
---     run (lambda ["f","g","x"] (apply "f" [apply "g" ["x"]]))
---     run (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
---     run (lambda ["f"] (apply "(.)" ["reverse", apply "map" ["f"]]))
---     run (apply "map" [apply "map" ["map"]])
---     run (apply "(*)" [int 1, int 2])
---     run (apply "foldr" ["(+)", int 0])
---     run (apply "map" ["length"])
---     run (apply "map" ["map"])
---     run (lambda ["x"] (apply "ifThenElse" [apply "(<)" ["x", int 0], int 0, "x"]))
---     T.putStrLn "Ill-typed:"
---     run (apply "(*)" [int 1, bool True])
---     run (apply "foldr" [int 1])
---     run (lambda ["x"] (apply "x" ["x"]))
---
---
---
--- -- | Build multiple lambda bindings.
--- --
--- -- Instead of
--- --
--- -- @
--- -- EAbs "f" (EAbs "x" (EApp "f" "x"))
--- -- @
--- --
--- -- we can write
--- --
--- -- @
--- -- lambda ["f", "x"] (EApp "f" "x")
--- -- @
--- --
--- -- for
--- --
--- -- @
--- -- λf x. f x
--- -- @
--- lambda :: [Name] -> Exp -> Exp
--- lambda names expr = foldr EAbs expr names
---
---
---
--- -- | Apply a function to multiple arguments.
--- --
--- -- Instead of
--- --
--- -- @
--- -- EApp (EApp (EApp "f" "x") "y") "z")
--- -- @
--- --
--- -- we can write
--- --
--- -- @
--- -- apply "f" ["x", "y", "z"]
--- -- @
--- --
--- -- for
--- --
--- -- @
--- -- f x y z
--- -- @
--- apply :: Exp -> [Exp] -> Exp
--- apply = foldl EApp
---
---
---
--- -- | Construct an integer literal.
--- int :: Integer -> Exp
--- int = ELit . LInteger
---
---
---
--- -- | Construct a boolean literal.
--- bool :: Bool -> Exp
--- bool = ELit . LBool
---
---
---
--- -- | Convenience function to run type inference algorithm
--- showType :: Env    -- ^ Starting environment, e.g. 'prelude'.
---          -> [Text] -- ^ Fresh variable name supply. Should be non-empty.
---          -> Exp    -- ^ Expression to typecheck
---          -> Text   -- ^ Text representation of the result. Contains an error
---                    --   message on failure.
--- showType env supply expr =
---     case (runInfer supply . fmap snd . infer env) expr of
---         Left err -> "Error inferring type of " <> ppr expr <>": " <> ppr err
---         Right ty -> ppr expr <> " :: " <> ppr ty
