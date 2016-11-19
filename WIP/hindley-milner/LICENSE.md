@@ -1,4 +1,7 @@
-Copyright (c) 2015, David Luposchainsky
+BSD-3 License
+=============
+
+Copyright (c) 2015-2016, David Luposchainsky
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
