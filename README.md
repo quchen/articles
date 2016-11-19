@@ -40,6 +40,8 @@ Haskell related
   it will be useful to others as well.
 - [Informal description of class instances][instances] gives non-technical
   descriptions of various common class instances.
+- [An extensive tutorial on the Hindley-Damas-Milner type inference algorithm]
+  [hindley-milner]
 - [Lens infix operators cheat sheet][lens-infix] provides an overview of what
   the individual symbols in infix operators of the [lens][lens] library stand
   for.
@@ -113,6 +115,7 @@ Other topics
 [functor-law]:      second_functor_law.md
 [great]:            great_things_about_haskell.md
 [haskell-style]:    haskell_style.md
+[hindley-milner]:   hindley-milner/README.md
 [hp]:               install_haskell_platform_manually.md
 [instances]:        instances.md
 [law-rules]:        law-rules.md

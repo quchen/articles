@@ -15,7 +15,6 @@ import           HindleyMilner
 
 
 
-
 -- #############################################################################
 -- #############################################################################
 -- * Testing
@@ -83,9 +82,6 @@ infixr 9 ~>
 -- | Supply to draw fresh type variable names from
 defaultSupply :: [Text]
 defaultSupply = map (T.pack . pure) ['a'..'z']
-
-
-
 
 
 
