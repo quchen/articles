@@ -94,23 +94,25 @@ defaultSupply = map (T.pack . pure) ['a'..'z']
 -- | Run type inference on a cuple of values
 main :: IO ()
 main = do
-    let run = T.putStrLn . ("  " <>) . showType prelude defaultSupply
+    let inferAndPrint = T.putStrLn . ("  " <>) . showType prelude defaultSupply
     T.putStrLn "Well-typed:"
-    run (lambda ["x"] "x")
-    run (lambda ["f","g","x"] (apply "f" ["x", apply "g" ["x"]]))
-    run (lambda ["f","g","x"] (apply "f" [apply "g" ["x"]]))
-    run (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
-    run (lambda ["f"] (apply "(.)" ["reverse", apply "map" ["f"]]))
-    run (apply "map" [apply "map" ["map"]])
-    run (apply "(*)" [int 1, int 2])
-    run (apply "foldr" ["(+)", int 0])
-    run (apply "map" ["length"])
-    run (apply "map" ["map"])
-    run (lambda ["x"] (apply "ifThenElse" [apply "(<)" ["x", int 0], int 0, "x"]))
+    do
+        inferAndPrint (lambda ["x"] "x")
+        inferAndPrint (lambda ["f","g","x"] (apply "f" ["x", apply "g" ["x"]]))
+        inferAndPrint (lambda ["f","g","x"] (apply "f" [apply "g" ["x"]]))
+        inferAndPrint (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
+        inferAndPrint (lambda ["f"] (apply "(.)" ["reverse", apply "map" ["f"]]))
+        inferAndPrint (apply "map" [apply "map" ["map"]])
+        inferAndPrint (apply "(*)" [int 1, int 2])
+        inferAndPrint (apply "foldr" ["(+)", int 0])
+        inferAndPrint (apply "map" ["length"])
+        inferAndPrint (apply "map" ["map"])
+        inferAndPrint (lambda ["x"] (apply "ifThenElse" [apply "(<)" ["x", int 0], int 0, "x"]))
     T.putStrLn "Ill-typed:"
-    run (apply "(*)" [int 1, bool True])
-    run (apply "foldr" [int 1])
-    run (lambda ["x"] (apply "x" ["x"]))
+    do
+        inferAndPrint (apply "(*)" [int 1, bool True])
+        inferAndPrint (apply "foldr" [int 1])
+        inferAndPrint (lambda ["x"] (apply "x" ["x"]))
 
 
 

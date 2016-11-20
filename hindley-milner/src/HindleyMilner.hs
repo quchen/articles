@@ -170,8 +170,8 @@ substMType s = \case
 -- | A polytype is a monotype universally quantified over a number of type
 -- variables. In Haskell, all definitions have polytypes, but since the @forall@
 -- is implicit they look a bit like monotypes, maybe confusingly so. For
--- example, the type of "1 :: Int" is actually "forall <nothing>. Int", and the
--- type of "id" is "forall a. a -> a", although GHC displays it as "a -> a".
+-- example, the type of @1 :: Int@ is actually @forall <nothing>. Int@, and the
+-- type of @id@ is @forall a. a -> a@, although GHC displays it as @a -> a@.
 --
 -- A polytype claims to work "for all imaginable type parameters", very similar
 -- to how a lambda claims to work "for all imaginable value parameters". We can
@@ -241,19 +241,29 @@ substPType (Subst subst) (Forall qs mType) =
 -- | The environment consists of all the values available in scope, and their
 -- associated polytypes.
 --
--- Conceptually, the environment also contains all the things you can form by
--- combining its elements, but this behaviour is modeled by the inference rules
--- and not by the environment itself. This is a good thing, since the
--- environment makes infinitely many things available to us: when we have @z@,
--- then we also have @\y -> z@ and @\x y -> z@ and so on available to us.
+-- There are two kinds of membership in an environment,
+--
+--   - @∈@: an environment @Γ@ can be viewed as a set of @(value, type)@ pairs,
+--     and we can test whether something is /literally contained/ by it via
+--     x:σ ∈ Γ
+--   - @⊢@, pronounced /entails/, describes all the things that are well-typed,
+--     given an environment @Γ@. @Γ ⊢ x:τ@ can thus be seen as a judgement that
+--     @x:τ@ is /figuratively contained/ in @Γ@.
+--
+-- For example, the environment @{x:Int}@ literally contains @x@, but given
+-- this, it also entails @λy. x@, @λy z. x@, @let id = λy. y in id x@ and so on.
 --
 -- In Haskell terms, the environment consists of all the things you currently
--- have available. So if you import the Prelude, your environment consists of
+-- have available, or that can be built by comining them. If you import the
+-- Prelude, your environment consists of
 --
 -- @
--- id        →  ∀a. a→a
--- map       →  ∀a b. (a→b) → [a] → [b]
--- putStrLn  →  ∀∅. String → IO ()
+-- id            →  ∀a. a→a
+-- map           →  ∀a b. (a→b) → [a] → [b]
+-- putStrLn      →  ∀∅. String → IO ()
+-- …
+-- id map        →  ∀a b. (a→b) → [a] → [b]
+-- map putStrLn  →  ∀∅. [String] -> [IO ()]
 -- …
 -- @
 newtype Env = Env (Map Name PType)
@@ -312,21 +322,22 @@ empty = Subst M.empty
 
 
 
--- | Combine two substitutions. Applying the resulting substitution means
--- applying the right hand side substitution first, and then the left hand side.
+-- | Combine two substitutions.
 --
--- In the implementation of 'compose', we don't apply the substitution to
--- anything of course, as we do not yet have anything to apply it to available.
--- Because of this, we have to incorporate the first (higher priority)
--- substitution substitution into the second one beforehand.
+-- Applying the resulting substitution means applying the right hand side
+-- substitution first, and then the left hand side.
 compose :: Subst -> Subst -> Subst
 compose subst1 subst2 = Subst (s1 `M.union` s2)
   where
     Subst s1 = subst1
     Subst s2 = substSubst subst1 subst2
 
-    -- Apply one substitution to another, replacing all the bindings in the
-    -- second argument with their values mentioned in the first one.
+    -- Since the left hand side may specify substitutions for values already
+    -- mentioned in the right hand side, we have to apply the first to the second
+    -- substitution's contained types as well.
+    --
+    -- Thus, apply one substitution to another, replacing all the bindings in
+    -- the second argument with their values mentioned in the first one.
     substSubst :: Subst -- Apply this …
                -> Subst -- … to this
                -> Subst
@@ -357,7 +368,7 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 
 
 -- #############################################################################
--- * Inference context
+-- ** Inference context
 -- #############################################################################
 
 
@@ -369,15 +380,17 @@ newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
 
 data InferError =
     -- | Two types that don't match were attempted to be unified.
+    --
+    -- For example, @a -> a@ and @Int@ do not unify.
       CannotUnify MType MType
 
     -- | A 'TVar' is bound to an 'MType' that already contains it.
     --
     -- The canonical example of this is @λx. x x@, where the first @x@
-    -- in the body has to have type @a → b@, and the second one @a@. Since
-    -- they're both the same @x@, this requires unification of @a@ with @a → b@,
-    -- which only works if @a = a → b = (a → b) → b = …@, yielding an infinite
-    -- type.
+    -- in the body has to have type @a -> b@, and the second one @a@. Since
+    -- they're both the same @x@, this requires unification of @a@ with
+    -- @a -> b@, which only works if @a = a -> b = (a -> b) -> b = …@, yielding
+    -- an infinite type.
     | OccursCheckFailed Name MType
 
     -- | The value of an unknown identifier was read.
@@ -387,10 +400,15 @@ data InferError =
     | OutOfFreshNames
 
 instance Pretty InferError where
-    ppr (CannotUnify t1 t2) = "Cannot unify " <> ppr t1 <> " with " <> ppr t2
-    ppr (OccursCheckFailed name ty) = "Occurs check failed: " <> ppr name <> " already appears in " <> ppr ty
-    ppr (UnknownIdentifier name) = "Unknown identifier: " <> ppr name
-    ppr OutOfFreshNames = "Fresh type variable name supply empty"
+    ppr = \case
+        CannotUnify t1 t2 ->
+            "Cannot unify " <> ppr t1 <> " with " <> ppr t2
+        OccursCheckFailed name ty ->
+            "Occurs check failed: " <> ppr name <> " already appears in " <> ppr ty
+        UnknownIdentifier name ->
+            "Unknown identifier: " <> ppr name
+        OutOfFreshNames ->
+            "Fresh type variable name supply empty"
 
 
 
@@ -429,7 +447,7 @@ throw err = Infer (ExceptT (StateT (\s -> Identity (Left err, s))))
 -- applied to both of them in order to yield the same result.
 --
 -- __Example:__ trying to unify @a -> b@ with @c -> (Int -> Bool)@ will result
--- in a substitution of @a@ for @c@, and @b@ for @Int -> Bool@.
+-- in the substitution @{a ==> c, b ==> Int -> Bool}@.
 unify :: (MType, MType) -> Infer Subst
 unify = \case
     (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
@@ -500,11 +518,11 @@ bindVariableTo name mType = pure (Subst (M.singleton name mType))
 --
 -- @
 -- Γ ⊢ even : Int → Bool   Γ ⊢ 1 : Int
--- -----------------------------------
+-- –––––––––––––––––––––––––––––––––––
 --          Γ ⊢ even 1 : Bool
 -- @
 --
--- means that if we have a value of type @Int → Bool@ called "even" and a value
+-- means that if we have a value of type @Int -> Bool@ called "even" and a value
 -- of type @Int@ called @1@, then we also have a value of type @Bool@ via
 -- @even 1@ available to us.
 --
@@ -535,7 +553,7 @@ bindVariableTo name mType = pure (Subst (M.singleton name mType))
 data Exp = ELit Lit          -- ^ True, 1
          | EVar Name         -- ^ @x@
          | EApp Exp Exp      -- ^ @f x@
-         | EAbs Name Exp     -- ^ @\x -> e@
+         | EAbs Name Exp     -- ^ @λx. e@
          | ELet Name Exp Exp -- ^ @let x = e in e'@
 
 
@@ -621,21 +639,6 @@ fresh = drawFromSupply >>= \case
 
 
 
--- | Lift a 'fresh'ly generated 'MType' into a 'PType' by quantifying over no
--- variables. This is only safe to use if no variable duplication can be
--- ensured, as is the case when the argument is 'fresh'. Violating this rule
--- will result in (possibly silent!) name clashes.
---
--- __Example:__
---
--- @
--- a → b  ⇒  ∀∅ a → b
--- @
-liftFresh :: MType -> PType
-liftFresh = Forall []
-
-
-
 -- | Add a new binding to the environment.
 --
 -- The Haskell equivalent would be defining a new value, for example in module
@@ -685,13 +688,12 @@ inferLit lit = pure (empty, TConst litTy)
 --
 -- @
 -- x:σ ∈ Γ   τ = instantiate(σ)
--- ----------------------------  [Var]
+-- ––––––––––––––––––––––––––––  [Var]
 --            Γ ⊢ x:τ
 -- @
 --
--- which simply means that if @x@ is available in polymorphic form, then we have
--- it available in all possible instantiations of that σ type. This allows us to
--- take a σ type, and specialize it to our specific needs.
+-- This means that if @Γ@ /literally contains/ (@∈@) a value, then it also
+-- /entails it/ (@⊢@) in all its instantiations.
 inferVar :: Env -> Name -> Infer (Subst, MType)
 inferVar env name = do
     sigma <- lookupEnv env name -- x:σ ∈ Γ
@@ -702,6 +704,9 @@ inferVar env name = do
 
 
 -- | Look up the 'PType' of a 'Name' in the 'Env'ironment.
+--
+-- This checks whether @x:σ@ is /literally contained/ in @Γ@. For more details
+-- about this, see the documentation of 'Env'.
 --
 -- To give a Haskell analogon, looking up @id@ when @Prelude@ is loaded, the
 -- resulting 'PType' would be @id@'s type, namely @forall a. a -> a@.
@@ -715,13 +720,16 @@ lookupEnv (Env env) name = case M.lookup name env of
 -- | Bind all quantified variables of a 'PType' to 'fresh' type variables.
 --
 -- __Example:__ instantiating @forall a. a -> b -> a@ results in the 'MType'
--- @a -> b -> a@, where @a@ is a fresh name (to avoid shadowing issues).
+-- @c -> b -> c@, where @c@ is a fresh name (to avoid shadowing issues).
 --
 -- You can picture the 'PType' to be the prototype converted to an instantiated
 -- 'MType', which can now be used in the unification process.
 --
 -- Another way of looking at it is by simply forgetting which variables were
 -- quantified, carefully avoiding name clashes when doing so.
+--
+-- 'instantiate' can also be seen as the opposite of 'generalize', which we'll
+-- need later to convert an 'MType' to a 'PType'.
 instantiate :: PType -> Infer MType
 instantiate (Forall qs t) = do
     subst <- substituteAllWithFresh qs
@@ -744,15 +752,13 @@ instantiate (Forall qs t) = do
 --
 -- @
 -- Γ ⊢ f : fτ   Γ ⊢ x : xτ   fxτ = fresh   unify(fτ, xτ → fxτ)
--- -----------------------------------------------------------  [App]
+-- –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––  [App]
 --                       Γ ⊢ f x : fxτ
 -- @
 --
--- This rule is however a bit backwards to our normal way of thinking about
--- typing function application: instead of applying a function to a value and
--- investigating the result, we hypothesize the function type @xτ → fxτ@ of
--- mappting the argument @xτ@ to the result type @fxτ@, and make sure this
--- mapping unifies with the function @f:fτ@ given.
+-- This rule says that given a function and a value with a type, the function
+-- type has to unify with a function type that allows the value type to be its
+-- argument.
 inferApp
     :: Env
     -> Exp -- ^ __f__ x
@@ -773,9 +779,9 @@ inferApp env f x = do
 -- the body.
 --
 -- @
--- τ = fresh   σ = liftFresh(τ)   Γ, x:σ ⊢ e:τ'
--- --------------------------------------------  [Abs]
---                Γ ⊢ λx.e : τ→τ'
+-- τ = fresh   σ = ∀∅. τ   Γ, x:σ ⊢ e:τ'
+-- –––––––––––––––––––––––––––––––––––––  [Abs]
+--             Γ ⊢ λx.e : τ→τ'
 -- @
 --
 -- Here, @Γ, x:τ@ is @Γ@ extended by one additional mapping, namely @x:τ@.
@@ -790,7 +796,7 @@ inferAbs
     -> Infer (Subst, MType)
 inferAbs env x e = do
     tau <- fresh                           -- τ = fresh
-    let sigma = liftFresh tau              -- σ = liftFresh τ
+    let sigma = Forall [] tau              -- σ = ∀∅. τ
         env' = extendEnv env (x, sigma)    -- Γ, x:σ …
     (s, tau') <- infer env' e              --        … ⊢ e:τ'
                                            -- ---------------
@@ -800,13 +806,14 @@ inferAbs env x e = do
 
 -- | A let binding allows extending the environment with new bindings in a
 -- principled manner. To do this, we first have to typecheck the expression to
--- be introduced. The result of this is then generalized to a PType, since let
--- bindings introduce new polymorphic values, and then added to the environment.
--- Now we can finally typecheck the body of the "in" part of the let binding.
+-- be introduced. The result of this is then generalized to a 'PType', since let
+-- bindings introduce new polymorphic values, which are then added to the
+-- environment. Now we can finally typecheck the body of the "in" part of the
+-- let binding.
 --
 -- @
 -- Γ ⊢ e:τ   σ = gen(Γ,τ)   Γ, x:σ ⊢ e':τ'
--- ---------------------------------------  [Let]
+-- –––––––––––––––––––––––––––––––––––––––  [Let]
 --         Γ ⊢ let x = e in e' : τ'
 -- @
 inferLet
@@ -831,12 +838,18 @@ inferLet env x e e' = do
 -- environment.
 --
 -- __Example:__ Generalizing @forall a. a -> b -> a@ yields
--- @forall a b. a -> b -> a@.
+-- @forall a b. a -> b -> a@. The @a@ is not duplicated, and the @b@ is
+-- recognized as not quantified over yet, so it is added to the @forall@.
+--
+-- In more formal notation,
 --
 -- @
--- gen(Γ,τ) = ∀{α}. σ
+-- gen(Γ,τ) = ∀{α}. τ
 --     where {α} = free(τ) – free(Γ)
 -- @
+--
+-- 'generalize' can also be seen as the opposite of 'instantiate', which
+-- converts a 'PType' to an 'MType'.
 generalize :: Env -> MType -> PType
 generalize env mType = Forall qs mType
   where
