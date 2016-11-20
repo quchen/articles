@@ -753,7 +753,11 @@ instantiate (Forall qs t) = do
 -- investigating the result, we hypothesize the function type @xτ → fxτ@ of
 -- mappting the argument @xτ@ to the result type @fxτ@, and make sure this
 -- mapping unifies with the function @f:fτ@ given.
-inferApp :: Env -> Exp -> Exp -> Infer (Subst, MType)
+inferApp
+    :: Env
+    -> Exp -- ^ __f__ x
+    -> Exp -- ^ f __x__
+    -> Infer (Subst, MType)
 inferApp env f x = do
     (s1, fTau) <- infer env f                         -- f : fτ
     (s2, xTau) <- infer (substEnv s1 env) x           -- x : xτ
@@ -779,7 +783,11 @@ inferApp env f x = do
 -- Abstraction is typed by extending the environment by a new 'MType', and if
 -- under this assumption we can construct a function mapping to a value of that
 -- type, we can say that the lambda takes a value and maps to it.
-inferAbs :: Env -> Name -> Exp -> Infer (Subst, MType)
+inferAbs
+    :: Env
+    -> Name -- ^ λ__x__. e
+    -> Exp  -- ^ λx. __e__
+    -> Infer (Subst, MType)
 inferAbs env x e = do
     tau <- fresh                           -- τ = fresh
     let sigma = liftFresh tau              -- σ = liftFresh τ
@@ -801,7 +809,12 @@ inferAbs env x e = do
 -- ---------------------------------------  [Let]
 --         Γ ⊢ let x = e in e' : τ'
 -- @
-inferLet :: Env -> Name -> Exp -> Exp -> Infer (Subst, MType)
+inferLet
+    :: Env
+    -> Name -- ^ let __x__ = e in e'
+    -> Exp -- ^ let x = __e__ in e'
+    -> Exp -- ^ let x = e in __e'__
+    -> Infer (Subst, MType)
 inferLet env x e e' = do
     (s1, tau) <- infer env e              -- Γ ⊢ e:τ
     let env' = substEnv s1 env
