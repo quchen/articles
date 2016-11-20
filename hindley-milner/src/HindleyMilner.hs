@@ -144,22 +144,17 @@ freeMType = \case
 
 
 
--- | Apply a substitution to all known variables contained in an 'MType'.
--- Variables not mentioned are left unchanged.
---
--- This operation will not change the 'MType' constructors that may be contained
--- inside the 'MType' recursively, it only acts on type variables.
-substMType :: Subst -> MType -> MType
-substMType s = \case
-    TVar a -> let Subst s' = s
-              in M.findWithDefault (TVar a) a s'
-    TFun f x      -> TFun (rec f) (rec x)
-    TList a       -> TList (rec a)
-    TEither l r   -> TEither (rec l) (rec r)
-    TTuple a b    -> TTuple (rec a) (rec b)
-    c@(TConst {}) -> c
-  where
-    rec = substMType s
+-- | Substitute all the contained type variables mentioned in the substitution,
+-- and leave everything else alone.
+instance Substitutable MType where
+    applySubst s = \case
+        TVar a -> let Subst s' = s
+                  in M.findWithDefault (TVar a) a s'
+        TFun f x      -> TFun (applySubst s f) (applySubst s x)
+        TList a       -> TList (applySubst s a)
+        TEither l r   -> TEither (applySubst s l) (applySubst s r)
+        TTuple a b    -> TTuple (applySubst s a) (applySubst s b)
+        c@(TConst {}) -> c
 
 
 
@@ -196,7 +191,7 @@ substMType s = \case
 -- effectively replacing all occurrences of 'MType' with 'PType', yields
 -- impredicative types. Both these extensions make the type system
 -- *significantly* more complex though.
-data PType = Forall (Set Name) MType
+data PType = Forall (Set Name) MType -- ^ ∀{α}. τ
 
 instance Pretty PType where
     -- ^ @
@@ -220,15 +215,12 @@ freePType (Forall qs mType) = freeMType mType `S.difference` qs
 
 
 
--- | Apply a substitution to a 'PType', replacing all known variables in the
--- contained 'MType' except the ones universally quantified.
---
--- Invariant: the quantified variables are not changed by the operation.
-substPType :: Subst -> PType -> PType
-substPType (Subst subst) (Forall qs mType) =
-    let qs' = M.fromSet (const ()) qs
-        subst' = Subst (subst `M.difference` qs')
-    in Forall qs (substMType subst' mType)
+-- | Substitute all the free type variables.
+instance Substitutable PType where
+    applySubst (Subst subst) (Forall qs mType) =
+        let qs' = M.fromSet (const ()) qs
+            subst' = Subst (subst `M.difference` qs')
+        in Forall qs (applySubst subst' mType)
 
 
 
@@ -239,7 +231,9 @@ substPType (Subst subst) (Forall qs mType) =
 
 
 -- | The environment consists of all the values available in scope, and their
--- associated polytypes.
+-- associated polytypes. Other common names for it include "(typing) context",
+-- and because of the commonly used symbol for it sometimes directly
+-- \"Gamma"/@"Γ"@.
 --
 -- There are two kinds of membership in an environment,
 --
@@ -287,8 +281,8 @@ freeEnv (Env env) = let allPTypes = M.elems env
 
 -- | Performing a 'Subst'itution in an 'Env'ironment means performing that
 -- substituion on all the contained 'PType's.
-substEnv :: Subst -> Env -> Env
-substEnv s (Env env) = Env (M.map (substPType s) env)
+instance Substitutable Env where
+    applySubst s (Env env) = Env (M.map (applySubst s) env)
 
 
 
@@ -310,45 +304,49 @@ newtype Subst = Subst (Map Name MType)
 
 
 
+-- | We're going to apply substitutions to a variety of other values that
+-- somehow contain type variables, so we overload this application operation in
+-- a class here.
+--
+-- Laws:
+--
+-- @
+-- 'applySubst' 'empty' ≡ 'id'
+-- 'applySubst' s1 . 'applySubst' s2 ≡ 'applySubst' (s1 '<>' s2)
+-- @
+class Substitutable a where
+    applySubst :: Subst -> a -> a
+
+-- | @'applySubst' s1 s2@ applies one substitution to another, replacing all the
+-- bindings in the second argument @s2@ with their values mentioned in the first
+-- one (@s1@).
+instance Substitutable Subst where
+    applySubst s (Subst target) = Subst (fmap (applySubst s) target)
+
 instance Pretty Subst where
-    -- ^ a ⇒ b, c ⇒ d → e
-    ppr (Subst s) = T.intercalate ", " [ ppr k <> " ⇒ " <> ppr v | (k,v) <- M.toList s ]
+    -- ^ {a ⇒ b, c ⇒ d → e}
+    ppr (Subst s) = "{" <> T.intercalate ", " [ ppr k <> " ⇒ " <> ppr v | (k,v) <- M.toList s ] <> "}"
 
-
-
--- | The empty substituion holds nothing, and is the identity of 'compose'.
-empty :: Subst
-empty = Subst M.empty
-
-
-
--- | Combine two substitutions.
---
--- Applying the resulting substitution means applying the right hand side
--- substitution first, and then the left hand side.
-compose :: Subst -> Subst -> Subst
-compose subst1 subst2 = Subst (s1 `M.union` s2)
-  where
-    Subst s1 = subst1
-    Subst s2 = substSubst subst1 subst2
-
-    -- Since the left hand side may specify substitutions for values already
-    -- mentioned in the right hand side, we have to apply the first to the second
-    -- substitution's contained types as well.
+-- | Combine two substitutions by applying all substitutions mentioned in the
+-- first argument to the type variables contained in the second.
+instance Monoid Subst where
+    -- Considering that all we can really do with a substitution is apply it, we
+    -- can use the one of 'Substitutable's laws to show that substitutions
+    -- combine associatively,
     --
-    -- Thus, apply one substitution to another, replacing all the bindings in
-    -- the second argument with their values mentioned in the first one.
-    substSubst :: Subst -- Apply this …
-               -> Subst -- … to this
-               -> Subst
-    substSubst s (Subst target) = Subst (fmap (substMType s) target)
+    -- @
+    --   applySubst (compose s1 (compose s2 s3))
+    -- = applySubst s1 . applySubst (compose s2 s3)
+    -- = applySubst s1 . applySubst s2 . applySubst s3
+    -- = applySubst (compose s1 s2) . applySubst s3
+    -- = applySubst (compose (compose s1 s2) s3)
+    -- @
+    mappend subst1 subst2 = Subst (s1 `M.union` s2)
+      where
+        Subst s1 = subst1
+        Subst s2 = applySubst subst1 subst2
 
--- I have a strong feeling that 'compose' is associative, which would make
--- 'Subst' a 'Monoid', but I wasn't able to prove this yet.
---
--- instance Monoid Subst where
---     mappend = compose
---     mempty = empty
+    mempty = Subst M.empty
 
 
 
@@ -376,6 +374,8 @@ compose subst1 subst2 = Subst (s1 `M.union` s2)
 -- | The inference type holds a supply of unique names, and can fail with a
 -- descriptive error if something goes wrong.
 newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
+    -- ^ Fail with an 'InferError', and hold a supply of unused variable
+    -- names to generate new names from.
     deriving (Functor, Applicative, Monad)
 
 data InferError =
@@ -413,7 +413,7 @@ instance Pretty InferError where
 
 
 -- | Evaluate a value in an 'Infer'ence context.
-runInfer :: [Text] -- ^ Supply of variable names.
+runInfer :: [Text] -- ^ Supply of variable names
          -> Infer a -- ^ Inference data
          -> Either InferError a
 runInfer supply (Infer inf) =
@@ -428,7 +428,7 @@ runInfer supply (Infer inf) =
 
 -- | Throw an 'InferError' in an 'Infer'ence context.
 throw :: InferError -> Infer a
-throw err = Infer (ExceptT (StateT (\s -> Identity (Left err, s))))
+throw = Infer . throwE
 
 
 
@@ -453,7 +453,7 @@ unify = \case
     (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
     (TVar v,      x)                 -> v `bindVariableTo` x
     (x,           TVar v)            -> v `bindVariableTo` x
-    (TConst a,    TConst b) | a == b -> pure empty
+    (TConst a,    TConst b) | a == b -> pure mempty
     (TList a,     TList b)           -> unify (a,b)
     (TEither a b, TEither x y)       -> unifyBinary (a,b) (x,y)
     (TTuple a b,  TTuple x y)        -> unifyBinary (a,b) (x,y)
@@ -464,12 +464,13 @@ unify = \case
     -- Unification of binary type constructors, such as functions and Either.
     -- Unification is first done for the first operand, and assuming the
     -- required substitution, the second operands are unified.
+    unifyBinary :: (MType, MType) -> (MType, MType) -> Infer Subst
     unifyBinary (a,b) (x,y) = do
         s1 <- unify (a, x)
-        let b' = substMType s1 b
-            y' = substMType s1 y
+        let b' = applySubst s1 b
+            y' = applySubst s1 y
         s2 <- unify (b', y')
-        pure (s1 `compose` s2)
+        pure (s1 <> s2)
 
 
 
@@ -487,7 +488,7 @@ unify = \case
 --   Occurs Check.
 bindVariableTo :: Name -> MType -> Infer Subst
 
-bindVariableTo name (TVar v) | boundToSelf = pure empty
+bindVariableTo name (TVar v) | boundToSelf = pure mempty
   where
     boundToSelf = name == v
 
@@ -676,7 +677,7 @@ infer env = \case
 
 -- | Literals such as 'True' and '1' have their types hard-coded.
 inferLit :: Lit -> Infer (Subst, MType)
-inferLit lit = pure (empty, TConst litTy)
+inferLit lit = pure (mempty, TConst litTy)
   where
     litTy = case lit of
         LBool    {} -> "Bool"
@@ -699,7 +700,7 @@ inferVar env name = do
     sigma <- lookupEnv env name -- x:σ ∈ Γ
     tau <- instantiate sigma    -- τ = instantiate(σ)
                                 -- ------------------
-    pure (empty, tau)           -- Γ ⊢ x:τ
+    pure (mempty, tau)          -- Γ ⊢ x:τ
 
 
 
@@ -733,7 +734,7 @@ lookupEnv (Env env) name = case M.lookup name env of
 instantiate :: PType -> Infer MType
 instantiate (Forall qs t) = do
     subst <- substituteAllWithFresh qs
-    pure (substMType subst t)
+    pure (applySubst subst t)
 
   where
     -- For each given name, add a substitution from that name to a fresh type
@@ -766,11 +767,11 @@ inferApp
     -> Infer (Subst, MType)
 inferApp env f x = do
     (s1, fTau) <- infer env f                         -- f : fτ
-    (s2, xTau) <- infer (substEnv s1 env) x           -- x : xτ
+    (s2, xTau) <- infer (applySubst s1 env) x         -- x : xτ
     fxTau <- fresh                                    -- fxτ = fresh
-    s3 <- unify (substMType s2 fTau, TFun xTau fxTau) -- unify (fτ, xτ → fxτ)
-    let s = s3 `compose` s2 `compose` s1              -- --------------------
-    pure (s, substMType s3 fxTau)                     -- f x : fxτ
+    s3 <- unify (applySubst s2 fTau, TFun xTau fxTau) -- unify (fτ, xτ → fxτ)
+    let s = s3 <> s2 <> s1                            -- --------------------
+    pure (s, applySubst s3 fxTau)                     -- f x : fxτ
 
 
 
@@ -800,7 +801,7 @@ inferAbs env x e = do
         env' = extendEnv env (x, sigma)    -- Γ, x:σ …
     (s, tau') <- infer env' e              --        … ⊢ e:τ'
                                            -- ---------------
-    pure (s, TFun (substMType s tau) tau') -- λx.e : τ→τ'
+    pure (s, TFun (applySubst s tau) tau') -- λx.e : τ→τ'
 
 
 
@@ -824,12 +825,12 @@ inferLet
     -> Infer (Subst, MType)
 inferLet env x e e' = do
     (s1, tau) <- infer env e              -- Γ ⊢ e:τ
-    let env' = substEnv s1 env
+    let env' = applySubst s1 env
     let sigma = generalize env' tau       -- σ = gen(Γ,τ)
     let env'' = extendEnv env' (x, sigma) -- Γ, x:σ
     (s2, tau') <- infer env'' e'          -- Γ ⊢ …
                                           -- --------------------------
-    pure (s2 `compose` s1, tau')          --     … let x = e in e' : τ'
+    pure (s2 <> s1, tau')                 --     … let x = e in e' : τ'
 
 
 
