@@ -43,3 +43,12 @@ executable hindley-milner
                      , text         >= 1.2
   hs-source-dirs:      app
   default-language:    Haskell2010
+
+test-suite doctest
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Doctest.hs
+  build-depends:       base
+                     , doctest >= 0.10
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  default-language: Haskell2010

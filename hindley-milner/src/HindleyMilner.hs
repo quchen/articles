@@ -12,7 +12,7 @@
 --
 -- @
 -- find (λx. (>) x 0)
--- >>> :: [Integer] -> Either () Integer
+-- >> :: [Integer] -> Either () Integer
 -- @
 --
 -- It can be used in three different forms:
@@ -39,6 +39,17 @@ import qualified Data.Set                   as S
 import           Data.String
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
+
+
+
+-- $setup
+--
+-- For running doctests:
+--
+-- >>> :set -XOverloadedStrings
+-- >>> :set -XOverloadedLists
+-- >>> :set -XLambdaCase
+-- >>> import qualified Data.Text.IO as T
 
 
 
@@ -72,11 +83,13 @@ class Pretty a where
 -- | A 'name' is an identifier in the language we're going to typecheck.
 -- Variables on both the term and type level have 'Name's, for example.
 newtype Name = Name Text
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, Show)
 
 instance IsString Name where
     fromString = Name . T.pack
 
+-- | >>> (T.putStrLn . ppr) (Name "var")
+-- var
 instance Pretty Name where
     ppr (Name n) = n
 
@@ -103,13 +116,11 @@ data MType = TVar Name           -- ^ @a@
            | TList MType         -- ^ @[a]@
            | TEither MType MType -- ^ @Either a b@
            | TTuple MType MType  -- ^ @(a,b)@
+           deriving Show
 
+-- | >>> (T.putStrLn . ppr) (TFun (TEither (TVar "a") (TVar "b")) (TFun (TVar "c") (TVar "d")))
+-- Either a b → c → d
 instance Pretty MType where
-    -- ^ @
-    -- TFun (TVar "a") (TVar "b")
-    -- >>> a → b
-    -- @
-
     ppr = go False
       where
         go _ (TVar name)   = ppr name
@@ -193,12 +204,9 @@ instance Substitutable MType where
 -- *significantly* more complex though.
 data PType = Forall (Set Name) MType -- ^ ∀{α}. τ
 
+-- | >>> (T.putStrLn . ppr) (Forall ["a"] (TFun "a" "a"))
+-- ∀a. a → a
 instance Pretty PType where
-    -- ^ @
-    -- Forall ["a"] (TFun "a" "a")
-    -- >>> ∀a. a → a
-    -- @
-
     ppr (Forall qs mType) = "∀" <> pprUniversals qs <> ". " <> ppr mType
       where
         pprUniversals = T.intercalate " " . map ppr . S.toList
@@ -262,6 +270,14 @@ instance Substitutable PType where
 -- @
 newtype Env = Env (Map Name PType)
 
+-- | >>> :{
+--    (T.putStrLn . ppr) (Env
+--        [ ("id", Forall ["a"] (TFun "a" "a"))
+--        , ("const", Forall ["a", "b"] (TFun "a" (TFun "b" "a"))) ])
+-- :}
+-- Γ =
+--   const ≡ ∀a b. a → b → a
+--   id ≡ ∀a. a → a
 instance Pretty Env where
     ppr (Env env) = "Γ = \n" <> T.intercalate "\n" pprBindings
       where
@@ -323,9 +339,14 @@ class Substitutable a where
 instance Substitutable Subst where
     applySubst s (Subst target) = Subst (fmap (applySubst s) target)
 
+-- | >>> :{
+--    (T.putStrLn . ppr) (Subst
+--        [ ("a", TFun "b" "b")
+--        , ("b", TEither "c" "d") ])
+-- :}
+-- {a ==> b → b, b ==> Either c d}
 instance Pretty Subst where
-    -- ^ {a ⇒ b, c ⇒ d → e}
-    ppr (Subst s) = "{" <> T.intercalate ", " [ ppr k <> " ⇒ " <> ppr v | (k,v) <- M.toList s ] <> "}"
+    ppr (Subst s) = "{" <> T.intercalate ", " [ ppr k <> " ==> " <> ppr v | (k,v) <- M.toList s ] <> "}"
 
 -- | Combine two substitutions by applying all substitutions mentioned in the
 -- first argument to the type variables contained in the second.
@@ -398,7 +419,10 @@ data InferError =
 
     -- | The supply of 'fresh' variable names has run out.
     | OutOfFreshNames
+    deriving Show
 
+-- | >>> (T.putStrLn . ppr) (CannotUnify (TEither "a" "b") (TTuple "a" "b"))
+-- Cannot unify Either a b with (a, b)
 instance Pretty InferError where
     ppr = \case
         CannotUnify t1 t2 ->
@@ -413,6 +437,16 @@ instance Pretty InferError where
 
 
 -- | Evaluate a value in an 'Infer'ence context.
+--
+-- >>> :{
+-- let demonstrate = \case
+--         Right (_, ty) -> T.putStrLn (ppr expr <> " :: " <> ppr ty)
+--         Left err      -> T.putStrLn (ppr err)
+--     expr = EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x"))))
+--     inferred = runInfer ["a","b","c","d","e","f"] (infer (Env []) expr)
+-- in demonstrate inferred
+-- :}
+-- λf g x. f x (g x) :: (c → e → f) → (c → e) → c → f
 runInfer :: [Text] -- ^ Supply of variable names
          -> Infer a -- ^ Inference data
          -> Either InferError a
@@ -446,8 +480,13 @@ throw = Infer . throwE
 -- | The unification of two 'MType's is the most general substituion that can be
 -- applied to both of them in order to yield the same result.
 --
--- __Example:__ trying to unify @a -> b@ with @c -> (Int -> Bool)@ will result
--- in the substitution @{a ==> c, b ==> Int -> Bool}@.
+-- >>> :{
+-- let inferSubst = unify (TFun "a" "b", TFun "c" (TEither "d" "e"))
+-- in case runInfer [] inferSubst of
+--        Right subst -> T.putStrLn (ppr subst)
+--        Left err    -> T.putStrLn (ppr err)
+-- :}
+-- {a ==> c, b ==> Either d e}
 unify :: (MType, MType) -> Infer Subst
 unify = \case
     (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
@@ -542,15 +581,6 @@ bindVariableTo name mType = pure (Subst (M.singleton name mType))
 -- a close relative to simply typed lambda calculus, having only the most
 -- necessary syntax elements.
 --
--- __Example:__ the term @let y = λx. f x in z@ would be represented by
---
--- @
--- ELet "y"
---      (EAbs "x"
---            (EApp (EVar "f")
---                  (EVar "x")))
---      (EVar z)
--- @
 data Exp = ELit Lit          -- ^ True, 1
          | EVar Name         -- ^ @x@
          | EApp Exp Exp      -- ^ @f x@
@@ -566,18 +596,10 @@ data Lit = LBool Bool
 
 
 
+-- | >>> demonstrate = T.putStrLn . ppr
+-- >>> demonstrate (EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x")))))
+-- λf g x. f x (g x)
 instance Pretty Exp where
-    -- ^ Omit redundant parentheses, group chained lambdas.
-    --
-    -- @
-    -- EAbs "f"
-    --   (EAbs "g"
-    --     (EAbs "x"
-    --       (EApp (EApp "f" "x")
-    --             (EApp "g" "x"))))
-    -- >>> λf g x. f x (g x)
-    -- @
-
     ppr (ELit lit) = ppr lit
 
     ppr (EVar name) = ppr name
@@ -601,6 +623,11 @@ instance Pretty Exp where
     ppr (ELet name value body) =
         "let " <> ppr name <> " = " <> ppr value <> " in " <> ppr body
 
+-- | >>> (T.putStrLn . ppr) (LBool True)
+-- True
+--
+-- >>> (T.putStrLn . ppr) (LInteger 127)
+-- 127
 instance Pretty Lit where
     ppr = \case
         LBool    b -> showT b
@@ -661,7 +688,7 @@ extendEnv (Env env) (name, pType) = Env (M.insert name pType env)
 
 
 -- | Infer the type of an 'Exp'ression in an 'Env'ironment, resulting in the
--- 'Exp's 'MType'along with a substitution that has to be done in order to reach
+-- 'Exp's 'MType' along with a substitution that has to be done in order to reach
 -- this goal.
 --
 -- This is widely known as /Algorithm W/.
