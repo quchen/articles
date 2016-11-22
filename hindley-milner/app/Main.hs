@@ -110,6 +110,7 @@ main = do
         inferAndPrint (apply "map" ["length"])
         inferAndPrint (apply "map" ["map"])
         inferAndPrint (lambda ["x"] (apply "ifThenElse" [apply "(<)" ["x", int 0], int 0, "x"]))
+        inferAndPrint (lambda ["x"] (apply "fix" [lambda ["xs"] (apply "(:)" ["x", "xs"])]))
     T.putStrLn "Ill-typed:"
     do
         inferAndPrint (apply "(*)" [int 1, bool True])

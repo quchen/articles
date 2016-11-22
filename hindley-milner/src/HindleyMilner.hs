@@ -598,6 +598,8 @@ bindVariableTo name mType = pure (Subst (M.singleton name mType))
 -- a close relative to simply typed lambda calculus, having only the most
 -- necessary syntax elements.
 --
+-- Since 'ELet' is non-recursive, the usual fixed-point function
+-- @fix : (a → a) → a@ can be introduced to allow recursive definitions.
 data Exp = ELit Lit          -- ^ True, 1
          | EVar Name         -- ^ @x@
          | EApp Exp Exp      -- ^ @f x@
@@ -855,7 +857,8 @@ inferAbs env x e = do
 -- environment. Now we can finally typecheck the body of the "in" part of the
 -- let binding.
 --
--- Note that in our simple language, let is non-recursive.
+-- Note that in our simple language, let is non-recursive, but recursion can be
+-- introduced as usual by adding a primitive @fix : (a → a) → a@ if desired.
 --
 -- @
 -- Γ ⊢ e:τ   σ = gen(Γ,τ)   Γ, x:σ ⊢ e':τ'
