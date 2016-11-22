@@ -50,6 +50,7 @@ import qualified Data.Text                  as T
 -- >>> :set -XOverloadedLists
 -- >>> :set -XLambdaCase
 -- >>> import qualified Data.Text.IO as T
+-- >>> let putPprLn = T.putStrLn . ppr
 
 
 
@@ -85,10 +86,12 @@ class Pretty a where
 newtype Name = Name Text
     deriving (Eq, Ord, Show)
 
+-- | >>> "lorem" :: Name
+-- Name "lorem"
 instance IsString Name where
     fromString = Name . T.pack
 
--- | >>> (T.putStrLn . ppr) (Name "var")
+-- | >>> putPprLn (Name "var")
 -- var
 instance Pretty Name where
     ppr (Name n) = n
@@ -118,7 +121,12 @@ data MType = TVar Name           -- ^ @a@
            | TTuple MType MType  -- ^ @(a,b)@
            deriving Show
 
--- | >>> (T.putStrLn . ppr) (TFun (TEither (TVar "a") (TVar "b")) (TFun (TVar "c") (TVar "d")))
+-- | >>> putPprLn (TFun (TEither (TVar "a") (TVar "b")) (TFun (TVar "c") (TVar "d")))
+-- Either a b → c → d
+--
+-- Using the 'Pretty' instance:
+--
+-- >>> putPprLn (TFun (TEither "a" "b") (TFun "c" "d"))
 -- Either a b → c → d
 instance Pretty MType where
     ppr = go False
@@ -134,8 +142,8 @@ instance Pretty MType where
             where lhs = go True a
                   rhs = go False b
 
+-- | 'String' -> 'TVar'
 instance IsString MType where
-    -- ^ 'String' → 'TVar'
     fromString = TVar . fromString
 
 
@@ -204,7 +212,7 @@ instance Substitutable MType where
 -- *significantly* more complex though.
 data PType = Forall (Set Name) MType -- ^ ∀{α}. τ
 
--- | >>> (T.putStrLn . ppr) (Forall ["a"] (TFun "a" "a"))
+-- | >>> putPprLn (Forall ["a"] (TFun "a" "a"))
 -- ∀a. a → a
 instance Pretty PType where
     ppr (Forall qs mType) = "∀" <> pprUniversals qs <> ". " <> ppr mType
@@ -271,7 +279,7 @@ instance Substitutable PType where
 newtype Env = Env (Map Name PType)
 
 -- | >>> :{
---    (T.putStrLn . ppr) (Env
+--    putPprLn (Env
 --        [ ("id", Forall ["a"] (TFun "a" "a"))
 --        , ("const", Forall ["a", "b"] (TFun "a" (TFun "b" "a"))) ])
 -- :}
@@ -327,8 +335,8 @@ newtype Subst = Subst (Map Name MType)
 -- Laws:
 --
 -- @
--- 'applySubst' 'empty' ≡ 'id'
--- 'applySubst' s1 . 'applySubst' s2 ≡ 'applySubst' (s1 '<>' s2)
+-- 'applySubst' 'mempty' ≡ 'id'
+-- 'applySubst' (s1 '<>' s2) ≡ 'applySubst' s1 . 'applySubst' s2
 -- @
 class Substitutable a where
     applySubst :: Subst -> a -> a
@@ -340,13 +348,14 @@ instance Substitutable Subst where
     applySubst s (Subst target) = Subst (fmap (applySubst s) target)
 
 -- | >>> :{
---    (T.putStrLn . ppr) (Subst
+--    putPprLn (Subst
 --        [ ("a", TFun "b" "b")
 --        , ("b", TEither "c" "d") ])
 -- :}
--- {a ==> b → b, b ==> Either c d}
+-- { a ==> b → b
+-- , b ==> Either c d }
 instance Pretty Subst where
-    ppr (Subst s) = "{" <> T.intercalate ", " [ ppr k <> " ==> " <> ppr v | (k,v) <- M.toList s ] <> "}"
+    ppr (Subst s) = "{ " <> T.intercalate "\n, " [ ppr k <> " ==> " <> ppr v | (k,v) <- M.toList s ] <> " }"
 
 -- | Combine two substitutions by applying all substitutions mentioned in the
 -- first argument to the type variables contained in the second.
@@ -395,14 +404,16 @@ instance Monoid Subst where
 -- | The inference type holds a supply of unique names, and can fail with a
 -- descriptive error if something goes wrong.
 newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
-    -- ^ Fail with an 'InferError', and hold a supply of unused variable
-    -- names to generate new names from.
     deriving (Functor, Applicative, Monad)
 
+-- | Errors that can happen during the type inference process.
 data InferError =
     -- | Two types that don't match were attempted to be unified.
     --
     -- For example, @a -> a@ and @Int@ do not unify.
+    --
+    -- >>> putPprLn (CannotUnify (TFun "a" "a") (TConst "Int"))
+    -- Cannot unify a → a with Int
       CannotUnify MType MType
 
     -- | A 'TVar' is bound to an 'MType' that already contains it.
@@ -412,16 +423,25 @@ data InferError =
     -- they're both the same @x@, this requires unification of @a@ with
     -- @a -> b@, which only works if @a = a -> b = (a -> b) -> b = …@, yielding
     -- an infinite type.
+    --
+    -- >>> putPprLn (OccursCheckFailed "a" (TFun "a" "a"))
+    -- Occurs check failed: a already appears in a → a
     | OccursCheckFailed Name MType
 
     -- | The value of an unknown identifier was read.
+    --
+    -- >>> putPprLn (UnknownIdentifier "a")
+    -- Unknown identifier: a
     | UnknownIdentifier Name
 
     -- | The supply of 'fresh' variable names has run out.
+    --
+    -- >>> putPprLn OutOfFreshNames
+    -- Fresh type variable name supply empty
     | OutOfFreshNames
     deriving Show
 
--- | >>> (T.putStrLn . ppr) (CannotUnify (TEither "a" "b") (TTuple "a" "b"))
+-- | >>> putPprLn (CannotUnify (TEither "a" "b") (TTuple "a" "b"))
 -- Cannot unify Either a b with (a, b)
 instance Pretty InferError where
     ppr = \case
@@ -486,7 +506,8 @@ throw = Infer . throwE
 --        Right subst -> T.putStrLn (ppr subst)
 --        Left err    -> T.putStrLn (ppr err)
 -- :}
--- {a ==> c, b ==> Either d e}
+-- { a ==> c
+-- , b ==> Either d e }
 unify :: (MType, MType) -> Infer Subst
 unify = \case
     (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
@@ -596,8 +617,7 @@ data Lit = LBool Bool
 
 
 
--- | >>> demonstrate = T.putStrLn . ppr
--- >>> demonstrate (EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x")))))
+-- | >>> putPprLn (EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x")))))
 -- λf g x. f x (g x)
 instance Pretty Exp where
     ppr (ELit lit) = ppr lit
@@ -623,10 +643,10 @@ instance Pretty Exp where
     ppr (ELet name value body) =
         "let " <> ppr name <> " = " <> ppr value <> " in " <> ppr body
 
--- | >>> (T.putStrLn . ppr) (LBool True)
+-- | >>> putPprLn (LBool True)
 -- True
 --
--- >>> (T.putStrLn . ppr) (LInteger 127)
+-- >>> putPprLn (LInteger 127)
 -- 127
 instance Pretty Lit where
     ppr = \case
@@ -636,8 +656,8 @@ instance Pretty Lit where
         showT :: Show a => a -> Text
         showT = T.pack . show
 
+-- | 'String' -> 'EVar'
 instance IsString Exp where
-    -- ^ 'String' → 'EVar'
     fromString = EVar . fromString
 
 
