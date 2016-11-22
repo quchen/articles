@@ -459,9 +459,7 @@ instance Pretty InferError where
 -- | Evaluate a value in an 'Infer'ence context.
 --
 -- >>> :{
--- let demonstrate = \case
---         Right (_, ty) -> T.putStrLn (ppr expr <> " :: " <> ppr ty)
---         Left err      -> T.putStrLn (ppr err)
+-- let demonstrate = \case Right (_, ty) -> T.putStrLn (ppr expr <> " :: " <> ppr ty)
 --     expr = EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x"))))
 --     inferred = runInfer ["a","b","c","d","e","f"] (infer (Env []) expr)
 -- in demonstrate inferred
@@ -502,9 +500,7 @@ throw = Infer . throwE
 --
 -- >>> :{
 -- let inferSubst = unify (TFun "a" "b", TFun "c" (TEither "d" "e"))
--- in case runInfer [] inferSubst of
---        Right subst -> T.putStrLn (ppr subst)
---        Left err    -> T.putStrLn (ppr err)
+-- in case runInfer [] inferSubst of Right subst -> T.putStrLn (ppr subst)
 -- :}
 -- { a ==> c
 -- , b ==> Either d e }
@@ -606,7 +602,7 @@ data Exp = ELit Lit          -- ^ True, 1
          | EVar Name         -- ^ @x@
          | EApp Exp Exp      -- ^ @f x@
          | EAbs Name Exp     -- ^ @λx. e@
-         | ELet Name Exp Exp -- ^ @let x = e in e'@
+         | ELet Name Exp Exp -- ^ @let x = e in e'@ (non-recursive)
 
 
 
@@ -858,6 +854,8 @@ inferAbs env x e = do
 -- bindings introduce new polymorphic values, which are then added to the
 -- environment. Now we can finally typecheck the body of the "in" part of the
 -- let binding.
+--
+-- Note that in our simple language, let is non-recursive.
 --
 -- @
 -- Γ ⊢ e:τ   σ = gen(Γ,τ)   Γ, x:σ ⊢ e':τ'

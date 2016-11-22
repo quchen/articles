@@ -52,6 +52,8 @@ prelude = Env (M.fromList
     , ("map",        Forall ["a","b"]       (("a" ~> "b") ~> TList "a" ~> TList "b"))
     , ("reverse",    Forall ["a"]           (TList "a" ~> TList "a"))
     , ("Right",      Forall ["a","b"]       ("b" ~> TEither "a" "b"))
+    , ("[]",         Forall ["a"]           (TList "a"))
+    , ("(:)",        Forall ["a"]           ("a" ~> TList "a" ~> TList "a"))
     ])
   where
     tBool = TConst "Bool"
@@ -113,6 +115,7 @@ main = do
         inferAndPrint (apply "(*)" [int 1, bool True])
         inferAndPrint (apply "foldr" [int 1])
         inferAndPrint (lambda ["x"] (apply "x" ["x"]))
+        inferAndPrint (lambda ["x"] (ELet "xs" (apply "(:)" ["x", "xs"]) "xs"))
 
 
 
