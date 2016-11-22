@@ -102,8 +102,9 @@ main = do
         inferAndPrint (lambda ["x"] "x")
         inferAndPrint (lambda ["f","g","x"] (apply "f" ["x", apply "g" ["x"]]))
         inferAndPrint (lambda ["f","g","x"] (apply "f" [apply "g" ["x"]]))
-        inferAndPrint (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
+        inferAndPrint (lambda ["m", "k", "c"] (apply "m" [lambda ["x"] (apply "k" ["x", "c"])])) -- >>= for Cont
         inferAndPrint (lambda ["f"] (apply "(.)" ["reverse", apply "map" ["f"]]))
+        inferAndPrint (apply "find" [lambda ["x"] (apply "(>)" ["x", int 0])])
         inferAndPrint (apply "map" [apply "map" ["map"]])
         inferAndPrint (apply "(*)" [int 1, int 2])
         inferAndPrint (apply "foldr" ["(+)", int 0])
