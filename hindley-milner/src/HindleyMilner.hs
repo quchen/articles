@@ -124,7 +124,7 @@ data MType = TVar Name           -- ^ @a@
 -- | >>> putPprLn (TFun (TEither (TVar "a") (TVar "b")) (TFun (TVar "c") (TVar "d")))
 -- Either a b → c → d
 --
--- Using the 'Pretty' instance:
+-- Using the 'IsString' instance:
 --
 -- >>> putPprLn (TFun (TEither "a" "b") (TFun "c" "d"))
 -- Either a b → c → d
@@ -142,7 +142,8 @@ instance Pretty MType where
             where lhs = go True a
                   rhs = go False b
 
--- | 'String' -> 'TVar'
+-- | >>> "var" :: MType
+-- TVar (Name "var")
 instance IsString MType where
     fromString = TVar . fromString
 
@@ -224,8 +225,12 @@ instance Pretty PType where
 -- | The free variables of a 'PType' are the free variables of the contained
 -- 'MType', except those universally quantified.
 --
--- __Example:__ @foo :: forall a. a -> b -> a@ would be a 'PType' in which @b@
--- is a free type variable, while @a@ is bound (via the @forall@).
+-- >>> let sigma = Forall ["a"] (TFun "a" (TFun (TTuple "b" "a") "c"))
+-- >>> putPprLn sigma
+-- ∀a. a → (b, a) → c
+-- >>> let display = T.putStrLn . T.intercalate ", " . foldMap (\x -> [ppr x])
+-- >>> display (freePType sigma)
+-- b, c
 freePType :: PType -> Set Name
 freePType (Forall qs mType) = freeMType mType `S.difference` qs
 
@@ -265,7 +270,7 @@ instance Substitutable PType where
 --
 -- In Haskell terms, the environment consists of all the things you currently
 -- have available, or that can be built by comining them. If you import the
--- Prelude, your environment consists of
+-- Prelude, your environment entails
 --
 -- @
 -- id            →  ∀a. a→a
@@ -283,14 +288,13 @@ newtype Env = Env (Map Name PType)
 --        [ ("id", Forall ["a"] (TFun "a" "a"))
 --        , ("const", Forall ["a", "b"] (TFun "a" (TFun "b" "a"))) ])
 -- :}
--- Γ =
---   const ≡ ∀a b. a → b → a
---   id ≡ ∀a. a → a
+-- Γ = { const : ∀a b. a → b → a
+--     , id : ∀a. a → a }
 instance Pretty Env where
-    ppr (Env env) = "Γ = \n" <> T.intercalate "\n" pprBindings
+    ppr (Env env) = "Γ = { " <> T.intercalate "\n    , " pprBindings <> " }"
       where
         bindings = M.assocs env
-        pprBinding (name, pType) = "  " <> ppr name <> " ≡ " <> ppr pType
+        pprBinding (name, pType) = ppr name <> " : " <> ppr pType
         pprBindings = map pprBinding bindings
 
 
@@ -352,10 +356,10 @@ instance Substitutable Subst where
 --        [ ("a", TFun "b" "b")
 --        , ("b", TEither "c" "d") ])
 -- :}
--- { a ==> b → b
--- , b ==> Either c d }
+-- { a ––> b → b
+-- , b ––> Either c d }
 instance Pretty Subst where
-    ppr (Subst s) = "{ " <> T.intercalate "\n, " [ ppr k <> " ==> " <> ppr v | (k,v) <- M.toList s ] <> " }"
+    ppr (Subst s) = "{ " <> T.intercalate "\n, " [ ppr k <> " ––> " <> ppr v | (k,v) <- M.toList s ] <> " }"
 
 -- | Combine two substitutions by applying all substitutions mentioned in the
 -- first argument to the type variables contained in the second.
@@ -458,13 +462,13 @@ instance Pretty InferError where
 
 -- | Evaluate a value in an 'Infer'ence context.
 --
--- >>> :{
--- let demonstrate = \case Right (_, ty) -> T.putStrLn (ppr expr <> " :: " <> ppr ty)
---     expr = EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x"))))
---     inferred = runInfer ["a","b","c","d","e","f"] (infer (Env []) expr)
--- in demonstrate inferred
--- :}
--- λf g x. f x (g x) :: (c → e → f) → (c → e) → c → f
+-- >>> let expr = EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x"))))
+-- >>> putPprLn expr
+-- λf g x. f x (g x)
+-- >>> let inferred = runInfer ["a","b","c","d","e","f"] (infer (Env []) expr)
+-- >>> let demonstrate = \case Right (_, ty) -> T.putStrLn (":: " <> ppr ty)
+-- >>> demonstrate inferred
+-- :: (c → e → f) → (c → e) → c → f
 runInfer :: [Text] -- ^ Supply of variable names
          -> Infer a -- ^ Inference data
          -> Either InferError a
@@ -479,6 +483,9 @@ runInfer supply (Infer inf) =
 
 
 -- | Throw an 'InferError' in an 'Infer'ence context.
+--
+-- >>> case runInfer [] (throw (UnknownIdentifier "var")) of Left err -> putPprLn err
+-- Unknown identifier: var
 throw :: InferError -> Infer a
 throw = Infer . throwE
 
@@ -498,12 +505,16 @@ throw = Infer . throwE
 -- | The unification of two 'MType's is the most general substituion that can be
 -- applied to both of them in order to yield the same result.
 --
--- >>> :{
--- let inferSubst = unify (TFun "a" "b", TFun "c" (TEither "d" "e"))
--- in case runInfer [] inferSubst of Right subst -> T.putStrLn (ppr subst)
--- :}
--- { a ==> c
--- , b ==> Either d e }
+-- >>> let m1 = TFun "a" "b"
+-- >>> putPprLn m1
+-- a → b
+-- >>> let m2 = TFun "c" (TEither "d" "e")
+-- >>> putPprLn m2
+-- c → Either d e
+-- >>> let inferSubst = unify (m1, m2)
+-- >>> case runInfer [] inferSubst of Right subst -> putPprLn subst
+-- { a ––> c
+-- , b ––> Either d e }
 unify :: (MType, MType) -> Infer Subst
 unify = \case
     (TFun a b,    TFun x y)          -> unifyBinary (a,b) (x,y)
@@ -605,6 +616,7 @@ data Exp = ELit Lit          -- ^ True, 1
          | EApp Exp Exp      -- ^ @f x@
          | EAbs Name Exp     -- ^ @λx. e@
          | ELet Name Exp Exp -- ^ @let x = e in e'@ (non-recursive)
+         deriving Show
 
 
 
@@ -612,6 +624,7 @@ data Exp = ELit Lit          -- ^ True, 1
 -- simple type system, we'll have to hard-code the possible ones here.
 data Lit = LBool Bool
          | LInteger Integer
+         deriving Show
 
 
 
@@ -654,7 +667,8 @@ instance Pretty Lit where
         showT :: Show a => a -> Text
         showT = T.pack . show
 
--- | 'String' -> 'EVar'
+-- | >>> "var" :: Exp
+-- EVar (Name "var")
 instance IsString Exp where
     fromString = EVar . fromString
 
@@ -883,12 +897,13 @@ inferLet env x e e' = do
 
 
 -- | Generalize an 'MType' to a 'PType' by universally quantifying over all the
--- type variables contained in it, except those already mentioned in the
--- environment.
+-- type variables contained in it, except those already free in the environment.
 --
--- __Example:__ Generalizing @forall a. a -> b -> a@ yields
--- @forall a b. a -> b -> a@. The @a@ is not duplicated, and the @b@ is
--- recognized as not quantified over yet, so it is added to the @forall@.
+-- >>> let tau = TFun "a" (TFun "b" "a")
+-- >>> putPprLn tau
+-- a → b → a
+-- >>> putPprLn (generalize (Env [("x", Forall [] "b")]) tau)
+-- ∀a. a → b → a
 --
 -- In more formal notation,
 --
