@@ -15,10 +15,11 @@
 -- >> :: [Integer] -> Either () Integer
 -- @
 --
--- It can be used in three different forms:
+-- It can be used in multiple different forms:
 --
 --  * The source is written in literate programming style, so you can almost
 --    read it from top to bottom, minus some few references to later topics.
+--  * /Loads/ of doctests (runnable and verified code examples) are included
 --  * The code is runnable in GHCi, all definitions are exposed.
 --  * A small main module that gives many examples of what you might try out in
 --    GHCi is also included.
