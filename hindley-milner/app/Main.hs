@@ -188,6 +188,6 @@ showType :: Env    -- ^ Starting environment, e.g. 'prelude'.
          -> Text   -- ^ Text representation of the result. Contains an error
                    --   message on failure.
 showType env supply expr =
-    case (runInfer supply . fmap snd . infer env) expr of
+    case (runInfer supply . fmap (generalize (Env mempty) . snd) . infer env) expr of
         Left err -> "Error inferring type of " <> ppr expr <>": " <> ppr err
         Right ty -> ppr expr <> " :: " <> ppr ty

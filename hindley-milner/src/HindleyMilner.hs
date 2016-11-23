@@ -216,9 +216,11 @@ data PType = Forall (Set Name) MType -- ^ ∀{α}. τ
 -- | >>> putPprLn (Forall ["a"] (TFun "a" "a"))
 -- ∀a. a → a
 instance Pretty PType where
-    ppr (Forall qs mType) = "∀" <> pprUniversals qs <> ". " <> ppr mType
+    ppr (Forall qs mType) = "∀" <> pprUniversals <> ". " <> ppr mType
       where
-        pprUniversals = T.intercalate " " . map ppr . S.toList
+        pprUniversals
+          | S.null qs = "∅"
+          | otherwise = (T.intercalate " " . map ppr . S.toList) qs
 
 
 
