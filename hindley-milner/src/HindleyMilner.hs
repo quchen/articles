@@ -171,11 +171,11 @@ instance Substitutable MType where
     applySubst s = \case
         TVar a -> let Subst s' = s
                   in M.findWithDefault (TVar a) a s'
-        TFun f x      -> TFun (applySubst s f) (applySubst s x)
-        TList a       -> TList (applySubst s a)
-        TEither l r   -> TEither (applySubst s l) (applySubst s r)
-        TTuple a b    -> TTuple (applySubst s a) (applySubst s b)
-        c@(TConst {}) -> c
+        TFun f x    -> TFun (applySubst s f) (applySubst s x)
+        TList a     -> TList (applySubst s a)
+        TEither l r -> TEither (applySubst s l) (applySubst s r)
+        TTuple a b  -> TTuple (applySubst s a) (applySubst s b)
+        c@TConst {} -> c
 
 
 
@@ -348,6 +348,9 @@ newtype Subst = Subst (Map Name MType)
 class Substitutable a where
     applySubst :: Subst -> a -> a
 
+instance (Substitutable a, Substitutable b) => Substitutable (a,b) where
+    applySubst s (x,y) = (applySubst s x, applySubst s y)
+
 -- | @'applySubst' s1 s2@ applies one substitution to another, replacing all the
 -- bindings in the second argument @s2@ with their values mentioned in the first
 -- one (@s1@).
@@ -478,7 +481,7 @@ runInfer (Infer inf) =
     -- [a, b, c] ==> [a,b,c, a1,b1,c1, a2,b2,c2, …]
     infiniteSupply supply = supply <> addSuffixes supply (1 :: Integer)
       where
-        addSuffixes xs n = zipWith addSuffix xs (repeat n) <> addSuffixes xs (n+1)
+        addSuffixes xs n = map (\x -> addSuffix x n) xs <> addSuffixes xs (n+1)
         addSuffix x n = x <> T.pack (show n)
 
 
@@ -531,13 +534,11 @@ unify = \case
 
     -- Unification of binary type constructors, such as functions and Either.
     -- Unification is first done for the first operand, and assuming the
-    -- required substitution, the second operands are unified.
+    -- required substitution, for the second one.
     unifyBinary :: (MType, MType) -> (MType, MType) -> Infer Subst
     unifyBinary (a,b) (x,y) = do
         s1 <- unify (a, x)
-        let b' = applySubst s1 b
-            y' = applySubst s1 y
-        s2 <- unify (b', y')
+        s2 <- unify (applySubst s1 (b, y))
         pure (s1 <> s2)
 
 
@@ -639,14 +640,14 @@ instance Pretty Exp where
     ppr (EApp f x) = pprApp1 f <> " " <> pprApp2 x
       where
         pprApp1 = \case
-            eLet@(ELet {}) -> "(" <> ppr eLet <> ")"
-            eLet@(EAbs {}) -> "(" <> ppr eLet <> ")"
+            eLet@ELet{} -> "(" <> ppr eLet <> ")"
+            eLet@EAbs{} -> "(" <> ppr eLet <> ")"
             e -> ppr e
         pprApp2 = \case
-            eApp@(EApp {}) -> "(" <> ppr eApp <> ")"
+            eApp@EApp{} -> "(" <> ppr eApp <> ")"
             e -> pprApp1 e
 
-    ppr x@(EAbs {}) = pprAbs True x
+    ppr x@EAbs{} = pprAbs True x
       where
         pprAbs True  (EAbs name expr) = "λ" <> ppr name <> pprAbs False expr
         pprAbs False (EAbs name expr) = " " <> ppr name <> pprAbs False expr
