@@ -12,7 +12,7 @@
 --
 -- @
 -- find (λx. (>) x 0)
--- >> :: [Integer] -> Either () Integer
+--   :: [Integer] -> Either () Integer
 -- @
 --
 -- It can be used in multiple different forms:
@@ -329,7 +329,7 @@ instance Substitutable Env where
 --
 -- A key concept behind Hindley-Milner is that once we dive deeper into an
 -- expression, we learn more about our type variables. We might learn that  @a@
--- has to be specializedto @b -> b@, and then later on that @b@ is actually
+-- has to be specialized to @b -> b@, and then later on that @b@ is actually
 -- @Int@. Substitutions are an organized way of carrying this information along.
 newtype Subst = Subst (Map Name MType)
 
@@ -410,7 +410,10 @@ instance Monoid Subst where
 
 -- | The inference type holds a supply of unique names, and can fail with a
 -- descriptive error if something goes wrong.
-newtype Infer a = Infer (ExceptT InferError (State [Text]) a)
+--
+-- /Invariant:/ the supply must be infinite, or we might run out of names to
+-- give to things.
+newtype Infer a = Infer (ExceptT InferError (State [Name]) a)
     deriving (Functor, Applicative, Monad)
 
 -- | Errors that can happen during the type inference process.
@@ -440,12 +443,6 @@ data InferError =
     -- >>> putPprLn (UnknownIdentifier "a")
     -- Unknown identifier: a
     | UnknownIdentifier Name
-
-    -- | The supply of 'fresh' variable names has run out.
-    --
-    -- >>> putPprLn OutOfFreshNames
-    -- Fresh type variable name supply empty
-    | OutOfFreshNames
     deriving Show
 
 -- | >>> putPprLn (CannotUnify (TEither "a" "b") (TTuple "a" "b"))
@@ -458,8 +455,6 @@ instance Pretty InferError where
             "Occurs check failed: " <> ppr name <> " already appears in " <> ppr ty
         UnknownIdentifier name ->
             "Unknown identifier: " <> ppr name
-        OutOfFreshNames ->
-            "Fresh type variable name supply empty"
 
 
 
@@ -468,26 +463,29 @@ instance Pretty InferError where
 -- >>> let expr = EAbs "f" (EAbs "g" (EAbs "x" (EApp (EApp "f" "x") (EApp "g" "x"))))
 -- >>> putPprLn expr
 -- λf g x. f x (g x)
--- >>> let inferred = runInfer ["a","b","c","d","e","f"] (infer (Env []) expr)
+-- >>> let inferred = runInfer (infer (Env []) expr)
 -- >>> let demonstrate = \case Right (_, ty) -> T.putStrLn (":: " <> ppr ty)
 -- >>> demonstrate inferred
 -- :: (c → e → f) → (c → e) → c → f
-runInfer :: [Text] -- ^ Supply of variable names
-         -> Infer a -- ^ Inference data
+runInfer :: Infer a -- ^ Inference data
          -> Either InferError a
-runInfer supply (Infer inf) =
-    runIdentity (evalStateT (runExceptT inf) infiniteSupply)
+runInfer (Infer inf) =
+    runIdentity (evalStateT (runExceptT inf) (map Name (infiniteSupply alphabet)))
   where
+
+    alphabet = map T.singleton ['a'..'z']
+
     -- [a, b, c] ==> [a,b,c, a1,b1,c1, a2,b2,c2, …]
-    infiniteSupply = supply <> addSuffixes supply (1 :: Integer)
-    addSuffixes xs n = zipWith addSuffix xs (repeat n) <> addSuffixes xs (n+1)
-    addSuffix x n = x <> T.pack (show n)
+    infiniteSupply supply = supply <> addSuffixes supply (1 :: Integer)
+      where
+        addSuffixes xs n = zipWith addSuffix xs (repeat n) <> addSuffixes xs (n+1)
+        addSuffix x n = x <> T.pack (show n)
 
 
 
 -- | Throw an 'InferError' in an 'Infer'ence context.
 --
--- >>> case runInfer [] (throw (UnknownIdentifier "var")) of Left err -> putPprLn err
+-- >>> case runInfer (throw (UnknownIdentifier "var")) of Left err -> putPprLn err
 -- Unknown identifier: var
 throw :: InferError -> Infer a
 throw = Infer . throwE
@@ -515,7 +513,7 @@ throw = Infer . throwE
 -- >>> putPprLn m2
 -- c → Either d e
 -- >>> let inferSubst = unify (m1, m2)
--- >>> case runInfer [] inferSubst of Right subst -> putPprLn subst
+-- >>> case runInfer inferSubst of Right subst -> putPprLn subst
 -- { a ––> c
 -- , b ––> Either d e }
 unify :: (MType, MType) -> Infer Subst
@@ -694,11 +692,10 @@ fresh = drawFromSupply >>= \case
   where
 
     drawFromSupply :: Infer (Either InferError Name)
-    drawFromSupply = Infer (
-        lift get >>= \case
-            s:upply -> do lift (put upply)
-                          pure (Right (Name s))
-            _ -> pure (Left OutOfFreshNames) )
+    drawFromSupply = Infer (do
+        s:upply <- lift get
+        lift (put upply)
+        pure (Right s) )
 
 
 

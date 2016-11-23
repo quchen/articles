@@ -8,7 +8,6 @@ module Main (main) where
 import qualified Data.Map     as M
 import           Data.Monoid
 import           Data.Text    (Text)
-import qualified Data.Text    as T
 import qualified Data.Text.IO as T
 
 import HindleyMilner
@@ -81,12 +80,6 @@ infixr 9 ~>
 
 
 
--- | Supply to draw fresh type variable names from
-defaultSupply :: [Text]
-defaultSupply = map (T.pack . pure) ['a'..'z']
-
-
-
 -- #############################################################################
 -- ** Run it!
 -- #############################################################################
@@ -96,7 +89,7 @@ defaultSupply = map (T.pack . pure) ['a'..'z']
 -- | Run type inference on a cuple of values
 main :: IO ()
 main = do
-    let inferAndPrint = T.putStrLn . ("  " <>) . showType prelude defaultSupply
+    let inferAndPrint = T.putStrLn . ("  " <>) . showType prelude
     T.putStrLn "Well-typed:"
     do
         inferAndPrint (lambda ["x"] "x")
@@ -183,11 +176,10 @@ bool = ELit . LBool
 
 -- | Convenience function to run type inference algorithm
 showType :: Env    -- ^ Starting environment, e.g. 'prelude'.
-         -> [Text] -- ^ Fresh variable name supply. Should be non-empty.
          -> Exp    -- ^ Expression to typecheck
          -> Text   -- ^ Text representation of the result. Contains an error
                    --   message on failure.
-showType env supply expr =
-    case (runInfer supply . fmap (generalize (Env mempty) . snd) . infer env) expr of
+showType env expr =
+    case (runInfer . fmap (generalize (Env mempty) . snd) . infer env) expr of
         Left err -> "Error inferring type of " <> ppr expr <>": " <> ppr err
         Right ty -> ppr expr <> " :: " <> ppr ty
