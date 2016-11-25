@@ -157,7 +157,7 @@ instance IsString MType where
 freeMType :: MType -> Set Name
 freeMType = \case
     TVar a      -> [a]
-    TFun f x    -> freeMType f <> freeMType x
+    TFun a b    -> freeMType a <> freeMType b
     TList a     -> freeMType a
     TEither l r -> freeMType l <> freeMType r
     TTuple a b  -> freeMType a <> freeMType b
