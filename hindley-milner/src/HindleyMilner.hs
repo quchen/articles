@@ -28,7 +28,6 @@
 
 module HindleyMilner where
 
-import           Control.Monad.Identity
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.State
@@ -473,7 +472,7 @@ instance Pretty InferError where
 runInfer :: Infer a -- ^ Inference data
          -> Either InferError a
 runInfer (Infer inf) =
-    runIdentity (evalStateT (runExceptT inf) (map Name (infiniteSupply alphabet)))
+    evalState (runExceptT inf) (map Name (infiniteSupply alphabet))
   where
 
     alphabet = map T.singleton ['a'..'z']
