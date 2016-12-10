@@ -17,6 +17,8 @@ Haskell related
 
 ### General, tutorials
 
+- [Algebraic blindness][alg-blindness] is about how algebraic data types
+  sometimes make Boolean Blindness even more complex.
 - [The `build` function explained][build], which is an important piece in a
   popular optimization technique
 - [The `Cont` monad explained][cont]
@@ -99,6 +101,7 @@ Other topics
 [q]: https://github.com/quchen/articles
 [unmaintain-org]: https://www.thc.org/root/phun/unmaintain.html
 
+[alg-blindness]:    algebraic-blindness.md
 [amp]:              applicative_monad.md
 [bf-tut]:           write_yourself_a_brainfuck.md
 [build]:            build.md
