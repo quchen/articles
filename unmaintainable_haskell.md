@@ -160,7 +160,7 @@ equality.
 
     Use creative symbolism:
 
-    ```text
+    ```
     (☃) = show
     (☠) = undefined
     (≸) = (==)
@@ -170,7 +170,7 @@ equality.
     And last the really golden part about Unicode: characters that look alike,
     for example none of the following is in ASCII: аеорсух АВЕКМНОРСТУХ.
 
-    ```text
+    ```
     let map mар maр = mар : map mар maр; mаp mар = map mар mар in mаp "map"
     ```
 
@@ -197,6 +197,27 @@ equality.
     but the meaning of operators can be completely different - even non-monadic
     definitions are possible. As a bonus, you can do the re-definition *inside*
     a do block, affecting only the following code.
+
+
+
+22. The presence of algebraic data types does not mean we cannot use `String`
+    everywhere anyway. Switch to `Text`ly typed programs when performance
+    complaints arise.
+
+
+
+23. Use `where` like it creates a submodule. Use submodules extensively to
+    structure your code.
+
+
+
+24. All types up to functions can be composed out of `(,)`, `Either`, `()`,
+    `Void` and the primitives such as `Char` and `Int`.
+
+
+
+25. Before you start inventing fancy variable names, make good use of the first
+    26 ones.
 
 
 
