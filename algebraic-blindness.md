@@ -50,7 +50,7 @@ main = withFile ReadMode "file.txt" (\handle -> do stuff)
 
 in more idiomatic Haskell. Here, the meaning of the field is obvious, and since
 a data type `data IOMode = ReadMode | WriteMode` has nothing to do with a data
-type `data Colours = Red | Blue`, we cannot accidentially pass a `Red` value to
+type `data Colours = Red | Blue`, we cannot accidentally pass a `Red` value to
 our function, despite the fact that they would both have corresponded to `True`
 in the Boolean-typed example.
 
@@ -98,7 +98,7 @@ types naturally extend Boolean Blindness.
 - Unit is not very blind, since even synonyms of it mostly mean the same thing:
   we don’t really care about the result.
 
-In GHCi’s source code, there is a value of type `Maybe Bool` passed around, which has three possble values:
+In GHCi’s source code, there is a value of type `Maybe Bool` passed around, which has three possible values:
 
 1. `Nothing` means there is no more input to process when GHCi is invoked via
    `ghc -e`.
@@ -134,7 +134,7 @@ values of our blind values mean, and encode this in a new data type. Then pick a
 random use site, and just put it in there. The compiler will yell at you for a
 couple of minutes, but it *will* report every single conflicting site, and since
 you’re introducing something entirely new, there is no way you are producing
-untetected clashes. I found this type of refactoring to be **one of the most
+undetected clashes. I found this type of refactoring to be **one of the most
 powerful tools Haskell has to offer**, but we rarely speak about it because it
 seems so normal to us.
 
