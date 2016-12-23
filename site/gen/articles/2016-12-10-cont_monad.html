@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Haskell's continuation monad</title>
+    <link rel="stylesheet" type="text/css" href="../css/syntax-highlighting.css" />
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="../articles.rss">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400" rel="stylesheet" type="text/css">
+    <style>
+    /*! Typebase.less v0.1.0 | MIT License */
+    /* Setup */
+    html {
+        /* Change default typefaces here */
+        font-size: 125%;
+        -webkit-font-smoothing: antialiased;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 300;
+    }
+    /* Copy & Lists */
+    p, pre {
+        line-height: 1.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0;
+    }
+    ul,
+    ol {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    ul li,
+    ol li {
+        line-height: 1.5rem;
+    }
+    ul ul,
+    ol ul,
+    ul ol,
+    ol ol {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    blockquote {
+        line-height: 1.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    /* Headings */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        /* Change heading typefaces here */
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        margin-top: 1.5rem;
+        margin-bottom: 0;
+        line-height: 1.5rem;
+    }
+    h1 {
+        font-size: 3.242rem;
+        line-height: 4.5rem;
+        margin-top: 3rem;
+        text-align: center;
+        padding-bottom: 1.5rem;
+    }
+    h2 {
+        font-size: 2.828rem;
+        line-height: 3rem;
+        margin-top: 3rem;
+    }
+    h3 {
+        font-size: 1.414rem;
+    }
+    h4 {
+        font-size: 0.707rem;
+    }
+    h5 {
+        font-size: 0.4713333333333333rem;
+    }
+    h6 {
+        font-size: 0.3535rem;
+    }
+    /* Tables */
+    table {
+        margin-top: 1.5rem;
+        border-spacing: 0px;
+        border-collapse: collapse;
+    }
+    table td,
+    table th {
+        padding: 0;
+        line-height: 33px;
+    }
+    /* Leading paragraph text */
+    .lead {
+        font-size: 1.414rem;
+    }
+    /* Hug the block above you */
+    .hug {
+        margin-top: 0;
+    }
+
+    html {
+        background: #eae3cb;
+    }
+    body {
+        background-color: #fcf4dc;
+        width: 40em;
+        margin: 0 auto 2em;
+        padding: 2em 3em;
+        border: 1px solid #d9d2ba;
+        border-top: none;
+        color: #111;
+    }
+    /* h2,h3 { margin-top: 2em } */
+    ul#icons {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        list-style-type: none;
+        text-align: right;
+    }
+    ul#icons img { width: 16px; vertical-align: middle; }
+    ul#icons a { color: transparent; font-style: italic; font-size: small; }
+    ul#icons li:hover a { color: #aaa; text-decoration: none !important}
+    #TOC { display: none; }
+    pre {
+            border-bottom: 1px solid #d9d2ba;
+            border-top: 1px solid #d9d2ba;
+            background: hsla(45, 46%, 86%,0.4);
+            padding: 0.5rem;
+    }
+    a {
+            text-decoration: none;
+    }
+    code {
+            background: hsla(45, 46%, 86%,0.6);
+    }
+    code.sourceCode {
+            background: none;
+    }
+    </style>
+</head>
+<body>
+    <h1>Haskell's continuation monad</h1>
+    <p>First published: 2016-12-10</p>
+    <p>I am convinced that many complicated things in Haskell can - and have to be - understood on two levels: how to use it, and how it’s implemented. Usage is usually much easier to grasp than implementation, which is why it should be the first approach. However, this practical knowledge doesn’t tackle corner cases much, and may lead to unexpected surprises. This is where the inner workings of a function come into play, which is a lot easier to learn now that one knows what a function does; as a result, this feeds back to the intuitive side of things, eventually reaching “true” understanding. This article is split in these two levels: first the intuitive one, then the technicalities.</p>
+<h2 id="the-concept-of-continuations">The concept of continuations</h2>
+<p>You surely know the transformation to introduce better recursion by packing the result into an accumulator. For example</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">length []     <span class="fu">=</span> <span class="dv">0</span>
+length (_<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dv">1</span> <span class="fu">+</span> length xs</code></pre></div>
+<p>will build a large stack of <code>1+1+1+...</code> operations, but this issue can be fixed by packing the “1+” in another parameter, so that there’s some cheap form of state (namely the length so far) in the function:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">length <span class="fu">=</span> length' <span class="dv">0</span> <span class="kw">where</span>
+    length' l []     <span class="fu">=</span> l
+    length' l (_<span class="fu">:</span>xs) <span class="fu">=</span> length' (l<span class="fu">+</span><span class="dv">1</span>) xs</code></pre></div>
+<p>This converts the return value of the function to a parameter containing what has been done already - its past, so to speak.</p>
+<p>Now continuations can be seen as a similar transformation: you put something ordinary in a parameter instead of directly dealing with it. In case of a continuation, that parameter is what’s to be done next.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">--               |-------------| &lt;- &quot;Continuation&quot; type. (&quot;square maps an</span>
+<span class="co">--               |             |    'a' to a continuation&quot;)</span>
+<span class="ot">square ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r
+square x <span class="fu">=</span> \k <span class="ot">-&gt;</span> k (x<span class="fu">^</span><span class="dv">2</span>)</code></pre></div>
+<p>Instead of returning the value of <code>x^2</code>, it returns it wrapped in another function. You can see <code>k</code> as the future of <code>square x</code>. For example, if you set the future of <code>square x</code> to be the identity, you get</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">  square x id
+<span class="fu">=</span> (\k <span class="ot">-&gt;</span> k (x<span class="fu">^</span><span class="dv">2</span>)) id
+<span class="fu">=</span> id (x<span class="fu">^</span><span class="dv">2</span>)
+<span class="fu">=</span> x<span class="fu">^</span><span class="dv">2</span></code></pre></div>
+<p>A very useful way of picturing how this works in practice is this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">square <span class="dv">2</span> <span class="fu">$</span> \twoSquare <span class="ot">-&gt;</span> (<span class="fu">...</span>)</code></pre></div>
+<p>This means that wherever you are in <code>(...)</code>, you have the result of <code>square 2</code> at hand by using <code>twoSquare</code>. So the intuitive understanding is that <strong>continuations put the result value in a lambda argument</strong> (instead of returning it like ordinary functions). Let’s see that in action:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">square ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r
+square x <span class="fu">=</span> \k <span class="ot">-&gt;</span> k (x<span class="fu">^</span><span class="dv">2</span>)
+
+<span class="ot">add ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r
+add x y  <span class="fu">=</span> \k <span class="ot">-&gt;</span> k (x <span class="fu">+</span> y)
+
+<span class="ot">pythagoras ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r
+pythagoras x y <span class="fu">=</span> \k <span class="ot">-&gt;</span>
+    square x <span class="fu">$</span> \xSquare <span class="ot">-&gt;</span>
+    square y <span class="fu">$</span> \ySquare <span class="ot">-&gt;</span>
+    add xSquare ySquare <span class="fu">$</span> \result <span class="ot">-&gt;</span>
+    k result</code></pre></div>
+<p>In the end the result of the addition is bound to <code>result</code>, which is what we want to have. Since we’re staying in continuation-passing style, <code>pythagoras</code>’ continuation <code>k</code> is applied to the result.</p>
+<p>Now calling <code>pythagoras 3 4</code> will result in the hypothetical result of <code>3^2 + 4^2</code>, so <code>pythagoras 3 4 id = 25</code>.</p>
+<p>The important take-away message here, again, is that the following two lines are equivalent: both of them calculate <code>f x</code>, and then make the result available inside the <code>(...)</code> under the name <code>y</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">y <span class="fu">=</span> f x
+(<span class="fu">...</span>)
+
+f x <span class="fu">$</span> \y <span class="ot">-&gt;</span> (<span class="fu">...</span>)</code></pre></div>
+<p>The same piece of pythagoras code written using the <code>Cont</code> type would look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">square ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+square x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> k (x<span class="fu">^</span><span class="dv">2</span>)
+
+<span class="ot">add ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+add x y <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> k (x <span class="fu">+</span> y)
+
+pythagoras,<span class="ot"> pythagoras' ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+pythagoras x y <span class="fu">=</span> <span class="kw">do</span>
+    xSquare <span class="ot">&lt;-</span> square x
+    ySquare <span class="ot">&lt;-</span> square y
+    result <span class="ot">&lt;-</span> add xSquare ySquare
+    pure result
+<span class="co">-- or in equivalent explicit bind notation:</span>
+pythagoras' x y <span class="fu">=</span>
+    square x <span class="fu">&gt;&gt;=</span> \xSquare <span class="ot">-&gt;</span>
+    square y <span class="fu">&gt;&gt;=</span> \ySquare <span class="ot">-&gt;</span>
+    add xSquare ySquare <span class="fu">&gt;&gt;=</span> \result <span class="ot">-&gt;</span>
+    pure result</code></pre></div>
+<p>But now this can be refactored because of all the typeclasses <code>Cont</code> ships with. All of the functions now take <code>Cont</code> as parameters, and the intermediate continuations are passed through automatically.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Square a Cont</span>
+<span class="ot">square ::</span> <span class="dt">Cont</span> r <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+square <span class="fu">=</span> fmap (<span class="fu">^</span><span class="dv">2</span>)
+
+<span class="co">-- Add two Conts</span>
+<span class="ot">add ::</span> <span class="dt">Cont</span> r <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+add <span class="fu">=</span> liftA2 (<span class="fu">+</span>)
+
+<span class="co">-- Pythagoras two conts</span>
+<span class="ot">pythagoras ::</span> <span class="dt">Cont</span> r <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Int</span>
+pythagoras x y <span class="fu">=</span> add (square x)
+                     (square y)
+
+<span class="co">-- GHCi</span>
+<span class="fu">&gt;&gt;&gt;</span> pythagoras (pure <span class="dv">3</span>) (pure <span class="dv">4</span>) <span class="ot">`runCont`</span> id
+<span class="dv">25</span></code></pre></div>
+<h2 id="what-cont-does">What <code>Cont</code> does</h2>
+<p>The purpose of <code>Cont</code> is getting rid of all the explicit <code>\k -&gt; k ...</code> you would have to introduce manually, much like <code>State</code> takes care of dragging along the <code>\s -&gt; ...</code> explicitly. <code>Cont</code> itself is simply a wrapper around the type signature of a continuation like above in the Pythagoras example; note that <code>square</code> took a parameter to produce a continuation, so it had an additional <code>a -&gt;</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Cont</span> r a <span class="fu">=</span> <span class="dt">Cont</span> {<span class="ot"> (&gt;&gt;-) ::</span> (a <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r }</code></pre></div>
+<p>Usually, the operator <code>&gt;&gt;-</code> would be called <code>runCont</code>, but it turns out that using it infix makes for some very readable notation, as long as we keep in mind that</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">(&gt;&gt;-) ::</span> <span class="dt">Cont</span> r a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r</code></pre></div>
+<p>We will now be building our way up to the <code>Monad</code> instance, defining <code>Functor</code> and <code>Applicative</code> on the way.</p>
+<h3 id="functor">Functor</h3>
+<p>The Functor instance is probably the most important one you have to learn for <code>Cont</code>: once you understand it, <code>Applicative</code> and <code>Monad</code> will come naturally. I was very surprised myself once I realized this.</p>
+<p>We’ll be constructing the <code>Functor</code> based on the unwrap-apply-wrap idea. The box picture of certain Haskell types might sometimes be awkward, but for certain computations it’s a helpful model nevertheless. So for a <code>Functor</code> instance, what we want to do to get <code>fmap :: (a -&gt; b) -&gt; Cont r a -&gt; Cont r b</code> is:</p>
+<ol style="list-style-type: decimal">
+<li>Extract the value of type <code>a</code> out of the <code>Cont</code> we’re given.</li>
+<li>Apply the function <code>f</code> to that value, yielding a new value of type <code>b</code>.</li>
+<li>Wrap this value in a <code>Cont</code> again.</li>
+</ol>
+<p>The hardest part is the first one, I believe. But let’s start simple: by writing as much as we know down. We know that we want a <code>Cont</code> again in the end, so the code will look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">...</span></code></pre></div>
+<p>Because of <code>Cont</code>s type <code>((a -&gt; r) -&gt; r) -&gt; Cont r a</code>, we can see that the argument given to <code>Cont</code> is of type <code>(a -&gt; r) -&gt; r</code>. The <code>a -&gt; r</code> part of that can be bound to a value named <code>k</code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> <span class="fu">...</span></code></pre></div>
+<p>Now let’s tackle the first problem: extracting a value <code>x :: a</code> out of the given <code>cx :: Cont r a</code>. Remember the pythagoras example from above, where instead of returning values they were provided to us as a lambda parameter? That’s exactly what happens here again.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>
+    <span class="fu">...</span></code></pre></div>
+<p>This gives us access to <code>x :: a</code>, so 1. is finished! The second issue is applying <code>f</code> to that value, which is trivial:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>
+    <span class="kw">let</span> result <span class="fu">=</span> f x
+    <span class="kw">in</span>  <span class="fu">...</span></code></pre></div>
+<p>now we have our result as a value, next is step 3, making a proper <code>Cont</code> again. We could simply return <code>result</code> from the function. But that would completely ignore the <code>k</code>, and thus break the continuation (ignoring all future continuations). But what have we learned before? “Don’t return values directly, return them wrapped in the continuation parameter!”</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>
+    <span class="kw">let</span> result <span class="fu">=</span> f x
+    <span class="kw">in</span>  k result</code></pre></div>
+<p>And that’s it! Inlining <code>result</code> gives us a readable Functor instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Cont</span> r) <span class="kw">where</span>
+    fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+        cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>
+        k (f x)</code></pre></div>
+<p>To reiterate, here are the three steps we’ve done again:</p>
+<ol style="list-style-type: decimal">
+<li>Extract the value out of a computation <code>cx</code>. This is done by <code>cx &gt;&gt;- \x -&gt;</code>, which gives us access to said vaue in the lambda’s body.</li>
+<li>Transform that value using the mapping function <code>f</code>.</li>
+<li>Wrap the new value in the continuation parameter <code>k</code> again.</li>
+</ol>
+<h3 id="applicative">Applicative</h3>
+<p>I promised this would be easy when you’ve understood the <code>Functor</code> instance, let’s hope I can stand true to my promise.</p>
+<p><code>pure</code> does not have to do any extraction or transformation, so steps 1 and 2 fall away. All that’s left to do is to take our general form</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure<span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Cont</span> r a
+pure x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> <span class="fu">...</span></code></pre></div>
+<p>The resulting value is provided by <code>x</code> already, and instead of returning it directly in the lambda’s body, we wrap it in <code>k</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> k x</code></pre></div>
+<p>Done.</p>
+<p>Up next: <code>&lt;*&gt;</code>. This time, we have two <code>Cont</code> values: one holding a function, and one holding the value to apply it to. We’ll extract the function, then extract the value, apply the function to the value, and wrap it in <code>k</code> again.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">cf <span class="fu">&lt;*&gt;</span> cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    cf <span class="fu">&gt;&gt;-</span> \f <span class="ot">-&gt;</span> <span class="co">-- extract f</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span> <span class="co">-- extract x</span>
+    k (f x)      <span class="co">-- apply f to x, wrap in k</span></code></pre></div>
+<p>And we’re done!</p>
+<p>(Bonus joke for the experienced Haskeller: imagine what happens when we switch the second and third lines above. Nothing? Now imagine a <code>ContT</code> transformer doing this.)</p>
+<h3 id="monad">Monad</h3>
+<p>Since we already have the <code>Applicative</code> we can set <code>return = pure</code>. Now for <code>cx &gt;&gt;= f</code>, you guessed it: extract the value <code>x</code> out of the provided <code>Cont</code> <code>cx</code>, apply the function <code>f</code> to it (yielding a new <code>Cont</code>), extract the value out of that <code>Cont</code>, and wrap it up in <code>k</code> again.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">cx <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>
+    (f x) <span class="fu">&gt;&gt;-</span> \fx <span class="ot">-&gt;</span>
+    k fx</code></pre></div>
+<p>As a bonus, we could also define <code>join</code>, which is similarly simple.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">join' ::</span> <span class="dt">Cont</span> r (<span class="dt">Cont</span> r a) <span class="ot">-&gt;</span> <span class="dt">Cont</span> r a
+join' ccx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    ccx <span class="fu">&gt;&gt;-</span> \cx <span class="ot">-&gt;</span> <span class="co">-- extract inner continuation</span>
+    cx <span class="fu">&gt;&gt;-</span> \x <span class="ot">-&gt;</span>   <span class="co">-- extract value of inner continuation</span>
+    k x            <span class="co">-- wrap value in k again</span></code></pre></div>
+<h3 id="special-api-function-callcc">Special API function: <code>callCC</code></h3>
+<h4 id="purpose">Purpose</h4>
+<p><strong><code>callCC</code> introduces a single, well-defined early return.</strong></p>
+<p>Suppose you want a <code>Cont</code> value to break out of the evaluation and return a value <code>x</code>. You would implement this by simply ignoring the continuation parameter <code>k</code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">exit x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \_k <span class="ot">-&gt;</span> x</code></pre></div>
+<p>If you place this anywhere in a large <code>Cont</code> calculation, the final result will simply be <code>x</code> if <code>exit</code> is evaluated (used by <code>&gt;&gt;=</code>) at any point.</p>
+<p><code>callCC</code> creates a sandboxed environment for this idea: instead of leaving the entire calculation, only the sandbox is jumped out of. It is usually used like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foo ::</span> <span class="dt">Cont</span> r a
+foo <span class="fu">=</span> callCC <span class="fu">$</span> \exit <span class="ot">-&gt;</span> <span class="fu">...</span></code></pre></div>
+<p>inside the <code>...</code>, you now have an <code>exit</code> function that you can use. When this function is evaluated, its argument will become the value of the <code>callCC</code> block.</p>
+<p>An example: suppose you want to convert some data to PDF format, but if there is an error it should abort and return an empty result.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Create a PDF represented as Text from some Data</span>
+<span class="ot">toPDF ::</span> <span class="dt">Data</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Text</span>
+toPDF d <span class="fu">=</span> callCC <span class="fu">$</span> \exit <span class="ot">-&gt;</span> <span class="kw">do</span>
+    when (broken d) (exit <span class="st">&quot;ERROR&quot;</span>)
+    makePDF d</code></pre></div>
+<p>The nice thing about <code>callCC</code> is that it is nestable, providing the functionality of short-circuiting arbirary levels. The following example first checks whether the data is broken (and terminates the procedure entirely). If it is fine, it examines whether it’s not too long (resulting in a worded error message); if the data is alright but the format is dirty, it cleans it, and if everything works out alright it adds annoying eye candy.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">toPDF ::</span> <span class="dt">Data</span> <span class="ot">-&gt;</span> <span class="dt">Cont</span> r <span class="dt">Text</span>
+toPDF d <span class="fu">=</span> callCC <span class="fu">$</span> \exit1 <span class="ot">-&gt;</span> <span class="kw">do</span>
+    when (broken d) (exit1 <span class="st">&quot;Data corrupt&quot;</span>)
+    d' <span class="ot">&lt;-</span> callCC <span class="fu">$</span> \exit2 <span class="ot">-&gt;</span> <span class="kw">do</span>
+        when (tooLong d) (exit1 <span class="st">&quot;Data too long&quot;</span>) <span class="co">-- Jump out of everything</span>
+        when (dirty d) (exit2 (clean d)) <span class="co">-- Jump out of the inner callCC</span>
+        pure (decorateWithFlowers d)
+    pure (makePDF d')</code></pre></div>
+<p>To sum it up, each <code>callCC</code> carries around its own <code>exit</code> function, callable by the name of the lambda parameter. If you use this <code>exit</code> anywhere in its scope, the result of the corresponding <code>callCC</code> block will be <code>exit</code>’s argument; if you do not use it, the program works as if there was no <code>callCC $ \exit -&gt;</code> in the first place.</p>
+<p>Some readers coming from an imperative background might recognize this jumping-around-behaviour as similar to statements like <code>break</code>, <code>continue</code> and <code>goto</code>. <code>callCC</code> can indeed be seen as a generalization of these concepts. <code>callCC</code> should not be used too lightheartedly, or the control flow of the program might become an obfuscated mess.</p>
+<h4 id="intuition-of-the-implementation">Intuition of the implementation</h4>
+<p>There is another intuitive, but more technical, view of <code>callCC</code>. We’ve learned that the purpose of having <code>Cont</code> around is so we don’t have to worry about explicitly passing all the <code>k</code> continuations around, just like <code>State</code> abstracts passing the state <code>s</code> away.</p>
+<p>We can label <code>Cont</code> by the parameter it abstracts away, for example we might say that</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> x <span class="ot">&lt;-</span> foo
+   y <span class="ot">&lt;-</span> bar
+   <span class="kw">let</span> y' <span class="fu">=</span> <span class="kw">if</span> even x <span class="kw">then</span> y <span class="kw">else</span> y<span class="fu">+</span><span class="dv">1</span>
+   pure (x <span class="fu">+</span> y')</code></pre></div>
+<p>hides passing all the <code>\k -&gt;</code> from us. <code>callCC</code> now opens a new block with another parameter, let’s say it hides the <code>\l -&gt;</code> in the following (equivalent) code:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> x <span class="ot">&lt;-</span> foo                       <span class="co">-- k hidden</span>
+   y <span class="ot">&lt;-</span> bar                       <span class="co">-- k hidden</span>
+   y' <span class="ot">&lt;-</span> callCC <span class="fu">$</span>                 <span class="co">-- k hidden</span>
+       \exit <span class="ot">-&gt;</span> <span class="kw">do</span>
+           when (even x) (exit y) <span class="co">-- l hidden, conditionally inject k into l</span>
+           pure (y<span class="fu">+</span><span class="dv">1</span>)             <span class="co">-- l hidden</span>
+   pure (x <span class="fu">+</span> y')                  <span class="co">-- k hidden</span></code></pre></div>
+<p><code>callCC</code> has to somehow connect <code>k</code> and <code>l</code>, i.e. it defines what to continue with. It has two choices: keep using <code>l</code> (and continue like normal inside the <code>callCC</code>), or use the parent’s continuation parameter <code>k</code>, ignoring the rest of the <code>l</code>s and “jumping” to the next instruction after the <code>callCC</code> block (<code>pure (x + y')</code> in our case).</p>
+<h4 id="technical-implementation">Technical implementation</h4>
+<p>Recall we had our “hard exit function”</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">exit x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \_ <span class="ot">-&gt;</span> x</code></pre></div>
+<p>and the idea that <code>callCC</code> gives us a sandbox where a function like this is locally contained.</p>
+<p>The idea behind the implementation is building an almost fully contained <code>Cont</code> calculation (which is evaluated inside the <code>callCC</code>). Once it terminates, its value is extracted, and fed to the parent <code>Cont</code> calculation (the one containing <code>callCC</code>). This gives us the structure</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">callCC' <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    <span class="st">&quot;&lt;sandboxed calculation&gt;&quot;</span> <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span>
+    k result</code></pre></div>
+<p>where as before we have the usual <code>Cont $ \k -&gt;</code> wrapper in which we build a value, and then return <code>k &lt;value&gt;</code> in the end. What’s left to ask now is how the sandboxed calculation should be built up.</p>
+<p>The most primitive calculation that has to go in there somehow is simpy <code>exit</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">callCC' ::</span> <span class="dt">Cont</span> <span class="dt">Text</span> a
+callCC' <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    exit <span class="st">&quot;foobar&quot;</span> <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span>
+    k result</code></pre></div>
+<p>When evaluating this, the inner continuation encounters the <code>exit</code>, the final result of everything <code>Cont</code> is set to <code>&quot;foobar&quot;</code> by ignoring <code>k</code>, and thus everything after the second <code>($)</code> is never evaluated. How dull. But we can fix this! If we abort the inner <code>Cont</code> calculation not with <code>&quot;foobar&quot;</code> but with <code>k &quot;foobar&quot;</code>, then calling <code>exit</code> short-circuits out once more, but since it’s using <code>k</code> now, it will continue as if its value was <code>&quot;foobar&quot;</code>!</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">callCC' ::</span> <span class="dt">Cont</span> r <span class="dt">Text</span>
+callCC' <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    exit (k <span class="st">&quot;foobar&quot;</span>) <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span>
+    k result</code></pre></div>
+<p>You can see that this is actually equivalent to <code>pure &quot;foobar&quot;</code> when you refactor the code a bit:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">callCC'
+  <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>  exit (k <span class="st">&quot;foobar&quot;</span>)       <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span> k result
+    <span class="co">-- inline exit,</span>
+  <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>  <span class="dt">Cont</span> <span class="fu">$</span> \_ <span class="ot">-&gt;</span> k <span class="st">&quot;foobar&quot;</span> <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span> k result
+    <span class="co">-- resolve &gt;&gt;-,</span>
+  <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> (       \_ <span class="ot">-&gt;</span> k <span class="st">&quot;foobar&quot;</span>)               k
+    <span class="co">-- Delete the gaps,</span>
+  <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> (\_ <span class="ot">-&gt;</span> k <span class="st">&quot;foobar&quot;</span>) k
+    <span class="co">-- Function evaluation,</span>
+  <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> k <span class="st">&quot;foobar&quot;</span>
+    <span class="co">-- Recognize definition,</span>
+  <span class="fu">=</span> pure <span class="st">&quot;foobar&quot;</span></code></pre></div>
+<p>Great, so now we’ve achieved a detour version of <code>pure</code> using <code>exit</code>: instead of directly returning a value, we construct a new computation that short-circuits out with that value.</p>
+<p>And now the key idea: what if we only conditionally evaluate <code>exit</code> here?</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">callCC' f <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    f (exit (k <span class="st">&quot;foobar&quot;</span>)) <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span>
+    k result</code></pre></div>
+<p>Now it depends on <code>f</code> what happens:</p>
+<ol style="list-style-type: decimal">
+<li><code>f</code> uses its argument. The <code>&gt;&gt;-</code> will evaluate the result of whatever <code>f</code> produces, and eventually encounter the <code>exit</code> function. The entire thing short-circuits with <code>k &quot;foobar&quot;</code>, so <code>&quot;foobar&quot;</code> is the value passed on to <code>result</code>.</li>
+<li><code>f</code> ignores its argument, i.e. <code>f</code> is a constant function that maps to <code>Cont r a</code>. Whatever that value is, it is passed to <code>result</code>. No short-circuiting here.</li>
+</ol>
+<p>This is already very close to <code>callCC</code>, only one last step is missing: abstracting the <code>&quot;foobar&quot;</code> away, since that’s hardly the only value we ever want to short-circuit with.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">callCC f <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span>
+    f (\x <span class="ot">-&gt;</span> exit (k x)) <span class="fu">&gt;&gt;-</span> \result <span class="ot">-&gt;</span>
+    k result
+  <span class="kw">where</span>
+    exit x <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \_ <span class="ot">-&gt;</span> x</code></pre></div>
+<p>And there you have it: <code>callCC</code>! Let’s reiterate the design: take a <code>Cont</code> computation that might short-circuit out by discarding its own continuation (the <code>_</code> in <code>exit</code>), but wrap the value to exit with with the parent continuation <code>k</code>. On short-circuiting, the parent continuation is used for further calculations. On not short-circuiting, the <code>exit</code> function is never called, and the inner <code>Cont</code> is evaluated as if there was no <code>callCC</code> around in the first place, and it was simply evaluated along with its parent calculation.</p>
+<h2 id="cont-in-the-haskell-libraries"><code>Cont</code> in the Haskell libraries</h2>
+<p>One thing worth mentioning is that <code>Cont</code> in the Haskell library <a href="http://hackage.haskell.org/packages/archive/transformers/latest/doc/html/Control-Monad-Trans-Cont.html"><code>Control.Monad.Trans.Cont</code></a> is defined in terms of a monad transformer (on <code>Identity</code>). The general purpose <code>Cont</code> wrapper I’ve used in this article is only a smart constructor named <code>cont</code> (lower case c), and the type signatures are all a little more general to account for possible uses as a transformer. Apart from these small items, the other notable difference is the pointfree style. For example, <code>fmap</code> would be defined as</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap f cx <span class="fu">=</span> <span class="dt">Cont</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> runCont cx (k <span class="fu">.</span> f)</code></pre></div>
+<p>I find this to be very hard to understand, so I chose to present the more pointful version here. Similar thoughts apply to all the other sections.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>I would probably still be in the dark about continuations if it wasn’t for <code>#haskell</code>, most notably due to parcs’ and <a href="http://chrisdone.com/">Chris Done</a>’s explanations. Thanks for that!</p>
+</body>
+</html>

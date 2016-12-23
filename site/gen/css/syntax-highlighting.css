@@ -1,0 +1,50 @@
+/*$base03:    #002b36;
+$base02:    #073642;
+$base01:    #586e75;
+$base00:    #657b83;
+$base0:     #839496;
+$base1:     #93a1a1;
+$base2:     #eee8d5;
+$base3:     #fdf6e3;
+$yellow:    #b58900;
+$orange:    #cb4b16;
+$red:       #dc322f;
+$magenta:   #d33682;
+$violet:    #6c71c4;
+$blue:      #268bd2;
+$cyan:      #2aa198;
+$green:     #859900;*/
+
+
+
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode, table.sourceCode pre
+   { margin: 0; padding: 0; border: 0; vertical-align: baseline; border: none; }
+td.lineNumbers { border-right: 1px solid #AAAAAA; text-align: right; color: #AAAAAA; padding-right: 5px; padding-left: 5px; }
+td.sourceCode { padding-left: 5px; }
+
+/*Keyword*/
+pre.sourceCode span.kw { color: #268bd2; font-weight: bold; }
+
+/*Type, type constructor*/
+pre.sourceCode span.dt { color: #dc322f; }
+
+/*Number literals*/
+pre.sourceCode span.dv { color: #40a070; }
+pre.sourceCode span.bn { color: #40a070; }
+pre.sourceCode span.fl { color: #40a070; }
+pre.sourceCode span.ch { color: #4070a0; }
+
+/*String*/
+pre.sourceCode span.st { color: #4070a0; }
+
+/*Comments*/
+pre.sourceCode span.co { color: hsl(192, 32%, 67%); font-style: italic; }
+
+/*Function arrows*/
+pre.sourceCode span.ot { }
+pre.sourceCode span.al { color: red; font-weight: bold; }
+
+/*Infix operators*/
+pre.sourceCode span.fu { color: #268bd2; }
+pre.sourceCode span.re { }
+pre.sourceCode span.er { color: red; font-weight: bold; }
