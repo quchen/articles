@@ -8,8 +8,6 @@ probably unfinished or otherwise not worth reading at this point.
 
 
 
-
-
 Haskell related
 ---------------
 
@@ -37,9 +35,6 @@ Haskell related
   should be.
 - [How to fix, or avoid fixing, certain warnings][fixing-warnings]
 - [My Haskell code style][haskell-style] and the rationale behind it
-- [Installing the Haskell platform manually.][hp] This is mostly a guide for
-  myself to walk me through setting up GHC properly in case I needed to, hoping
-  it will be useful to others as well.
 - [Informal description of class instances][instances] gives non-technical
   descriptions of various common class instances.
 - [An extensive tutorial on the Hindley-Damas-Milner type inference algorithm]
@@ -61,10 +56,6 @@ Haskell related
 - [Write yourself a Brainfuck in an hour][bf-tut] implements a very simple
   [Brainfuck][bf] interpreter in Haskell, with plenty of room to go on
   afterwards.
-- [Install GHC from zero][local-ghc] is the advanced version of
-  [install_haskell_platform_manually.md][hp] from above: it guides through the
-  installation of self-compiled GHC plus standard libraries and tools from
-  nothing.
 
 
 
@@ -80,17 +71,6 @@ Haskell related
     - [Original text][fail]
     - [Update after one week of discussion.][fail_update1]
 
-- [Stuff I would like to see in/for Haskell][stuff-i-want]
-
-
-
-
-
-Other topics
-------------
-
-- [Modular keyboard][modular-keyboard] describes a keyboard I'd like to have.
-  I encourage everyone to steal this idea so I can buy one from him.
 
 
 
@@ -110,8 +90,8 @@ Other topics
 [crazy-io]:         crazy_io.md
 [equality-live]:    http://htmlpreview.github.io/?https://github.com/quchen/articles/blob/master/haskell-equality-table.html
 [equality]:         haskell-equality-table.html
-[fail]:             monad_fail.md
 [fail_update1]:     monad_fail_update1.md
+[fail]:             monad_fail.md
 [fbut]:             fbut.md
 [fix]:              fix.md
 [fixing-warnings]:  fixing-warnings.md
@@ -119,16 +99,12 @@ Other topics
 [great]:            great_things_about_haskell.md
 [haskell-style]:    haskell_style.md
 [hindley-milner]:   hindley-milner/README.md
-[hp]:               install_haskell_platform_manually.md
 [instances]:        instances.md
 [law-rules]:        law-rules.md
 [lens-infix]:       lens-infix-operators.md
-[local-ghc]:        zero_to_local_ghc.md
 [loeb]:             loeb-moeb.md
-[modular-keyboard]: modular_keyboard.md
 [reader]:           reader_instance_derived.md
 [seqm-proposal]:    seqm_proposal.md
-[stuff-i-want]:     stuff_i_would_like_in_haskell.md
 [tag-dont-type]:    tag-dont-type.md
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
