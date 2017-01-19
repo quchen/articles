@@ -958,7 +958,7 @@ would look like this:
 
 ```haskell
           +---------------+
-case x of | Just y -> [y] | -- Block opened by the Just symbol
+case x of | Just y -> [y] | -- Block opened by the Just
           | Nothing -> [] |
           +---------------+
 ```
@@ -999,8 +999,9 @@ The lines following a new block can start in three positions:
              Nothing -> []
      ```
 
-     The `Nothing` is *not* part of the `case` anymore, and part of a (not
-     shown) case further on the outside, or a syntax error.
+     The `Nothing` is *not* part of the `case` anymore, so it is a syntax error.
+     (It can’t be part of a not-shown `case` further outside, because the `case`
+     shown is indented less than it.)
 
 
 
@@ -1058,7 +1059,7 @@ The lines following a new block can start in three positions:
 [TOC/regex]:                    #im-looking-for-a-good-regex-library
 [TOC/reversed-instances]:       #reversed-type-class-instances
 [TOC/sections]:                 #a-op-is-not-x---a-op-x
-[TOC/sensitive-whitespace]:     #indentation-and-sensitive-whitespace
+[TOC/sensitive-whitespace]:     #sensitive-whitespace
 [TOC/seq]:                      #seq-does-not-specify-an-evaluation-order
 [TOC/show]:                     #show-is-not-for-prettyprinting
 [TOC/special-dollar]:           #-has-special-powers
