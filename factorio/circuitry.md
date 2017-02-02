@@ -103,3 +103,61 @@ range -500 to 500, and in the end shrink everything by a factor of 100 again.«
     When the output is too large, simply divide it by a constant P'.
     Mathematically, this means the *actual* PID parameter P is the P used in the
     circuit divided by that P'.
+
+
+# Random number generation
+
+## Linear Congruential Generator (LCG)
+
+The linear congruential number generator is a very simple algorithm to produce
+pseudorandom numbers. The simplicity comes at a price though, because the
+numbers generated are of pretty poor quality, making it unsuitable for many
+real-world applications. It is however very useful to generate »some noise« in
+Factorio.
+
+The LCG has two parameters `a` and `c` (carefully chosen) and a seed value
+(arbitrary). A new random number Y is generated from the last one X by
+calculating
+
+    Y = a X + c   mod m
+
+The parameter `m` is 2^32 in Factorio, since we’ll be using its built-in 32-bit
+wrapping integer overflow arithmetic. The constants `a` and `c` need to satisfy
+some properties to make the output random; luckily, good values can be looked up
+on the internet. We’ll be using
+
+    a = 214013
+    c = 2531011
+
+since they’re relatively short to type in. [Wikipedia has a list of alternative
+choices.](https://en.wikipedia.org/wiki/Linear_congruential_generator)
+
+### Truncation of predictable digits
+
+We can now generate lots of numbers using the formula; unfortunately, the less
+significant the bit, the less random it is due to LCG’s properties. For our
+(already ideal) choice of parameters, the i-th least significant bit has a
+period length of at most 2^i, which is quite terrible for a random number
+generator. Basically, the red parts of our output are not random at all,
+
+![](img/lcg-truncation.png)
+
+We now have to take away as many digits on the right as possible, leaving us
+with good random numbers. We can do this by dividing by 2^n, where n is the
+number of bits to discard. Good choices are
+
+  - n=31: we get a pretty good RNG for a true/false value.
+  - n=16: there are 65536 possible outcomes (ranging from -2^15+1 to 2^15);
+    probably more than enough for Factorio.
+
+### Circuit schematic
+
+Putting both the generator and the truncator in Factorio gives us
+
+![](img/lcg-circuit-schematic.png)
+
+where the left part is our raw generator with feedback loop, and the right one
+truncates the not very random least significant n bit. And simple enough, in
+the game it looks like this:
+
+![](img/lcg-circuit-ingame.png)
