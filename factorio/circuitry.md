@@ -38,7 +38,7 @@ the system does exactly what we want.
   - The differential term extrapolates the error into the future, predicting how
     large the error is going to be based on its current slope.
 
-## Schematic
+### Schematic
 
 Below is how one could build a PID controller in Factorio. The coloured upper
 parts are the integral, differential and proportional units, and below them are
@@ -66,7 +66,7 @@ the cells to tune their output to achieve the desired feedback for the system.
   - `I/J` is the parameter for the integral term.
   - `D/F` is the parameter for the differential term.
 
-## Tuning the parameters
+### Tuning the parameters
 
 A well-tuned PID controller brings a suitable destabilized system into
 equilibrium quickly, and maintains it without much fluctuation. However, finding
@@ -98,7 +98,7 @@ least a quarter amplitude each period. Often, having reasonable `P` and `I` is
 already satisfactory. If not, increase `D` until the system converges quickly
 enough.
 
-## Numerics
+### Numerics
 
 Factorio’s number system is integer-based, but a PID controller usually requires
 fractional numbers in order to be able to tune a system nicely; if `1` is too
@@ -108,6 +108,44 @@ can at least have rational coefficients. In the previous section, we set the
 denominators to `1000`, which effectively means we can craft parameters up to a
 precision of `1/1000`. This should be plenty of accuracy for Factorio
 applications.
+
+### Example application
+
+It is visually pleasing to see belts not fully occupied, because lots of little
+moving items are more interesting than a long queue of inactive items. On the
+other hand, it is functionally pleasing to know there is plenty of material for
+the consumer. Finding the middle ground by hand is practically impossible,
+because supply and demand change all the time, so in order to find a good middle
+ground – production just right for consumption – requires someone to tune the
+system for us.
+
+Who would have guessed, we can use a PID controller for that. Let’s see how that
+looks like and then discuss it!
+
+![](img/rate-limiter.jpg)
+
+The part of the belt that extends to the right is gated by two belt sensors. The
+lower one adds one to a counter when a blue circuit passes, the upper one
+subtracts one. Combining these gives us Δ, the number of items on that part of
+the belt. From this value, we can calculate how unhappy we are with the  current
+count, which gives us an error quantity; this is done at the very top. This
+error is then fed into a PID controller, which generates the control variable S,
+whose purpose it is to influence the system in order to minimize the error, i.e.
+to accomplish that only X items are on the measure belt.
+
+On the left, we have our LCG from the other chapter. It generates random values
+and feeds them to the rate limiter belt element. This element compares the
+random value R with the PID output S every tick, and if R exceeds S, the belt is
+activated, letting items through. Therefore, the discrepancy between R and S
+controls the likelihood the belt is moving each tick – which is what a rate
+limiter does.
+
+Connecting the dots, the PID controller adjusts the likelihood with which the
+belt is activated or not each tick, based on whether there are enough (or too
+many) blue circuits on the measure belt. As you can see in the picture, the
+desiried quantity of 10 blue circuits on the measure belt is accomplished, and
+even after changing the quantity to say 15, the system quickly adapts to the new
+circumstances.
 
 
 
@@ -167,3 +205,9 @@ truncates the not very random least significant n bit. And simple enough, in
 the game it looks like this:
 
 ![](img/lcg-circuit-ingame.png)
+
+### Applications
+
+Random number generators have lots of applications, even in Factorio. For
+example, they can be used to rate-limit the throughput of a belt, as seen in the
+example of the PID controller in the other section.
