@@ -1,8 +1,4 @@
-# PID controller
-
-*TODO:* add rational coefficients for better numerics
-
-## Controllers
+# Controllers
 
 The purpose of a controller is automatically tweaking the parameters of a system
 so that it follows certain rules. For example, a stove has a controller that
@@ -20,6 +16,12 @@ again. This works well enough for many cases, but not so well for others.
   - The quantity oscillates between on/off phases; ideally it should be
     constant.
 
+## Schmitt trigger
+
+TODO. Until then: there are enough of these around online already.
+
+## PID controller
+
 The PID controller is a more sophisticated, but also much more powerful,
 controller. Conceptually, it consists of three parts: a (P)roportional, an
 (I)ntegral, and a (D)ifferential one. Each of these parts reads an input signal
@@ -36,12 +38,13 @@ the system does exactly what we want.
   - The differential term extrapolates the error into the future, predicting how
     large the error is going to be based on its current slope.
 
-## Factorio schematic
+## Schematic
 
-This is how one could build a PID controller in factorio out of just 7
-arithmetic units:
+Below is how one could build a PID controller in Factorio. The coloured upper
+parts are the integral, differential and proportional units, and below them are
+the cells to tune their output to achieve the desired feedback for the system.
 
-![](pid.png)
+![](img/pid.png)
 
   - The purple integral unit feeds back into itself, and is equivalent to a
     memory cell for the A signal. Each tick, it is altered by adding a value E
@@ -51,58 +54,61 @@ arithmetic units:
     right hand side. The left cell then compares this delayed signal with the
     current one; the result is the change of E over the last tick, stored as B.
 
-  - The teal proportional unit piggy-backs on part of the differential unit.
+  - The blue proportional unit piggy-backs on part of the differential unit.
     This is theoretically unnecessary, since we might as well use E directly as
     C, but since both the integral and differential units have a 1-tick delay
     built in, this delay cell synchronizes A, B and C so that their value
     changes synchronously with E.
 
-## Tuning the parameters P, I and D
+  - `P/Q` is the parameter for the proportional term. It is split into
+    numerator/denominator due to Factorio’s limited integer-only arithmetic.
+    See the section on numerics below.
+  - `I/J` is the parameter for the integral term.
+  - `D/F` is the parameter for the differential term.
 
-A well-tuned PID controller is a very reliable controller. However, finding the
-right parameters for P, I and D is not that easy. It is useful to keep the
-following interpretations in mind:
+## Tuning the parameters
 
-  - I is the number of ticks we want the system to each E=0. If I is too large
-    we’ll quickly reach but overshoot it, if it is too small it takes a long
-    time to converge.
-  - D describes how many ticks into the future we’re extrapolating. This is
-    useful if we expect small fluctuations that we’d like to counteract. D too
-    large means small fluctuations destabilize the system, D too small makes the
-    system more stable, but makes it less adaptive to disturbances.
-  - P is a constant that simply scales the output signal. Too small and the
-    system will barely be controlled, too large and it might destabilize.
+A well-tuned PID controller brings a suitable destabilized system into
+equilibrium quickly, and maintains it without much fluctuation. However, finding
+the right parameters can be a bit tricky. It is useful to keep the following
+physical interpretations in mind:
 
-A good rule of thumb for tuning the parameters manually is to set all three to
-zero. P is then increased until the output S oscillates noticably. Next, I is
-increased so that the oscillation amplitude reduces by around a quarter each
-period. If desired, D is increased until the system is satisfactorily quick in
-reaching the steady state after a typical disturbance. Often, the parameter D is
-left zero, since PI controllers are quite good on their own already, and not as
-susceptible to instabilities due to spikes in the input signal E.
+  - Considering the past errors, the integral term will make the error
+    (momentarily) zero after a time `Ti = P*J/(Q*I)` (the inverse product of the
+    proportional and integral factors). If `Ti` is too large we’ll quickly reach
+    but overshoot it, if it is too small it takes a long time to converge.
+
+  - `Td = D*Q/(F*P)` describes how many ticks into the future we’re
+    extrapolating. This is useful if we expect drift effects that we’d like to
+    counteract. `Td` large means small fluctuations destabilize the system, `Td`
+    too small makes  the system more stable, but makes it less adaptive to
+    disturbances.
+
+  - `Kp = P/Q` is a constant that simply scales the output signal. Too small and
+    the system will converge only slowly because it has to rely on the integral
+    term a lot, too large and it might destabilize.
+
+There are entire books about tuning controller parameters. A good rule of thumb
+for the PID controller is to set `P`, `I` and `D` to zero, and `Q`, `J` and `F`
+to `1000`. Now watch what happens to the system when you increase `P` in steps
+of a couple of hundreds at a time; keep doing this until the system starts
+oscillating noticably when distiurbed out of equilibrium. Next, increase `I`
+until the oscillation either vanishes completely, or at least dies off to at
+least a quarter amplitude each period. Often, having reasonable `P` and `I` is
+already satisfactory. If not, increase `D` until the system converges quickly
+enough.
 
 ## Numerics
 
 Factorio’s number system is integer-based, but a PID controller usually requires
-fractional numbers in order to be able to tune a system nicely. Luckily, we can
-emulate fractional numbers by scaling our integers up. The idea is that »if -5
-to 5 is too coarse, multiply everything before by 100, run the system in the
-range -500 to 500, and in the end shrink everything by a factor of 100 again.«
+fractional numbers in order to be able to tune a system nicely; if `1` is too
+small but `2` is already too large, the controller can’t do its job properly.
+For this reason the parameters were split into numerator/denominator, so that we
+can at least have rational coefficients. In the previous section, we set the
+denominators to `1000`, which effectively means we can craft parameters up to a
+precision of `1/1000`. This should be plenty of accuracy for Factorio
+applications.
 
-  - The input E should be somewhat large (in terms of its absolute value), in
-    the range of up to many thousands or more. This way, division by the
-    integral constant I has a meaningful effect. If all errors are below 10,
-    then x/10 is zero, leading to an inactive integral term.
-
-    A large E can be achieved by simply multiplying the actual input with a
-    constant.
-
-  - The output should be reasonably small, yet so fine-grained that it has a
-    precise effect on the system it is supposed to control.
-
-    When the output is too large, simply divide it by a constant P'.
-    Mathematically, this means the *actual* PID parameter P is the P used in the
-    circuit divided by that P'.
 
 
 # Random number generation
