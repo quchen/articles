@@ -40,31 +40,40 @@ the system does exactly what we want.
 
 ### Schematic
 
-Below is how one could build a PID controller in Factorio. The coloured upper
-parts are the integral, differential and proportional units, and below them are
-the cells to tune their output to achieve the desired feedback for the system.
+The PID controller shown in the schematic below follows the formula
+
+![](img/pid-formula.png)
+
+We’ll talk about how to tune the parameters `P/Q`, `I/J` and `D/F` later, so at
+this point let’s just briefly mention that
+
+  - Splitting all parameters into numerator/denominator is due to Factorio’s
+    limited integer-only arithmetic. See the section on numerics below.
+  - `P/Q` is a general scale factor to tune the overall controller strength
+  - `I/J` is the time we expect the integral term to reach `E=0`
+  - `D/F` is the time we’re extrapolating into the future, assuming the error
+    keeps increasing at a constant rate
+
+In the schematic, coloured upper parts are the integral, differential and
+proportional units respectively, and below them are the cells to tune their
+output to achieve the desired feedback for the system.
 
 ![](img/pid.png)
 
   - The purple integral unit feeds back into itself, and is equivalent to a
-    memory cell for the A signal. Each tick, it is altered by adding a value E
-    to its internal state.
+    memory cell for the `A` signal. Each tick, it is altered by adding a value
+    `E` to its internal state.
 
   - The orange differential unit has a 1-tick delay unit (»E+0 ⇒ C«) on the
     right hand side. The left cell then compares this delayed signal with the
-    current one; the result is the change of E over the last tick, stored as B.
+    current one; the result is the change of E over the last tick, stored as
+    `B`.
 
   - The blue proportional unit piggy-backs on part of the differential unit.
-    This is theoretically unnecessary, since we might as well use E directly as
-    C, but since both the integral and differential units have a 1-tick delay
-    built in, this delay cell synchronizes A, B and C so that their value
-    changes synchronously with E.
-
-  - `P/Q` is the parameter for the proportional term. It is split into
-    numerator/denominator due to Factorio’s limited integer-only arithmetic.
-    See the section on numerics below.
-  - `I/J` is the parameter for the integral term.
-  - `D/F` is the parameter for the differential term.
+    This is theoretically unnecessary, since we might as well use `E` directly
+    as `C`, but since both the integral and differential units have a 1-tick
+    delay built in, this delay cell synchronizes `A`, `B` and `C` so that their
+    value changes synchronously with `E`.
 
 ### Tuning the parameters
 
@@ -73,41 +82,64 @@ equilibrium quickly, and maintains it without much fluctuation. However, finding
 the right parameters can be a bit tricky. It is useful to keep the following
 physical interpretations in mind:
 
-  - Considering the past errors, the integral term will make the error
-    (momentarily) zero after a time `Ti = P*J/(Q*I)` (the inverse product of the
-    proportional and integral factors). If `Ti` is too large we’ll quickly reach
-    but overshoot it, if it is too small it takes a long time to converge.
-
-  - `Td = D*Q/(F*P)` describes how many ticks into the future we’re
-    extrapolating. This is useful if we expect drift effects that we’d like to
-    counteract. `Td` large means small fluctuations destabilize the system, `Td`
-    too small makes  the system more stable, but makes it less adaptive to
-    disturbances.
-
   - `Kp = P/Q` is a constant that simply scales the output signal. Too small and
     the system will converge only slowly because it has to rely on the integral
     term a lot, too large and it might destabilize.
 
+  - Considering the past errors, the integral term will make the error
+    (momentarily) zero after a time `Ti = I*J`. If `Ti` is too large we’ll
+    quickly reach but overshoot our goal of `E=0`, if it is too small it takes a
+    long time for the integral term to have an effect.
+
+  - `Td = D/F` describes how many ticks into the future we’re extrapolating,
+    assuming the error keeps rising at a steady rate. This is useful if we
+    expect drift effects that we’d like to counteract. Since most quantities in
+    Factorio are quite jerky and don’t tend to rise and fall very continuously,
+    the differential term is of questionable utility.
+
 There are entire books about tuning controller parameters. A good rule of thumb
-for the PID controller is to set `P`, `I` and `D` to zero, and `Q`, `J` and `F`
-to `1000`. Now watch what happens to the system when you increase `P` in steps
-of a couple of hundreds at a time; keep doing this until the system starts
-oscillating noticably when distiurbed out of equilibrium. Next, increase `I`
-until the oscillation either vanishes completely, or at least dies off to at
-least a quarter amplitude each period. Often, having reasonable `P` and `I` is
-already satisfactory. If not, increase `D` until the system converges quickly
-enough.
+for the PID controller is to set
+
+  - `P`, `J`, `D` = 0
+  - `I`, `F` = 60
+  - `Q` = 100
+
+This disables all terms, and the controller does nothing. Now increase `P` in
+small steps (e.g. 10, 20, 50, 100, 200, …) until you see a noticeable effect of
+the controller on your system. This brings the controller’s response into the
+order of magnitude you want the control output to be. Next, increase `J` in
+steps of 30, equivalent to half-second increments of the integral’s coefficient
+until you’re happy with your result, i.e. the system converges quickly, and does
+not overshoot `E=0` too much on the way to it.
+
+If you want, you can now watch the system’s response when you change the desired
+state, resulting in a suddendly large `E`, and a lot of work for the PID
+controller to compensate. Watch how well it does its job in these new
+circumstances; if it converges to the new state too slowly, consider tuning the
+parameters some more.
+
+As mentioned, the differential coefficient is rarely useful in Factorio, but
+feel free to play around with it if proportional and integral terms alone don’t
+yield unsatisfactory results.
 
 ### Numerics
 
-Factorio’s number system is integer-based, but a PID controller usually requires
-fractional numbers in order to be able to tune a system nicely; if `1` is too
-small but `2` is already too large, the controller can’t do its job properly.
-For this reason the parameters were split into numerator/denominator, so that we
-can at least have rational coefficients. In the previous section, we set the
-denominators to `1000`, which effectively means we can craft parameters up to a
-precision of `1/1000`. This should be plenty of accuracy for Factorio
-applications.
+Factorio’s number system is 32-bit integer based, which means two things:
+
+  - Adding one to the largest integer, `2^31`, yields the lowers integer,
+    `-2^31+1`. This is a break-neck condition for many practical purposes, and
+    must be avoided by carefully keeing all numbers (well) below that threshold.
+
+  - Division simply ignores the remainder: `1/2` is `0`, `10/11` is `0`, `19/2`
+    is `1`.
+
+A PID controller usually requires fractional numbers in order to be able to tune
+a system nicely; if `1` is too small but `2` is already too large, the
+controller can’t do its job properly. For this reason the parameters were split
+into numerator/denominator, so that we can at least have rational coefficients.
+In the previous section, we set the denominators to `100`, which effectively
+means we can craft parameters up to a precision of `1/100`. This should be
+plenty of accuracy for Factorio applications.
 
 ### Example application
 
