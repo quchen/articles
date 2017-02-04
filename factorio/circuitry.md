@@ -128,7 +128,8 @@ Factorio’s number system is 32-bit integer based, which means two things:
 
   - Adding one to the largest integer, `2^31`, yields the lowers integer,
     `-2^31+1`. This is a break-neck condition for many practical purposes, and
-    must be avoided by carefully keeing all numbers (well) below that threshold.
+    must be avoided by carefully keeing all numbers (well) below that threshold
+    in all parts of the circuit.
 
   - Division simply ignores the remainder: `1/2` is `0`, `10/11` is `0`, `19/2`
     is `1`.
@@ -219,12 +220,11 @@ generator. Basically, the red parts of our output are not random at all,
 ![](img/lcg-truncation.png)
 
 We now have to take away as many digits on the right as possible, leaving us
-with good random numbers. We can do this by dividing by 2^n, where n is the
-number of bits to discard. Good choices are
+with good random numbers.
 
-  - n=31: we get a pretty good RNG for a true/false value.
-  - n=16: there are 65536 possible outcomes (ranging from -2^15+1 to 2^15);
-    probably more than enough for Factorio.
+  - For random numbers ranging from -2^15+1 to 2^15, divide by `2^16 = 65536`.
+  - For boolean values, check whether the number is positive (effectively
+    discarding everything but the sign bit).
 
 ### Circuit schematic
 
