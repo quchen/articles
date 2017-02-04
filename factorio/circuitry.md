@@ -5,20 +5,31 @@ so that it follows certain rules. For example, a stove has a controller that
 enables and disables the heating elements in a way that the desired temperature
 is reached as fast as possible, and then maintained relatively constant.
 
+## Schmitt trigger
+
 The simplest controller worth the name is known as a »Schmitt Trigger« or »Bang
 Bang Controller«: if the desired quantity (stove heat) is below a threshold
 enable the input (current to the heater), if it’s above a threshold disable it
-again. This works well enough for many cases, but not so well for others.
+again.
 
-  - Ramping up too heavily leads to overshooting the goal. This is particularly
-    annoying in the heating setting, since cooling a stove takes *much* longer
-    than heating it.
-  - The quantity oscillates between on/off phases; ideally it should be
-    constant.
+The downside of the Schmitt trigger is that it makes a system oscillate between
+the minimum and maximum state (when ideally it should be stable, not just
+bounded), and it doesn’t adapt to new circumstances.
 
-## Schmitt trigger
+In Factorio, we can build a Schmitt trigger out of an RS latch (the purple
+part),
 
-TODO. Until then: there are enough of these around online already.
+![](img/schmitt.png)
+
+The on and off conditions should be mutually exclusive, since RS Nor latches
+have undefined behaviour when both inputs are enabled.
+
+In Factorio, I use Schmitt triggers for many purposes, such as cracking oil when
+there is excess, and inserting robots into roboports when there only few
+available. A particularly useful one is around a capacitor in my base: whenever
+its charge falls below a threshold, say 10%, I switch on a flashing red light.
+Whenever I see that light, it means energy will run low soon, and I better build
+some more solar plants or the lights are going to drive me nuts.
 
 ## PID controller
 
