@@ -1,3 +1,40 @@
+# Digital electronics components
+
+## D latch
+
+A D latch (»D« for »data«) is a simple memory digital memory cell. It simply
+stores the current value of the input signal when triggered, and holds it until
+the trigger event (overwriting the previous one).
+
+In Factorio, we have simpler ways of building memory cells, but they usually
+have several shortcomings, such as no reset condition, and adding up signals
+instead of overwriting the old value.
+
+The standard digital D latch holds only a binary value, but in Factorio we can
+build a simple D latch that can hold one arbitrary (analog) value, and is
+triggered by a digital signal.
+
+The schematic is as follows:
+
+![](img/d-latch.png)
+
+The memory cell consists of the two logical combinators on the left: when the
+clock signal is true, let the current value of `D` into the green circuit. When
+`C` is false, then do not read `D` from the outside, but let it loop on the
+green loop around the center combinator.
+
+The NOOP combinator on the right hand side serves multiple purposes. In order of
+descending importance,
+
+  1. It closes off the circuit to the right, so that even when there is a `D`
+     signal coming from another circuit on the right, the D latch is unaffected
+     by it.
+  2. It allows renaming the `D` signal, making it easier to plug the latch into
+     an existing circuit.
+  3. I like all my free wires to be red, with green only used if functionally
+     necessary, or for clarity.
+
+
 # Controllers
 
 The purpose of a controller is automatically tweaking the parameters of a system
