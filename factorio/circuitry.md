@@ -2,9 +2,9 @@
 
 ## D latch
 
-A D latch (»D« for »data«) is a simple memory digital memory cell. It simply
-stores the current value of the input signal when triggered, and holds it until
-the trigger event (overwriting the previous one).
+A D latch (for »data«) is a simple digital memory cell. It simply stores the
+current value of the input signal when triggered, and holds it until the trigger
+event (overwriting the previous one).
 
 In Factorio, we have simpler ways of building memory cells, but they usually
 have several shortcomings, such as no reset condition, and adding up signals
@@ -19,9 +19,9 @@ The schematic is as follows:
 ![](img/d-latch.png)
 
 The memory cell consists of the two logical combinators on the left: when the
-clock signal is true, let the current value of `D` into the green circuit. When
-`C` is false, then do not read `D` from the outside, but let it loop on the
-green loop around the center combinator.
+clock signal is true, let the current value of `D` into the green circuit (`#`
+for »input count«). When `C` is false, then do not read `D` from the outside,
+but let it loop on the green loop around the center combinator.
 
 The NOOP combinator on the right hand side serves multiple purposes. In order of
 descending importance,
@@ -34,6 +34,15 @@ descending importance,
   3. I like all my free wires to be red, with green only used if functionally
      necessary, or for clarity.
 
+Taking timing (each combinator introduces a 1-tick delay) into consideration,
+storage of the current `D` signal in the circuit is triggered by the falling
+edge of the `C` signal. As a result, a 1-tick clock pulse stores the input  `D`
+value at the time the pulse starts.
+
+## Shift register
+
+**TODO:** combine multiple D latches to get a shift register. (The intermediate
+`D+0` cleaning cells are unnecessary in this case.)
 
 # Controllers
 
