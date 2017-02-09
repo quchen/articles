@@ -18,26 +18,20 @@ The schematic is as follows:
 
 ![](img/d-latch.png)
 
-The memory cell consists of the two logical combinators on the left: when the
-clock signal is true, let the current value of `D` into the green circuit (`#`
-for »input count«). When `C` is false, then do not read `D` from the outside,
-but let it loop on the green loop around the center combinator.
+The memory cell consists of the two logical combinators on the right: when the
+clock signal `C` is true, let the current value of `D` (`#` for »input count«)
+into the green circuit through the top combinator. When `C` is false, then do
+not read `D` from the input signal, but from the green loop instead. This way,
+`C` switches the circuit from either retaining the stored signal, or forgetting
+it and continuously reading it from the outside.
 
-The NOOP combinator on the right hand side serves multiple purposes. In order of
-descending importance,
+The NOOP combinator on the left separates the `C` and `D` signals, because D
+must only enter the green loop from the top, and by my convention, all free
+wires have to be red. Since this combinator introduces a 1-tick delay, we also
+route the `C` signal to the bottom combinator through it so they stay in sync.
 
-  1. It closes off the circuit to the right, so that even when there is a `D`
-     signal coming from another circuit on the right, the D latch is unaffected
-     by it.
-  2. It allows renaming the `D` signal, making it easier to plug the latch into
-     an existing circuit.
-  3. I like all my free wires to be red, with green only used if functionally
-     necessary, or for clarity.
-
-Taking timing (each combinator introduces a 1-tick delay) into consideration,
-storage of the current `D` signal in the circuit is triggered by the falling
-edge of the `C` signal. As a result, a 1-tick clock pulse stores the input  `D`
-value at the time the pulse starts.
+**TODO** Currently, C is one tick slower than than D, so that one should be
+delayed as well.
 
 ## Shift register
 
