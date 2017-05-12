@@ -56,6 +56,9 @@ Haskell related
 - [Write yourself a Brainfuck in an hour][bf-tut] implements a very simple
   [Brainfuck][bf] interpreter in Haskell, with plenty of room to go on
   afterwards.
+- [Make macros mean something – readable backwards compatibility with
+  CPP][cpp-semantic-macros] talks about how to define readable macro synonyms
+  for writing backwards compatible libraries.
 
 
 
@@ -87,6 +90,7 @@ Haskell related
 [build]:            build.md
 [comprehensible]:   functions_comprehensible.md
 [cont]:             cont_monad.md
+[cpp-semantic-macros]: haskell-cpp-compatibility.md
 [crazy-io]:         crazy_io.md
 [equality-live]:    http://htmlpreview.github.io/?https://github.com/quchen/articles/blob/master/haskell-equality-table.html
 [equality]:         haskell-equality-table.html
