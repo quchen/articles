@@ -30,7 +30,7 @@ as:
 ```c
 MIN_VERSION_GLASGOW_HASKELL(X,Y,Z,W) // Is GHC >= X.Y.Z.W?
 
-__GLASGOW_HASKELL >= 710 // Before GHC 7.10, we had to use this instead
+__GLASGOW_HASKELL__ >= 710 // Before GHC 7.10, we had to use this instead
 
 linux_HOST_OS // Defined if we’re on Linux
 mingw32_HOST_OS // Defined if we’re on Windows
