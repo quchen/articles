@@ -93,8 +93,8 @@ like to call it `version-compatibility-macros.h`, with the following contents:
 #define FOLDABLE_TRAVERSABLE_IN_PRELUDE MIN_VERSION_base(4,8,0)
 #define MONOID_IN_PRELUDE               MIN_VERSION_base(4,8,0)
 #define NATURAL_IN_BASE                 MIN_VERSION_base(4,8,0)
-#define SEMIGROUP_IN_BASE               MIN_VERSION_base(4,8,0)
 
+#define SEMIGROUP_IN_BASE               MIN_VERSION_base(4,9,0)
 #define MONAD_FAIL                      MIN_VERSION_base(4,9,0)
 ```
 
