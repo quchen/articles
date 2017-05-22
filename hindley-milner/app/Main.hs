@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main (main) where
+module Main where
 
 
 
