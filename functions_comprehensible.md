@@ -114,3 +114,35 @@ filterM p (x:xs) = do
       ys   <- filterM p xs
       return (if flag then x:ys else ys)
 ```
+
+
+
+Desugaring `do` notation
+------------------------
+
+- A `do` block with a single action as its content is equivalent to not having the `do` keyword:.
+
+  ```haskell
+  do action   ---->   action
+  ```
+
+- The `<-` symbol desugars to a `>>=` (pronounced »bind«) operator:
+
+  ```haskell
+  do x <- action   ---->   action >>= \x -> do REST
+     REST
+  ```
+
+- An action not bound via `<-` is desugared to the `>>` operator:
+
+  ```haskell
+  do action   ---->   action >> do REST
+     REST
+  ```
+
+- The standalone `let` in `do` notation is translated to a `let…in…` block:
+
+  ```haskell
+  do let definition = value   ---->   let definition = value in do REST
+     REST
+  ```
