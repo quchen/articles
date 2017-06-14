@@ -37,6 +37,7 @@ Contents
 17. [Comment syntax][TOC/comment-syntax]
 18. [`data`, `newtype`, `type`][TOC/data-newtype-type]
 19. [Indentation and sensitive whitespace][TOC/sensitive-whitespace]
+20. [What program should I write?][TOC/what-should-i-write]
 
 
 
@@ -1005,6 +1006,86 @@ The lines following a new block can start in three positions:
 
 
 
+What program should I write?
+----------------------------
+
+When learning a new programming language – Haskell or any other – we usually
+really want to use our shiny new tool, but we don’t know what to build with it!
+To solve this dilemma, here is the project I always recommend:
+
+**Build a Brainfuck interpreter.**
+
+Why?
+
+  - Multiple simple components
+  - Lots of room to extend them
+  - Many important topics covered
+
+If you’re not familiar with Brainfuck, it’s a very simple programming language
+that you can probably learn in less than 5 minutes, but is pretty hard to write
+programs in. It is however very instructional to implement it! [Everything you
+need to know you can find in the Wikipedia
+article.](https://en.wikipedia.org/wiki/Brainfuck) To give you a taste, here is
+what Hello World looks like:
+
+```brainfuck
+++++++++++[>+++++++>++++++++++>+++>+<<<<-]  Yes, it’s hard to read, but
+>++.>+.+++++++..+++.>++.<<+++++++++++++++.  you should implement it, not
+>.+++.------.--------.>+.>.                 write programs in it! ;-)
+```
+
+So, why that project? What’s in it for me, or rather – you? Well, the goal is
+simple: write a server that the user can send Brainfuck sourcecode such as the
+above to, and that runs the programs and sends back the reply.
+
+To achieve this, you’ll need the following basic components:
+
+  - **Parser:** Read a simple text format into logical blocks.
+  - **Syntax tree:** Think about how to represent Brainfuck code in your
+    interpreter.
+  - **User interaction:** How to read user input, how to send back the result?
+
+Depending on prior knowledge, this might take you anywere from a couple of
+minutes to a weekend. Don’t be afraid of the weekend end of the spectrum, you’ll
+learn a *lot* in the process!
+
+With that out of the way, we can go in many different directions:
+
+  - **Web server:** Add a HTTP frontend, so that you can host your own
+    interpreter over HTTP.
+  - **Command-line tool:** Add a command line parser (many libraries available
+    to do this) so the interpreter can be used from the terminal.
+  - **Optimizer:** `+++---+-` does nothing! Why not remove it beforehand to
+    speed up execution? What optimizations can you come up with?
+  - **Rich intermediate representation:** `[-]` sets a cell to 0, by laboriously
+    subtracting 1 repeatedly. Maybe the interpreter should have a special
+    operation to just set things to a constant value?
+  - **Code generators**
+      - **Brainfuck:** You’ve optimized the input – why not give the
+        user the optimized program back as output?
+      - **C:** If you’re familiar with C, you can try generating a C program
+        that represents the Brainfuck input. You can then run a C compiler over
+        your generated code to get an executable.
+      - **Native/LLVM:** This one is definitely not something for beginners,
+        but if you’re already familiar with how to build a compiler to  machine
+        code, why not add a code generator?
+
+Up to now, we’ve already touched a very large programming spectrum, from super
+low level to backend web programming. Here are some further ideas:
+
+  - Make the web service scale! All of a sudden, 100 users connect concurrently.
+    Parallelize your service to exploit that multicore CPU of yours!
+  - Urk, some users give the program infinite loops! Maybe it should warn or
+    abort if a number of steps were exceeded?
+  - Add a GUI that allows watching/stepping through the program.
+  - Remember past programs in some database, and let users re-run them by
+    specifying e.g. their name or ID.
+
+
+
+
+
+
 [Book/Hutton]:             http://www.cs.nott.ac.uk/~gmh/book.html
 [Book/LYAH]:               http://learnyouahaskell.com/
 [Book/RWH]:                http://book.realworldhaskell.org/
@@ -1065,3 +1146,4 @@ The lines following a new block can start in three positions:
 [TOC/special-dollar]:           #-has-special-powers
 [TOC/special-minus]:            #--4-is-not-x---x---4
 [TOC/tabspaces]:                #tabs-vs-spaces
+[TOC/what-should-i-write]:      #what-program-should-i-write
