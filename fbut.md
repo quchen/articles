@@ -1032,6 +1032,7 @@ what Hello World looks like:
 ++++++++++[>+++++++>++++++++++>+++>+<<<<-]  Yes, it’s hard to read, but
 >++.>+.+++++++..+++.>++.<<+++++++++++++++.  you should implement it, not
 >.+++.------.--------.>+.>.                 write programs in it! ;-)
+                                            (Wikipedia has a more readable version.)
 ```
 
 So, why that project? What’s in it for me, or rather – you? Well, the goal is
