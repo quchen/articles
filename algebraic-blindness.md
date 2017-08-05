@@ -90,7 +90,7 @@ types naturally extend Boolean Blindness.
   `Either a b` is as blind as `a` plus as blind as `b`, plus one for the fact
   that `Left` and `Right` do not have intrinsic meaning.
 
-- Tuples have two fields, but how do they relate to each other? Does one maybe
+- Pairs have two fields, but how do they relate to each other? Does one maybe
   tell us about errors in the other? We cannot know.
 
   `(a,b)` is as blind as `a` times the blindness of `b`.
