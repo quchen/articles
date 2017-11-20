@@ -9,6 +9,7 @@
             table#eq tr:first-child th {
                   max-width:  1em;
                   transform: rotate(-90deg);
+                  transform-origin: 43% 32%;
                   }
             table#eq tr th.l {
                   text-align:  right;
@@ -69,10 +70,6 @@
 <body>
 
 <h1>Haskell equality table</h1>
-
-<p>(CSS hacks for doing the table head properly appreciated. You can contact me
-      via <a href="https://github.com/quchen/articles">GitHub</a>.)</p>
-
 
 <table id="eq">
 <tr>   <td/>                             <th class="t">True</th>        <th class="t">False</th>       <th class="t">1 :: Int</th>    <th class="t">0 :: Int</th>    <th class="t">-1 :: Int</th>   <th class="t">1 :: Double</th>   <th class="t">0 :: Double</th>   <th class="t">-1 :: Double</th>   <th class="t">Infinity</th>    <th class="t">-Infinity</th>   <th class="t">NaN</th>         <th class="t">"True"</th>      <th class="t">"False"</th>     <th class="t">"1"</th>         <th class="t">"0"</th>         <th class="t">"-1"</th>        <th class="t">""</th>          <th class="t">[]</th>               <th class="t">[[]]</th>             <th class="t">[0 :: Int]</th>  <th class="t">[1 :: Int]</th>   </tr>
