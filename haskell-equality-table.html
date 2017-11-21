@@ -113,7 +113,9 @@
           concrete type of the contained values is unknown, and the right
           <code>Eq</code> instance cannot be found. Adding explicit type
           annotations solves this issue, <code>([] :: [Int]) == []</code> is
-          <code>True</code>.</li>
+          <code>True</code>. (Note that GHCi has extended default rules, picking
+          <code>[] :: [()]</code> to make this sort of ambiguity somewhat easier
+          to work with in the REPL meant for fast one-liners.)</li>
 </ul>
 
 </body>
