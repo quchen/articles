@@ -1131,7 +1131,7 @@ exception = () => throw "urk";
 
 …is a valid value, that can mean a multitude of things, and the programmer has
 to infer its meaning from the context. We can check whether something is `null`
-or not. Wen can code defensively around values that can possibly be `null`, we
+or not. We can code defensively around values that can possibly be `null`, we
 can organize our codebase to avoid `null`, we can organize our codebase to crash
 hard on `null` so that we can be reasonably confident it doesn’t occur anywhere.
 
