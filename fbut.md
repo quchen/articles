@@ -38,6 +38,7 @@ Contents
 18. [`data`, `newtype`, `type`][TOC/data-newtype-type]
 19. [Indentation and sensitive whitespace][TOC/sensitive-whitespace]
 20. [What program should I write?][TOC/what-should-i-write]
+21. [`undefined` is not Haskell’s `null`][TOC/undefined-null]
 
 
 
@@ -1084,6 +1085,83 @@ low level to backend web programming. Here are some further ideas:
 
 
 
+Undefined is not Haskell’s null
+-------------------------------
+
+<!--
+**Short rant.**
+This is something I’ve heard multiple times from people that  learned everything
+about Haskell from blog posts, as opposed to actually using  it. It’s one of the
+statements that make me angry, since people issuing it are  either vocal about
+their ignorance, or intellectually dischonest.
+**End of rant.**
+-->
+
+### undefined
+
+…is the absence of a meaningful value – it is *not* a value that signifies the
+absence of one. Calculating with an undefined is *always* an error; the few
+legal uses of it are in dead code, and serve only to make the typechecker happy.
+Undefined values exist in all popular programming languages. Unbounded loops and
+exceptions are examples of undefined values. Although some undefined values can
+be handled, most notably exceptions, this is impossible in general (as it is
+equivalent to the Halting Problem).
+
+Haskell gives us a dangerous-and-meaningless placeholder `undefined`, which is
+an undefined value that just crashes the program (or at least thread), should
+execution reach that value. It is a placeholder used during prototyping, or
+historically to satisfy the typechecker in dead code (nowadays there’s the much
+better `Proxy` for that). It is *never* a valid value that is actually worked
+with.
+
+Here are some code examples of undefined values, first in Haskell, then in
+Javascript.
+
+```haskell
+infiniteLoop = infiniteLoop
+exception = error "undefined!"
+```
+
+```javascript
+infiniteLoop = () => { for(;;) {} }
+exception = () => throw "urk";
+```
+
+### null
+
+…is a valid value, that can mean a multitude of things, and the programmer has
+to infer its meaning from the context. We can check whether something is `null`
+or not. Wen can code defensively around values that can possibly be `null`, we
+can organize our codebase to avoid `null`, we can organize our codebase to crash
+hard on `null` so that we can be reasonably confident it doesn’t occur anywhere.
+
+Haskell and Rust have no such value, and nothing equivalent to it. What they do
+have is specialized types (Haskell’s `Maybe`, Rust’s `Option`) that cover some
+of the use cases one might abuse `null` for in languages that are not capable of
+abstracting over `null`, such as Java, which goes into great lengths to
+introduce a zoo of `Optional` libraries, yet this still compiles,
+
+```java
+import my.favourite.optional.lib;
+public class LolBoilerplate {
+    public static void main(String[] args) {
+        Optional<Integer> iAmNull;
+        System.out.printLn(iAmNull.toString());
+    }
+}
+```
+
+but let’s not beat a dead horse.
+
+### Conclusion
+
+We can work with `null`, and we *should* avoid it. We cannot work with
+undefined, and we *have to* avoid it.
+
+
+
+
+
 
 
 
@@ -1147,4 +1225,5 @@ low level to backend web programming. Here are some further ideas:
 [TOC/special-dollar]:           #-has-special-powers
 [TOC/special-minus]:            #--4-is-not-x---x---4
 [TOC/tabspaces]:                #tabs-vs-spaces
+[TOC/undefined-null]:           #undefined-is-not-haskells-null
 [TOC/what-should-i-write]:      #what-program-should-i-write
