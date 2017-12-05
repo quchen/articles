@@ -965,7 +965,6 @@ case x of | Just y -> [y] | -- Block opened by the Just
           +---------------+
 ```
 
-
 The lines following a new block can start in three positions:
 
   1. Same column as the layout block opener. In this case, it is made a new item
@@ -1088,80 +1087,132 @@ low level to backend web programming. Here are some further ideas:
 Undefined is not Haskell’s null
 -------------------------------
 
-<!--
-**Short rant.**
-This is something I’ve heard multiple times from people that  learned everything
-about Haskell from blog posts, as opposed to actually using  it. It’s one of the
-statements that make me angry, since people issuing it are  either vocal about
-their ignorance, or intellectually dischonest.
-**End of rant.**
--->
+(Technical note for those who know about such things: `undefined` will be used
+synonymous to bottom/⊥ in the following.)
 
-### undefined
+<!-- **Short rant.**
 
-…is the absence of a meaningful value – it is *not* a value that signifies the
-absence of one. Calculating with an undefined is *always* an error; the few
-legal uses of it are in dead code, and serve only to make the typechecker happy.
-Undefined values exist in all popular programming languages. Unbounded loops and
-exceptions are examples of undefined values. Although some undefined values can
-be handled, most notably exceptions, this is impossible in general (as it is
-equivalent to the Halting Problem).
+»Undefined is Haskell’s null« is something I’ve heard multiple times from people
+that learned everything about Haskell from blog posts, as opposed to actually
+using it. It’s one of the statements that make me angry, since people issuing it
+are either vocal about their ignorance, or intellectually dischonest.
 
-Haskell gives us a dangerous-and-meaningless placeholder `undefined`, which is
-an undefined value that just crashes the program (or at least thread), should
-execution reach that value. It is a placeholder used during prototyping, or
-historically to satisfy the typechecker in dead code (nowadays there’s the much
-better `Proxy` for that). It is *never* a valid value that is actually worked
-with.
+**End of rant.** -->
 
-Here are some code examples of undefined values, first in Haskell, then in
-Javascript.
+### What are they?
 
-```haskell
-infiniteLoop = infiniteLoop
-exception = error "undefined!"
-```
+`null` is a special value that can have any type, or be assigned to any
+variable. For example in Java, we can have a variable of type `Integer` that
+does not contain an `Integer` as the type claims, but `null` instead.
+
+`undefined` is the complete absence of a meaningful value, which can have
+multiple reasons. An infinite loop has the value `undefined`, and so does a
+function throwing an exception. In Haskell, we can have a variable of type
+`Integer` that does not contain an `Integer` as the type claims, but is
+`undefined` instead. Similarly, we can have a method in Java that claims to
+return an `Integer` given no arguments, but fails to yield any answer, so it
+also has value `undefined`.
+
+These two sound similar, but there is really nothing they have in common at all
+once you look at them in detail.
+
+
+
+### What’s the problem?
+
+In short, we can work with `null`, and we *should* avoid it. We cannot work with
+undefined, and we *have to* avoid it. The core reason for this is that `null` is
+checkable, while `undefined` is not.
+
+Checkable means we can write a function to decide whether a value is `null` or
+`undefined`. We can write such a function for null, e.g.
 
 ```javascript
-infiniteLoop = () => { for(;;) {} }
-exception = () => throw "urk";
+isNull = x => x === null;
 ```
 
-### null
+There is no such function in Haskell, since it does not have `null`. But `Maybe`
+is a type that covers some of `null`’s (ab)use cases, and we can check for
+whether something is not there,
 
-…is a valid value, that can mean a multitude of things, and the programmer has
-to infer its meaning from the context. We can check whether something is `null`
-or not. Wen can code defensively around values that can possibly be `null`, we
-can organize our codebase to avoid `null`, we can organize our codebase to crash
-hard on `null` so that we can be reasonably confident it doesn’t occur anywhere.
-
-Haskell and Rust have no such value, and nothing equivalent to it. What they do
-have is specialized types (Haskell’s `Maybe`, Rust’s `Option`) that cover some
-of the use cases one might abuse `null` for in languages that are not capable of
-abstracting over `null`, such as Java, which goes into great lengths to
-introduce a zoo of `Optional` libraries, yet this still compiles,
-
-```java
-import my.favourite.optional.lib;
-public class LolBoilerplate {
-    public static void main(String[] args) {
-        Optional<Integer> iAmNull;
-        System.out.printLn(iAmNull.toString());
-    }
-}
+```haskell
+isNothing x = x == Nothing
 ```
 
-but let’s not beat a dead horse.
+We cannot, neither in Javascript nor in Haskell (nor in any other Turing
+complete language) write a function that checks whether its argument is
+`undefined`. The reason for this is that one way to be `undefined` is containing
+an infinite loop and hence never returning a meaningful value, so checking
+whether something is `undefined` would require us to solve the Halting problem.
+We can check for some few instances of `undefined`, for example functions
+throwing exceptions by wrapping them in try/catch or equivalent.
 
-### Conclusion
-
-We can work with `null`, and we *should* avoid it. We cannot work with
-undefined, and we *have to* avoid it.
+So, we *can* write a function that takes an arbitrary value and tells us whether
+it’s `null` or not, but we *cannot* do the same for `undefined`.
 
 
 
+### Who has it?
+
+`null` is used by all large mainstream languages, strongly or weakly typed. It
+is almost universally agreed on that `null` is a terrible idea language design
+wise, yet it keeps popping up in new languages, presumably because programmers
+tend to be very reluctant to learning new concepts. The biggest examples of at
+least somewhat well-known languages that do not have `null` are Haskell and
+Rust.
+
+`undefined` is a placeholder value we assign to values that don’t produce a
+meaningful result. Unbounded loops are `undefined`, exception throwers are
+`undefined`. Any language that supports any of these constructs has `undefined`,
+and all popular and even semi-popular languages do. One example of a language
+that does not is (total) Idris, but it would be a stretch to even call it a
+semi-semi popular language at this point.
 
 
+
+### When is it valid?
+
+Since `null` is unfortunately workable (remember, we can check for it), it
+depends entirely on the programmer’s taste what to do with it. There are many
+conventions about when or whether to use `null`, and they vary widely among
+language ecosystems, companies, and even individual projects. This makes it
+completely impossible to understand whether some code works without knowing the
+culture of its authors.
+
+`undefined` is very hard to work with, to the point where most programmers will
+wonder what good it can be at all – since when would we ever want an infinite
+loop? There are some few cases in which `undefined` is valid or even good code.
+One is during prototyping, where it can serve as a »I’ll fill this out later«
+value, much like a TODO comment that crashes the program, should the programmer
+fail to fulfill the promise. Another is in dead code to please the typechecker,
+when a branch of the program will not ever be taken, but the compiler fails to
+recognize this and warns that, well, this branch might be taken. The popular
+`assert` family of debugging functions also fall into this category.
+
+
+
+### How to avoid it?
+
+Avoiding `null` can be difficult, depending on the language. There are two
+levels of avoidance. One is by self-discipline, by agreeing that `null` is bad
+and should not be present in the codebase at all cost; static code analyzers can
+(and probably should) be part of that self-discipline. The more important one is
+by language design, since we don’t only use our own code, but use libraries
+touched by many hands. Good language design means that it is easy to spot values
+that might be `null`, so that we don’t have to play the »could it be `null`«
+game. Java is famously bad at this, because it introduces an `Optional` type
+that adds explicit nullability without removing `null` at all; Kotlin marks
+variables of types that contain `null` explicitly.
+
+Avoiding `undefined` in practice is fairly simple: we rarely write programs that
+just hang in infinite loops producing nothing but CPU heat, and if we do, we’re
+likely to catch those mistakes during testing. We try not to use exceptions too
+much (especially in Haskell where they’re frowned upon).
+
+Avoiding `undefined` in general is prohibitively hard, since we would have to
+prove that none of the paths through a program might hang, or throw, or fail to
+handle a certain case. One notable language that tries to push the boundaries
+here is Idris, but it has a long way to go before becoming production ready.
 
 
 
