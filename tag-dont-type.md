@@ -73,6 +73,8 @@ type TcTauType   = TcType
 type TcType      = Type
 ```
 
+into these:
+
 ```haskell
 -- Empty data types to be used as tags
 data PredType
