@@ -144,7 +144,7 @@ This GHC behaviour violates the Haskell standard, [which literally demands that
 ```
 
 However, the problems arising from this don't seem bad enough to demand a fix,
-so it'll probably stay a small quirk in GHC for the forseeable future.
+so it'll probably stay a small quirk in GHC for the foreseeable future.
 
 
 
@@ -1046,7 +1046,7 @@ To achieve this, you’ll need the following basic components:
     interpreter.
   - **User interaction:** How to read user input, how to send back the result?
 
-Depending on prior knowledge, this might take you anywere from a couple of
+Depending on prior knowledge, this might take you anywhere from a couple of
 minutes to a weekend. Don’t be afraid of the weekend end of the spectrum, you’ll
 learn a *lot* in the process!
 
@@ -1095,7 +1095,7 @@ synonymous to bottom/⊥ in the following.)
 »Undefined is Haskell’s null« is something I’ve heard multiple times from people
 that learned everything about Haskell from blog posts, as opposed to actually
 using it. It’s one of the statements that make me angry, since people issuing it
-are either vocal about their ignorance, or intellectually dischonest.
+are either vocal about their ignorance, or intellectually dishonest.
 
 **End of rant.** -->
 
