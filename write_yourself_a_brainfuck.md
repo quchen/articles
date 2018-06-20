@@ -457,7 +457,7 @@ specifying a source file with
    this? Hint: `Comment`s don't do anything and may save you from adding a
    `Maybe` type.
 
-2. (easy) The call to `ord` produces an error when applied to a negative
+2. (easy) The call to `chr` produces an error when applied to a negative
    element, and you probably won't want to print character number 9001 in
    Brainfuck ever anyway. How could you modify the command to constrain the
    output to ASCII?
