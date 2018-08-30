@@ -55,9 +55,14 @@ fmap f . fmap g = fmap (f . g)
 ```
 
 Note how we used nothing but `fmap`'s type (to generate the free theorem) and
-the first `Functor` law (to eliminate `fmap id`) to derive this. [It is worth
-mentioning that this only holds up to fast and loose reasoning, i.e. assuming
-no ⊥ are involved][fastandloose], otherwise e.g.
+the first `Functor` law (to eliminate `fmap id`) to derive this.
+
+
+
+## Bottom ruins the party
+
+[It is worth mentioning that this only holds up to fast and loose reasoning,
+i.e. assuming no ⊥ are involved][fastandloose], otherwise e.g.
 
 ```haskell
 newtype Id a = Id a
@@ -91,6 +96,25 @@ fmap (const () . ⊥) x
       -- This is ⊥ if and only if x is ⊥.
 ```
 
+## The converse: 2nd law holds, 1st does not
+
+The following hypothetical `Functor Maybe` satisfies the second, but not the
+first, Functor law:
+
+```haskell
+instance Functor Maybe where
+    fmap _ _ = Nothing
+```
+```haskell
+-- 1st law broken
+fmap id (Just ()) = Nothing
+
+-- 2nd law holds
+fmap f . fmap g = const Nothing . const Nothing = const Nothing
+fmap (f . g) = const Nothing
+```
+
+
 
 ## Further reading
 
@@ -102,7 +126,6 @@ If you want to know more about free theorems or just play around with them:
   instantiations"; the free theorem is displayed in the very last box in a
   somewhat readable format)
 - [Theorems for free!][tff], the original publication on free theorems
-
 
 [fastandloose]: http://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.html
 [ftgen]: http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
