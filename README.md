@@ -2,8 +2,8 @@
 =================
 
 This repository is filled with articles I have written and needed online for
-various reasons. Below is a short summary of the articles available publically;
-the repository may contain files not mentioned below, in which case they're
+various reasons. Below is a short summary of the articles available publically.
+The repository may contain files not mentioned below, in which case they're
 probably unfinished or otherwise not worth reading at this point.
 
 
