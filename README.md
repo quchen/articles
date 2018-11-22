@@ -58,6 +58,7 @@ Haskell related
 - [Make macros mean something – readable backwards compatibility with
   CPP][cpp-semantic-macros] talks about how to define readable macro synonyms
   for writing backwards compatible libraries.
+- [`zipWith const`][zipWithConst] is my favorite Haskell function
 
 
 
@@ -111,3 +112,4 @@ Haskell related
 [tag-dont-type]:    tag-dont-type.md
 [unmaintain]:       unmaintainable_haskell.md
 [useful]:           useful_techniques.md
+[zipWithConst]:     2018-11-22_zipWith_const.md
