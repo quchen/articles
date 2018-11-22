@@ -77,7 +77,7 @@ For the second half, we can now drop the first firstHalf-many elements from the
 input list,
 
 ```haskell
-zipOverflow (x:xs) (y:ys) = zipOverflow xs ys
+zipOverflow (_:xs) (_:ys) = zipOverflow xs ys
 zipOverflow [] ys = ys
 zipOverflow xs [] = xs
 ```
@@ -116,7 +116,7 @@ Remember, the idea behind `zipWith const` is to have a list whose entries we’r
 interested in, and one that tells us how long to take elements. There is a list
 that contains all the rotations of `xs` as sublists: `cycle xs`! And we have a
 list that’s as long as the rotated version – xs itself, since rotation preserves
-length. All that’s left to do is navigate to the beginnong of the sublist of
+length. All that’s left to do is navigate to the beginning of the sublist of
 `cycle xs` where the desired rotation sublist starts, which we can do by simply
 droping the first `n` elements, yielding
 
