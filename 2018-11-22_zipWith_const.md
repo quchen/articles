@@ -93,49 +93,7 @@ splitMiddle xs = let firstHalf = zipWith const xs (halfAsLong xs)
 This works even for infinite lists, where the input will be in the first
 component of the tuple, and the second one is of course bottom.
 
-## Example 3: rotate a list
-
-Rotating a vector, array or list means removing the first couple of elements,
-and appending them onto the input.
-
-```haskell
-rotate 3 [0,1,2,3,4,5,6,7,8,9] ====> [3,4,5,6,7,8,9,0,1,2]
-```
-
-The naive
-
-```haskell
-rotate n xs = let (a,b) = splitAt n xs in b ++ a
-```
-
-once again does not work for infinite lists (even with out nifty `splitAt`
-function from before, since we require the second half in the result). But maybe
-we can do better?
-
-Remember, the idea behind `zipWith const` is to have a list whose entries we’re
-interested in, and one that tells us how long to take elements. There is a list
-that contains all the rotations of `xs` as sublists: `cycle xs`! And we have a
-list that’s as long as the rotated version – xs itself, since rotation preserves
-length. All that’s left to do is navigate to the beginning of the sublist of
-`cycle xs` where the desired rotation sublist starts, which we can do by simply
-droping the first `n` elements, yielding
-
-```haskell
-rotate n xs = zipWith const (drop n (cycle xs)) xs
-```
-
-This is already quite good, but it crashes for empty inputs, for which `cycle`
-fails to produce a result. But `zipWith` short-circuits in our favor if we just
-flip its arguments,
-
-```haskell
-rotate n xs = zipWith (flip const) xs (drop n (cycle xs))
-```
-
-and we’ve got ourselves our rotation function. As you’ve come to expect, this of
-course works for infinite inputs as well.
-
-## Example 4: rotateWhile
+## Example 3: rotateWhile
 
 One last example that I recently needed. Backstory: a polygon can be described
 by the ordered list of its corners. But it’s not actually important which corner
