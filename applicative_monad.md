@@ -74,7 +74,7 @@ spell it out.
 - `pure` and `return` do the same thing.
 - `>>` and `*>` are identical.
 - `liftM` and `liftA` are `fmap`. The `liftM*` are `liftA*`, `<*>` is `ap`.
-- Prelude's `sequence` requres `Monad` right now, while `Applicative` is
+- Prelude's `sequence` requires `Monad` right now, while `Applicative` is
   sufficient to implement it. The more general version of this issue is
   captured by `Data.Traversable`, whose main typeclass implements the *same*
   functionality twice, namely `traverse` and `mapM`, and `sequenceA` and
