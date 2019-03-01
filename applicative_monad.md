@@ -49,7 +49,7 @@ Here's the list of final changes I have in mind:
 - Make `Alternative` (along with `Monad`) a superclass of `MonadPlus`.
 
 The following will first discuss the consequences of these changes; afterwards
-there's a strategy about how to make this chainge as painless as possible.
+there's a strategy about how to make this change as painless as possible.
 
 
 
