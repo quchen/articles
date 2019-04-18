@@ -253,7 +253,7 @@ Adapting old code
 
 
 
-Esimating the breakage
+Estimating the breakage
 ----------------------
 
 Using our initial implementation, I compiled stackage-nightly, and grepped the
