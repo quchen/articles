@@ -115,7 +115,7 @@ data MType = TVar Name           -- ^ @a@
 
            -- Since we can't declare our own types in our simple type system
            -- here, we'll hard-code certain basic ones so we can typecheck some
-           -- familar functions that use them later.
+           -- familiar functions that use them later.
            | TList MType         -- ^ @[a]@
            | TEither MType MType -- ^ @Either a b@
            | TTuple MType MType  -- ^ @(a,b)@
@@ -271,7 +271,7 @@ instance Substitutable PType where
 -- this, it also entails @λy. x@, @λy z. x@, @let id = λy. y in id x@ and so on.
 --
 -- In Haskell terms, the environment consists of all the things you currently
--- have available, or that can be built by comining them. If you import the
+-- have available, or that can be built by combining them. If you import the
 -- Prelude, your environment entails
 --
 -- @
@@ -370,7 +370,7 @@ instance Pretty Subst where
 -- first argument to the type variables contained in the second.
 instance Monoid Subst where
     -- Considering that all we can really do with a substitution is apply it, we
-    -- can use the one of 'Substitutable's laws to show that substitutions
+    -- can use one of 'Substitutable's laws to show that substitutions
     -- combine associatively,
     --
     -- @
@@ -505,7 +505,7 @@ throw = Infer . throwE
 
 
 
--- | The unification of two 'MType's is the most general substituion that can be
+-- | The unification of two 'MType's is the most general substitution that can be
 -- applied to both of them in order to yield the same result.
 --
 -- >>> let m1 = TFun "a" "b"
