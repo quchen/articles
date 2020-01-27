@@ -563,7 +563,7 @@ callCC f = Cont $ \k ->
 
 And there you have it: `callCC`! Let's reiterate the design: take a `Cont`
 computation that might short-circuit out by discarding its own continuation
-(the `_` in `exit`), but wrap the value to exit with with the parent
+(the `_` in `exit`), but wrap the value to exit with the parent
 continuation `k`. On short-circuiting, the parent continuation is used for
 further calculations. On not short-circuiting, the `exit` function is never
 called, and the inner `Cont` is evaluated as if there was no `callCC` around in
