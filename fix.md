@@ -95,7 +95,7 @@ factorial = let go n = if n <= 0 then 1 else n * go (n-1)
             in  go
 
           -- Drop the trailing n in go, rewrite the lambda parameters in f
-          -- a bit. Now the recursion (go) is spearate from the other
+          -- a bit. Now the recursion (go) is separate from the other
           -- logic (f).
           = let go = f go
                 f rec m = if m <= 0 then 1 else m * rec (m-1)
