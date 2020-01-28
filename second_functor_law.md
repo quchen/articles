@@ -128,6 +128,6 @@ If you want to know more about free theorems or just play around with them:
 - [Theorems for free!][tff], the original publication on free theorems
 
 [fastandloose]: http://www.cse.chalmers.se/~nad/publications/danielsson-et-al-popl2006.html
-[ftgen]: http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
-[kmett-free-fmap]: https://www.fpcomplete.com/user/edwardk/snippets/fmap
+[ftgen]: https://web.archive.org/web/20180106062645/http://www-ps.iai.uni-bonn.de/cgi-bin/free-theorems-webui.cgi
+[kmett-free-fmap]: https://web.archive.org/web/20181014033824/https://www.schoolofhaskell.com/user/edwardk/snippets/fmap
 [tff]: http://homepages.inf.ed.ac.uk/wadler/papers/free/free.ps
