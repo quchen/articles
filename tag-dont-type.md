@@ -106,7 +106,7 @@ Nothing's for free
 There are downsides of this approach of course, so it's not a no-brainer
 solution.
 
-- You will have to wrap and unwrap thigns in `Tagged`, or use predefined
+- You will have to wrap and unwrap things in `Tagged`, or use predefined
   convenience functions to do it for you. Whatever the case, there will be a
   certain amount of syntactic noise.
 - `Tagged` does not share `a`'s instances. You can easily write all the
