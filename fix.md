@@ -253,8 +253,8 @@ counts the number of bad inputs so far:
 
 Monadic loops are arguably more readable than for non-monadic ones, since
 non-monadic code requires to keep track of a form of recursion state using a
-second parameter for `fix`' argument. In monadic code on the other hand, the
-states and effects can be implicit, so there's only code of the form
+second parameter for `fix`' argument. on the other hand monadic code are the
+states and effects which can be implicit, so there will only be one code of the form
 
 ```haskell
 fix $ \loop -> ... loop ...
@@ -262,3 +262,5 @@ fix $ \loop -> ... loop ...
 
 which quite plainly stands for "when you reach `loop`, restart after the `->`
 again".
+
+if any of you could fix any anything here on this project then that would be so great of you, thank you. ^^
