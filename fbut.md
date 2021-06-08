@@ -12,16 +12,15 @@ Contents
 --------
 
 1.  [`ByteString.Char8` is bad][TOC/bsbad]
-2.  [``(a `op`)`` is not ``\x -> a `op` x``][TOC/sections]
-3.  [I don't understand Monads][TOC/monads]
-4.  [Tabs vs. spaces][TOC/tabspaces]
-5.  [`(- 4)` is not `\x -> x - 4`][TOC/special-minus]
-6.  [I'm looking for a good Regex library][TOC/regex]
-7.  [`Show` is not for prettyprinting][TOC/show]
-8.  [Imposing constraints on data types][TOC/constraint-types]
-9.  [`seq` does not specify an evaluation order][TOC/seq]
-10. [Where is `IO` defined?][TOC/io]
-11. [Don't use ...][TOC/dont-use]
+2.  [I don't understand Monads][TOC/monads]
+3.  [Tabs vs. spaces][TOC/tabspaces]
+4.  [`(- 4)` is not `\x -> x - 4`][TOC/special-minus]
+5.  [I'm looking for a good Regex library][TOC/regex]
+6.  [`Show` is not for prettyprinting][TOC/show]
+7.  [Imposing constraints on data types][TOC/constraint-types]
+8.  [`seq` does not specify an evaluation order][TOC/seq]
+9. [Where is `IO` defined?][TOC/io]
+10. [Don't use ...][TOC/dont-use]
     - [`fail`][TOC/dont-use-fail]
     - [`read`][TOC/dont-use-read]
     - [`genericLength`][TOC/dont-use-genericlength]
@@ -29,16 +28,16 @@ Contents
     - [`head`, `isJust`, ...][TOC/dont-use-headtail]
     - [`nub`][TOC/dont-use-nub]
     - [`String`][TOC/dont-use-string]
-12. [How to start learning Haskell][TOC/haskell-start]
-13. [`f x = ...` is not `f = \x -> ...`][TOC/lambda-vs-normal]
-14. [Reversed type class instances][TOC/reversed-instances]
-15. [Folding direction of `foldl` and `foldr`][TOC/foldl-foldr]
-16. [`($)` has special powers][TOC/special-dollar]
-17. [Comment syntax][TOC/comment-syntax]
-18. [`data`, `newtype`, `type`][TOC/data-newtype-type]
-19. [Indentation and sensitive whitespace][TOC/sensitive-whitespace]
-20. [What program should I write?][TOC/what-should-i-write]
-21. [`undefined` is not Haskell’s `null`][TOC/undefined-null]
+11. [How to start learning Haskell][TOC/haskell-start]
+12. [`f x = ...` is not `f = \x -> ...`][TOC/lambda-vs-normal]
+13. [Reversed type class instances][TOC/reversed-instances]
+14. [Folding direction of `foldl` and `foldr`][TOC/foldl-foldr]
+15. [`($)` has special powers][TOC/special-dollar]
+16. [Comment syntax][TOC/comment-syntax]
+17. [`data`, `newtype`, `type`][TOC/data-newtype-type]
+18. [Indentation and sensitive whitespace][TOC/sensitive-whitespace]
+19. [What program should I write?][TOC/what-should-i-write]
+20. [`undefined` is not Haskell’s `null`][TOC/undefined-null]
 
 
 
@@ -100,51 +99,6 @@ communicating over a HTTP connection the headers are all ASCII. Using
 `ByteString` explicitly all the time, but note that HTTP requests can still
 contain Unicode in their bodies, so HTTP isn't a ticket to using `Char8` in
 general.
-
-
-
-``(a `op`)`` is not ``\x -> a `op` x``
---------------------------------------
-
-These two forms are seemingly identical, but there is a subtle difference in
-GHC. The first one is just sugar for `op a`, while the second one is a lambda
-(and not direct application of `op`). This leads to different strictness
-properties in the presence of ⊥:
-
-```haskell
-> let op = undefined
-
--- Section
-> (() `op`) `seq` ()
->>> *** Exception: Prelude.undefined
-
--- Prefix
-> (op ()) `seq` ()
->>> *** Exception: Prelude.undefined
-
--- Lambda
-> (\x -> () `op` x) `seq` ()
->>> ()
-```
-
-The reason for this behaviour is that a lambda can be thought of as an
-additional wrapper around the application of `op`, and this wrapper is already
-WHNF. For this reason, `op` is never forced, and the `seq` terminates without
-complaints.
-
-This GHC behaviour violates the Haskell standard, [which literally demands that
-"the following identities hold"][Report/sections]:
-
-```haskell
-(op e)  =  \ x -> x op e
-(e op)  =  \ x -> e op x
-
--- where op is a binary operator, e is an expression,
--- and x is a variable that does not occur free in e.
-```
-
-However, the problems arising from this don't seem bad enough to demand a fix,
-so it'll probably stay a small quirk in GHC for the foreseeable future.
 
 
 
@@ -1269,7 +1223,6 @@ here is Idris, but it has a long way to go before becoming production ready.
 [TOC/monads]:                   #i-dont-understand-monads
 [TOC/regex]:                    #im-looking-for-a-good-regex-library
 [TOC/reversed-instances]:       #reversed-type-class-instances
-[TOC/sections]:                 #a-op-is-not-x---a-op-x
 [TOC/sensitive-whitespace]:     #sensitive-whitespace
 [TOC/seq]:                      #seq-does-not-specify-an-evaluation-order
 [TOC/show]:                     #show-is-not-for-prettyprinting
