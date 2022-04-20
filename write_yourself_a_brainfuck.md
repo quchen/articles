@@ -245,7 +245,7 @@ moveLeft (Tape (l:ls) p rs) = Tape ls l (p:rs)
 So that's the tape all encoded in Haskell. You probably guessed already that
 `moveRight` is related what `>` does, but that's part of the next section.
 
-In the finished interpreter, we'll have to `Tape` objects: one for the data
+In the finished interpreter, we'll have two `Tape` objects: one for the data
 tape (the one with the numbers on it), and one for the source code (because
 when we encounter a `]` we have to walk backwards in the source code). While
 the data tape is infinite, the source tape is finite and starts out with an
@@ -483,7 +483,7 @@ specifying a source file with
       faster: now jumping back `n` instructions is O(1) instead of O(n)!
 
    3. (open-ended) Various optimizations: You could combine multiple uses of
-      `Increment` so that instread of adding 1 five times, you could just add
+      `Increment` so that instead of adding 1 five times, you could just add
       a single 5; successive uses of `+` and `-` cancel out, as do `>` and `<`.
       And then there are higher-level optimizations as well of course, such as
       rewriting `[-]` to "set to zero or error if cell content is negative".
