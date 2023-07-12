@@ -4,7 +4,15 @@ Haddock+Doctest+Cairo = ♥
 tl;dr
 =====
 
-[Here is an example that I think is pretty cool. Most of the package looks like this.][gen-pages]
+[[Here]][gen-pages]
+is an example that I think is pretty cool.
+[[Most]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Geometry-Core.html#v:perpendicularLineThrough)
+[[of]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Geometry-Algorithms-Clipping.html)
+[[the]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Geometry-Algorithms-Triangulate.html)
+[[package]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Draw-Color-Schemes-Continuous.html)
+[[looks]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Draw-Text.html)
+[[like]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Geometry-Algorithms-SimplexNoise.html)
+[[this]](https://quchen.github.io/generative-art/generative-art-0.1.0.0/Geometry-Processes-Billard.html).
 It mixes doctests with picture output, and links to those pictures in the
 documemtation. This is not only a great appetizer for casually browsing the lib,
 but also features loads of small examples that can be copypasted and played
