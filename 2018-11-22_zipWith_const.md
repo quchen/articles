@@ -140,14 +140,3 @@ normalize (Polygon xs) = rotateUntil (== minimum xs) xs
 - In the last example I’m using `==` on Doubles. That’s fine. `+` is the worse
   offender, but nobody yells at you when you use that one. Actually, up to
   `NaN`, equality of Doubles is perfectly well-behaved.
-
-- A reader (David Feuer) correctly mentioned that `Eq Polygon` would be more
-  efficient if we rotated only one polygon to match whatever the first point of
-  the second was, and then compare for equality, like so:
-
-  ```haskell
-  (==) :: Polygon -> Polygon -> Bool
-  Polygon p1Edges@(edge1:_) == Polygon p2Edges
-    = let p2Edges' = rotateUntil (== edge1) p2Edges
-      in p1Edges == p2Edges'
-  ```
